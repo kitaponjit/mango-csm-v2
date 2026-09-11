@@ -1,0 +1,119 @@
+:root {
+  --target-color-brand: #0f3d68;
+  --target-color-action: #1d6fd1;
+  --target-color-surface: #ffffff;
+  --target-color-surface-muted: #f3f7fb;
+  --target-color-text: #17324d;
+  --target-color-text-muted: #5f7284;
+  --target-color-border: #d7e2ec;
+  --target-font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --target-space-sm: 0.5rem;
+  --target-space-md: 1rem;
+  --target-space-lg: 1.5rem;
+  --target-space-xl: 2rem;
+  --target-radius-md: 0.75rem;
+  --target-elevation-panel: 0 1rem 2.5rem rgb(15 61 104 / 12%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--target-color-surface-muted);
+  color: var(--target-color-text);
+  font-family: var(--target-font-body);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.target-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: var(--target-space-xl) var(--target-space-md);
+}
+
+.target-card {
+  width: min(100%, 42rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--target-color-border);
+  border-radius: var(--target-radius-md);
+  background: var(--target-color-surface);
+  box-shadow: var(--target-elevation-panel);
+}
+
+.target-eyebrow {
+  margin: 0 0 var(--target-space-sm);
+  color: var(--target-color-action);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  color: var(--target-color-brand);
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.target-copy {
+  margin: var(--target-space-md) 0 var(--target-space-xl);
+  color: var(--target-color-text-muted);
+  line-height: 1.6;
+}
+
+.target-contract {
+  display: grid;
+  gap: var(--target-space-md);
+  margin: 0;
+}
+
+.target-contract > div {
+  display: grid;
+  gap: 0.25rem;
+  padding-top: var(--target-space-md);
+  border-top: 1px solid var(--target-color-border);
+}
+
+dt {
+  color: var(--target-color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+dd {
+  margin: 0;
+  line-height: 1.5;
+}
+
+code {
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+  background: var(--target-color-surface-muted);
+  color: var(--target-color-brand);
+  font-size: 0.95em;
+}
+
+@media (max-width: 40rem) {
+  .target-shell {
+    align-items: start;
+    padding-top: var(--target-space-lg);
+  }
+}
