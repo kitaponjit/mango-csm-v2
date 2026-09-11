@@ -1,0 +1,865 @@
+/* ─── Home : Responsive (Tablet / Mobile) ──────────────────
+   ดีไซน์ "ทะเบียนเอกสาร" — navy ink บนกระดาษขาว เส้น hairline
+   เลข folio ริมซ้าย ตราประทับเอียง ช่องกรอกเป็นเส้นใต้
+
+   ≤ 639px       มือถือ        ฟอร์ม 2 คอลัมน์
+   640 – 939px   tablet ตั้ง    ฟอร์ม 3 คอลัมน์ ระยะขอบกว้างขึ้น
+   ≥ 940px       ของเดิม       ไม่มี rule ไหนแตะ (ยกเว้นบล็อกแก้ scroll)
+
+   ทุก selector นำหน้าด้วย .home-page — ไม่รั่วไปหน้าอื่น */
+
+/* ─── Scroll (แก้การใช้งาน ไม่ใช่ดีไซน์ — ครอบถึง 991px) ────
+   body ถูกตั้ง overflowY:hidden ตอน mount, .fixed .wrapper เป็น
+   → ต่ำกว่า 992px ไม่เหลือตัวเลื่อนสักตัว ตั้ง .wrapper เป็นตัวเลื่อนแทน
+   (header/footer เป็น position:fixed อยู่แล้ว จึงไม่เลื่อนตาม) */
+@media (max-width: 991px) {
+
+  body.fixed .home-page > .wrapper {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .home-page > .wrapper .content-body {
+    height: auto;
+    min-height: 0;
+    overflow-y: visible;
+  }
+
+  /* Load More ถูกแทนด้วยการแบ่งหน้าแล้ว — ลบ rule นี้ถ้าจะกลับไปใช้ */
+  .home-page .home-loadmore {
+    display: none;
+  }
+}
+
+/* ─── ที่ว่างริมซ้าย (ผูกกับเบรกพอยต์ sidebar ของ AdminLTE ไม่ใช่ของดีไซน์) ──
+   ต่ำกว่า 768px AdminLTE เลื่อน .main-sidebar ออกนอกจอ (translate -230px)
+   แต่ .sidebar-mini.sidebar-collapse .content-wrapper ยังกัน padding-left 50px
+   ไว้ให้รางมินิ (specificity 0,3,0 ชนะ @media max-width:835px ของ Site.css)
+   → เหลือเป็นที่ว่างเปล่า ทำให้ขอบซ้าย 70px ขอบขวา 20px ไม่สมดุล */
+@media (max-width: 767px) {
+
+  .home-page .content-wrapper {
+    padding-left: 0 !important;
+  }
+}
+
+/* ─── ตัวแปรสี + โครงร่วม (≤ 939px) ────────────────────── */
+@media (max-width: 939px) {
+
+  .home-page {
+    --reg-paper:      #ffffff;
+    --reg-paper-2:    #f2f6fc;
+    --reg-ink:        #0a1c3d;
+    --reg-ink-2:      #44567a;
+    --reg-ink-3:      #6f7f9c;
+    --reg-rule:       #ccd7e8;
+    --reg-rule-soft:  #e3eaf5;
+    --reg-navy:       #1748a8;
+    --reg-navy-soft:  #b3c7e8;
+    --reg-moss:       #0d7a58;
+    --reg-amber:      #a06805;
+    --reg-indigo:     #4c46b8;
+    --reg-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, "Liberation Mono", monospace;
+    --reg-e: cubic-bezier(.2, .7, .25, 1);
+  }
+
+  body.dark-mode .home-page {
+    --reg-paper:      #060e1e;
+    --reg-paper-2:    #0d1729;
+    --reg-ink:        #e9effb;
+    --reg-ink-2:      #a4b3ce;
+    --reg-ink-3:      #6d7d9c;
+    --reg-rule:       #243350;
+    --reg-rule-soft:  #1a2740;
+    --reg-navy:       #6f9cf0;
+    --reg-navy-soft:  #2d4f8a;
+    --reg-moss:       #4fc39a;
+    --reg-amber:      #e0b055;
+    --reg-indigo:     #8f8bf0;
+  }
+
+  /* ─── กระดาษ ───
+     Site-Skin.css ตั้ง .skin-black .wrapper เป็น #02234e !important ไว้
+     ปกติถูก background ของ .content-wrapper ทับอยู่ พอทำให้ใสจึงโผล่มา
+     ต้อง !important + specificity สูงกว่า (0,2,1 > 0,2,0) ถึงจะทับได้ */
+  body .home-page > .wrapper {
+    background-color: var(--reg-paper) !important;
+    box-shadow: none !important;
+  }
+
+  .home-page .content-wrapper {
+    background: transparent !important;
+  }
+
+  .home-page .content {
+    padding: 0 !important;
+  }
+
+  .home-page .nav-tabs-custom {
+    margin-bottom: 0;
+    background: transparent;
+    box-shadow: none;
+    border-top: 0;
+  }
+
+  .home-page .nav-tabs-custom > .tab-content {
+    background: transparent;
+  }
+
+  /* แถบทะเบียนหัวกระดาษ — ไล่ 3 สีตามรหัสสถานะที่ใช้ในตราประทับ */
+  .home-page .nav-tabs-custom > .tab-content::before {
+    content: "";
+    display: block;
+    height: 4px;
+    background: repeating-linear-gradient(90deg,
+      var(--reg-navy)   0 22px, transparent 22px 30px,
+      var(--reg-indigo) 30px 52px, transparent 52px 60px,
+      var(--reg-moss)   60px 82px, transparent 82px 90px);
+  }
+
+  /* ─── ฟอร์มค้นหา ─── */
+  .home-page .home-filter-card {
+    margin: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .home-page .home-filter-card > .row {
+    margin: 0;
+  }
+
+  .home-page .home-filter-card > .row > div {
+    float: none;
+    width: auto;
+    padding: 0;
+  }
+
+  .home-page .home-filter {
+    display: grid;
+  }
+
+  /* clearfix ::before/::after ของ .row กลายเป็น grid item กินช่องแรกไป
+     ทำให้ทุกฟิลด์เลื่อนไปหนึ่งช่อง */
+  .home-page .home-filter::before,
+  .home-page .home-filter::after {
+    display: none;
+  }
+
+  .home-page .home-filter > div {
+    min-width: 0;
+  }
+
+  .home-page .home-filter .form-group {
+    position: relative;
+    margin: 0;
+  }
+
+  .home-page .home-filter label {
+    display: block;
+    margin-bottom: 7px;
+    font-family: var(--reg-mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .19em;
+    text-transform: uppercase;
+    color: var(--reg-navy) !important;
+  }
+
+  /* ช่องกรอกเป็นเส้นใต้ ไม่มีกล่อง */
+  .home-page .home-filter .form-control {
+    width: 100%;
+    height: auto;
+    padding: 5px 20px 7px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--reg-ink);
+    background: transparent;
+    background-image: none;
+    border: 0;
+    border-bottom: 1px solid var(--reg-rule);
+    border-radius: 0;
+    box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .25s var(--reg-e);
+  }
+
+  .home-page .home-filter .form-control:focus {
+    border-bottom-color: var(--reg-navy) !important;
+    box-shadow: 0 1px 0 var(--reg-navy);
+  }
+
+  .home-page .home-filter .form-group:has(select)::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 14px;
+    width: 5px;
+    height: 5px;
+    border-right: 1.4px solid var(--reg-ink-2);
+    border-bottom: 1.4px solid var(--reg-ink-2);
+    transform: rotate(45deg);
+    pointer-events: none;
+    transition: border-color .25s var(--reg-e);
+  }
+
+  .home-page .home-filter .form-group:focus-within::after {
+    border-color: var(--reg-navy);
+  }
+
+  /* select2 (Type CSM) ให้เหมือนช่องอื่น */
+  .home-page .home-filter .select2-container--bootstrap .select2-selection--single {
+    height: auto;
+    padding: 5px 20px 7px 0;
+    font-size: 14px;
+    color: var(--reg-ink);
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--reg-rule) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .home-page .home-filter .select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+    padding: 0 !important;
+    color: var(--reg-ink) !important;
+    line-height: 1.5;
+  }
+
+  /* ใช้ลูกศรตัวเดียวกับ select อื่นจาก .form-group::after ด้านบน */
+  .home-page .home-filter .select2-container--bootstrap .select2-selection--single .select2-selection__arrow {
+    display: none;
+  }
+
+  /* ─── แถวค้นหา : ช่องพิมพ์ + ปุ่มทึบ ─── */
+  .home-page .home-filter .input-group {
+    display: flex;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .home-page .home-filter .input-group > .form-control {
+    float: none;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 0;
+    border-bottom-width: 1.5px;
+    border-bottom-color: var(--reg-ink);
+  }
+
+  .home-page .home-filter .input-group-btn {
+    display: block;
+    flex: 0 0 46px;
+    width: 46px;
+  }
+
+  .home-page .home-filter .input-group-btn .btn {
+    width: 100%;
+    height: 100%;
+    min-height: 34px;
+    padding: 0;
+    color: #fff;
+    background: var(--reg-navy) !important;
+    background: linear-gradient(135deg, var(--reg-navy), var(--reg-indigo)) !important;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transition: filter .25s var(--reg-e);
+  }
+
+  .home-page .home-filter .input-group-btn .btn:active {
+    filter: brightness(.88);
+  }
+
+  /* ─── เพิ่มเงื่อนไข ─── */
+  .home-page .home-cond-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+  }
+
+  .home-page .home-cond-btn {
+    flex: 1;
+    justify-content: center;
+    height: auto;
+    padding: 11px 12px;
+    font-family: var(--reg-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--reg-navy);
+    background: none;
+    background: color-mix(in srgb, var(--reg-navy) 4%, transparent);
+    border: 1px dashed var(--reg-navy-soft);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .home-page .home-cond-btn:active:not(:disabled) {
+    color: var(--reg-navy);
+    background: color-mix(in srgb, var(--reg-navy) 10%, transparent);
+    border-style: solid;
+    border-color: var(--reg-navy);
+    box-shadow: none;
+  }
+
+  .home-page .home-cond-toggle {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    color: var(--reg-ink-2);
+    background: none;
+    border: 1px solid var(--reg-rule);
+    border-radius: 0;
+  }
+
+  .home-page .home-cond-count {
+    min-width: 26px;
+    height: 26px;
+    font-family: var(--reg-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    color: var(--reg-navy);
+    background: none;
+    border: 1px solid var(--reg-navy-soft);
+    border-radius: 0;
+  }
+
+  .home-page .home-cond-panel {
+    margin: 0;
+    padding: 14px 0 0;
+    background: transparent;
+    border: 0;
+    border-top: 1px dotted var(--reg-rule);
+    border-radius: 0;
+  }
+
+  .home-page .home-cond-join {
+    font-family: var(--reg-mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    color: var(--reg-ink-3);
+  }
+
+  .home-page .home-cond-join.is-or {
+    color: var(--reg-navy);
+  }
+
+  .home-page .home-cond-row .form-control {
+    height: auto;
+    padding: 5px 4px 7px 0;
+    font-size: 13.5px;
+    color: var(--reg-ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--reg-rule);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .home-page .home-cond-remove {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    color: var(--reg-ink-3);
+    background: none;
+    border: 1px solid var(--reg-rule);
+    border-radius: 0;
+  }
+
+  /* ─── แถบปุ่มสั่งงาน (Copy CSM / New / AI Gen Draft) ──────
+     ปุ่มชุดนี้ของเดิมอยู่ใน .nav-tabs ที่ติด hidden-sm hidden-xs
+     จึงหายไปทั้งชุดต่ำกว่า 992px  ฝั่งมือถือมีสำเนาของตัวเองที่
+     .home-mobile-actions (hidden-md hidden-lg) — ไม่ซ้อนกันกับของเดิม
+     เพราะสองชุดสลับกันด้วยเบรกพอยต์ 992px ของ bootstrap */
+  .home-page .home-mobile-actions {
+    margin: 0;
+    padding: 2px 0 10px;
+  }
+
+  .home-page .home-mobile-actions > [class*="col-"] {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ปุ่มหลัก (New) กินที่ว่างที่เหลือ ปุ่มรองกว้างตามเนื้อหา
+     เรียงชิดขวาให้อยู่แนวเดียวกับปุ่ม Add condition ด้านบน */
+  .home-page .home-mobile-actions .home-action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0;
+  }
+
+  .home-page .home-mobile-actions .home-action-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+    height: auto;
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+  }
+
+  /* ปรับให้เข้าชุดกับทะเบียน : พื้นโปร่ง เส้นขอบคม ไม่มีเงา/gradient */
+  .home-page .home-mobile-actions .home-action-btn.is-copy {
+    color: var(--reg-moss);
+    background: none;
+    border: 1px solid var(--reg-moss);
+  }
+
+  .home-page .home-mobile-actions .home-action-btn.is-ai {
+    color: var(--reg-amber);
+    background: none;
+    border: 1px solid var(--reg-amber);
+  }
+
+  /* ปุ่มหลัก — ทึบเพื่อเป็นจุดนำสายตาเดียวในแถบ */
+  .home-page .home-mobile-actions .home-action-btn.is-new {
+    flex: 1 1 100%;
+    order: -1;
+    color: #fff;
+    background: var(--reg-navy);
+    border: 1px solid var(--reg-navy);
+  }
+
+  .home-page .home-mobile-actions .home-action-btn > i {
+    font-size: 11px;
+  }
+
+  /* ─── ทะเบียนผลลัพธ์ ─── */
+  /* ระยะขอบซ้าย/ขวามาจาก .tab-content ที่เดียว — .row ของ bootstrap
+     มี margin -15px และ .col มี padding 15px ต้องล้างทั้งคู่ */
+  .home-page .home-mobile-row {
+    margin: 0;
+    padding: 4px 0 0;
+    border-top: 1.5px solid var(--reg-navy);
+  }
+
+  .home-page .home-mobile-list {
+    position: relative;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    counter-reset: folio;
+  }
+
+  /* เส้นริมกระดาษของทะเบียน — z-index ให้ลอยเหนือพื้นแถบสลับสี */
+  .home-page .home-mobile-list::before {
+    content: "";
+    position: absolute;
+    left: 34px;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    width: 1px;
+    background: linear-gradient(180deg, transparent,
+      var(--reg-navy-soft) 6%, var(--reg-navy-soft) 94%, transparent);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card {
+    position: relative;
+    margin: 0;
+    padding: 16px 2px 15px 46px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--reg-rule-soft);
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    counter-increment: folio;
+    animation: reg-rise .55s var(--reg-e) backwards;
+  }
+
+  .home-page .home-mobile-list .csm-doc-card--urgent,
+  .home-page .home-mobile-list .csm-doc-card--unstarted {
+    background: transparent;
+  }
+
+  /* กระดาษทะเบียนตีเส้นสลับแถบ — อ่านไล่ลงมาง่ายขึ้นและมีสีขึ้น */
+  .home-page .home-mobile-list .csm-doc-card:nth-of-type(even) {
+    background: var(--reg-paper-2);
+  }
+
+  /* หมุดบนเส้นริมกระดาษ */
+  .home-page .home-mobile-list .csm-doc-card::after {
+    content: "";
+    position: absolute;
+    left: 34px;
+    top: 23px;
+    z-index: 2;
+    width: 7px;
+    height: 7px;
+    margin-left: -3px;
+    border-radius: 50%;
+    background: var(--reg-navy-soft);
+    transition: background .25s var(--reg-e);
+  }
+
+  /* การ์ดเดิมยกตัวขึ้น 2px ตอน hover — ภาษาเส้นไม่มีเงา ใช้แต้มพื้นโปร่ง
+     เพื่อให้ทับแถบสลับสีได้ทั้งแถวคู่และแถวคี่ */
+  .home-page .home-mobile-list .csm-doc-card:hover {
+    transform: none;
+    background: color-mix(in srgb, var(--reg-navy) 7%, transparent);
+    box-shadow: none;
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover::before {
+    color: var(--reg-ink);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover::after {
+    background: var(--reg-navy);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover .csm-pill {
+    transform: rotate(0deg) scale(1.03);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:nth-child(2) { animation-delay: .045s; }
+  .home-page .home-mobile-list .csm-doc-card:nth-child(3) { animation-delay: .09s; }
+  .home-page .home-mobile-list .csm-doc-card:nth-child(4) { animation-delay: .135s; }
+  .home-page .home-mobile-list .csm-doc-card:nth-child(5) { animation-delay: .18s; }
+  .home-page .home-mobile-list .csm-doc-card:nth-child(6) { animation-delay: .225s; }
+  .home-page .home-mobile-list .csm-doc-card:nth-child(n+7) { animation-delay: .27s; }
+
+  @keyframes reg-rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* เลขลำดับริมซ้าย — ใช้ ::before เดิมที่เคยเป็นขอบ gradient */
+  .home-page .home-mobile-list .csm-doc-card::before {
+    content: counter(folio, decimal-leading-zero);
+    top: 19px;
+    right: auto;
+    bottom: auto;
+    left: 0;
+    width: 26px;
+    height: auto;
+    padding: 0;
+    text-align: right;
+    font-family: var(--reg-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--reg-navy);
+    background: none;
+    border-radius: 0;
+    -webkit-mask: none;
+            mask: none;
+    -webkit-mask-composite: source-over;
+            mask-composite: add;
+    opacity: 1;
+    transition: color .25s var(--reg-e);
+  }
+
+  .home-page .home-mobile-list .csm-doc-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+  }
+
+  /* ไอคอนกล่อง gradient ไม่เข้ากับภาษาเส้น — เลข folio ทำหน้าที่แทนแล้ว */
+  .home-page .home-mobile-list .csm-doc-icon-box {
+    display: none;
+  }
+
+  .home-page .home-mobile-list .csm-doc-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .home-page .home-mobile-list .csm-doc-no {
+    font-family: var(--reg-mono);
+    font-size: 15.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--reg-ink);
+  }
+
+  .home-page .home-mobile-list .csm-doc-sub {
+    margin-top: 7px;
+    font-family: var(--reg-mono);
+    font-size: 10px;
+    letter-spacing: .06em;
+    font-variant-numeric: tabular-nums;
+    color: var(--reg-ink-2);
+  }
+  .csm-doc-sub-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* จำกัดจำนวนบรรทัดสูงสุดที่ 2 บรรทัด */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all; /* ป้องกันไม่ให้ข้อความยาวติดกันเกินไปจนล้น */
+}
+
+  .home-page .home-mobile-list .csm-doc-badge-wrap {
+    flex: none;
+    max-width: none;
+  }
+
+  /* ตราประทับ */
+  .home-page .home-mobile-list .csm-pill {
+    display: inline-block;
+    padding: 5px 9px;
+    font-family: var(--reg-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: none;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    border: 1.5px solid currentColor;
+    border-radius: 0;
+    transform: rotate(-2deg);
+    backdrop-filter: none;
+    transition: transform .3s var(--reg-e);
+  }
+
+  .home-page .home-mobile-list .csm-pill-success { color: var(--reg-moss); }
+  .home-page .home-mobile-list .csm-pill-purple  { color: var(--reg-amber); }
+  .home-page .home-mobile-list .csm-pill-warning { color: var(--reg-amber); }
+  .home-page .home-mobile-list .csm-pill-info    { color: var(--reg-indigo); }
+  .home-page .home-mobile-list .csm-pill-danger  { color: #a5322b; }
+
+  .home-page .home-mobile-list .csm-pill-muted {
+    color: var(--reg-ink-3);
+    border-style: dashed;
+    opacity: .85;
+  }
+
+  /* progress + footer ซ้ำกับบรรทัด "อนุมัติ x/y" และยังคำนวณเป็น NaN
+     (task_qty ที่ backend ส่งมาเป็นสตริง "(1/1)" ไม่ใช่ตัวเลข) */
+  .home-page .home-mobile-list .csm-progress-wrap,
+  .home-page .home-mobile-list .csm-doc-footer {
+    display: none;
+  }
+
+  /* ─── แบ่งหน้า ─── */
+  .home-page .home-paging {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .home-page .home-paging > div {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .home-page .home-paging .pull-left {
+    float: none !important;
+  }
+
+  .home-page .home-paging .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* "First Page" / "Last Page" เป็นข้อความยาว ดันจนล้นจอ — เหลือ ‹ › พอ */
+  .home-page .home-paging .pagination > li:first-child,
+  .home-page .home-paging .pagination > li:last-child {
+    display: none;
+  }
+
+  .home-page .home-paging .pagination > li > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    float: none;
+    min-width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0 8px;
+    font-family: var(--reg-mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    color: var(--reg-navy);
+    background: transparent;
+    border: 1px solid var(--reg-navy-soft);
+    border-radius: 0;
+  }
+
+  .home-page .home-paging .pagination > li.active > a {
+    color: #fff;
+    background: var(--reg-navy);
+    border-color: var(--reg-navy);
+  }
+}
+
+/* ─── Tablet ตั้ง (640 – 939px) ─────────────────────────── */
+@media (min-width: 640px) and (max-width: 939px) {
+
+  .home-page .nav-tabs-custom > .tab-content {
+    padding: 0 32px;
+  }
+
+  .home-page .nav-tabs-custom > .tab-content::before {
+    margin: 0 -32px 22px;
+  }
+
+  .home-page .home-filter-card {
+    padding: 26px 0 30px;
+  }
+
+  /* 3 ช่องต่อบรรทัด ฟอร์มจึงกินความสูงน้อยลง */
+  .home-page .home-filter {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .home-page .home-cond-bar {
+    margin-top: 8px;
+  }
+
+  .home-page .home-cond-btn {
+    flex: 0 0 auto;
+    min-width: 250px;
+  }
+
+  /* มีที่พอให้ปุ่มทั้งสามอยู่บรรทัดเดียว ปุ่มหลักจึงไม่ต้องกินเต็มแถว */
+  .home-page .home-mobile-actions .home-action-btn.is-new {
+    flex: 0 0 auto;
+    order: 0;
+    min-width: 200px;
+  }
+
+  .home-page .home-mobile-actions .home-action-bar {
+    justify-content: flex-end;
+  }
+
+  .home-page .home-mobile-actions .home-action-btn.is-copy,
+  .home-page .home-mobile-actions .home-action-btn.is-ai {
+    flex: 0 0 auto;
+    min-width: 180px;
+  }
+
+  .home-page .home-mobile-list {
+    padding: 0;
+  }
+
+  .home-page .home-paging {
+    padding: 26px 0 30px;
+  }
+}
+
+/* ─── มือถือ (≤ 639px) ─────────────────────────────────── */
+@media (max-width: 639px) {
+
+  .home-page .nav-tabs-custom > .tab-content {
+    padding: 0 20px;
+  }
+
+  .home-page .nav-tabs-custom > .tab-content::before {
+    margin: 0 -20px 18px;
+  }
+
+  .home-page .home-filter-card {
+    padding: 22px 0 26px;
+  }
+
+  .home-page .home-filter {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 16px;
+  }
+
+  /* Search กับ Type CSM กินเต็มบรรทัด */
+  .home-page .home-filter > .col-lg-4,
+  .home-page .home-filter > .col-lg-2:has(+ .col-lg-4) {
+    grid-column: 1 / -1;
+  }
+
+  .home-page .home-cond-bar {
+    margin-top: 4px;
+  }
+
+  .home-page .home-mobile-list {
+    padding: 0;
+  }
+
+  .home-page .home-paging {
+    padding: 22px 0 26px;
+  }
+}
+
+/* ─── สัมผัส — hover ค้างบนจอสัมผัส ใช้ active แทน ─────── */
+@media (max-width: 939px) and (hover: none) {
+
+  /* .home-action-btn:hover ยกปุ่มขึ้น 1px + ขยายไอคอน ซึ่งบนจอสัมผัส
+     จะค้างไว้หลังแตะ ทำให้ดูเหมือนปุ่มยังถูกกดอยู่ */
+  .home-page .home-mobile-actions .home-action-btn:hover {
+    transform: none;
+  }
+
+  .home-page .home-mobile-actions .home-action-btn:hover > i {
+    transform: none;
+  }
+
+  .home-page .home-mobile-actions .home-action-btn:active {
+    opacity: .82;
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover {
+    background: transparent;
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:nth-of-type(even):hover {
+    background: var(--reg-paper-2);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover::before {
+    color: var(--reg-navy);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover::after {
+    background: var(--reg-navy-soft);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:hover .csm-pill {
+    transform: rotate(-2deg);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:active {
+    background: color-mix(in srgb, var(--reg-navy) 10%, transparent);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:active::before {
+    color: var(--reg-ink);
+  }
+
+  .home-page .home-mobile-list .csm-doc-card:active::after {
+    background: var(--reg-navy);
+  }
+}
+
+@media (max-width: 939px) and (prefers-reduced-motion: reduce) {
+
+  .home-page .home-mobile-list .csm-doc-card {
+    animation: none;
+  }
+}

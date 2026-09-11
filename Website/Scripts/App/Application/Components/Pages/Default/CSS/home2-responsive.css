@@ -1,0 +1,267 @@
+/* ─── home2 (Dashboard) : Responsive (Tablet / Mobile) ─────
+   ≤ 639px       มือถือ        การ์ดคอลัมน์เดียว ปฏิทินโหมด list
+   640 – 939px   tablet ตั้ง    การ์ด 2 ช่อง ปฏิทินเต็มแถว
+   ≥ 940px       ของเดิม       ไม่มี rule ไหนแตะเลย
+
+   ทุก selector นำหน้าด้วย .home2-page — ไม่รั่วไปหน้าอื่น
+   สไตล์เดิมของหน้านี้อยู่ใน Content/Site.css (§13.2-13.3) ซึ่งเป็น css กลาง
+   ห้ามแก้ จึงต้องเขียนทับจากที่นี่ และบางกฎต้องใช้ !important เพราะของเดิม
+   ตั้งไว้ที่ specificity เท่ากันแต่มาก่อนในลำดับไฟล์ */
+
+/* ─── ที่ว่างริมซ้าย (เบรกพอยต์ sidebar ของ AdminLTE ไม่ใช่ของดีไซน์) ──
+   ต่ำกว่า 768px AdminLTE เลื่อน .main-sidebar ออกนอกจอ
+   แต่ Site.css:1818 .sidebar-mini.sidebar-collapse .content-wrapper
+   ยังกัน padding-left 50px ไว้ให้รางมินิ (specificity 0,3,0)
+   → เหลือเป็นที่ว่างเปล่าริมซ้าย ทำให้ขอบสองข้างไม่สมดุล
+   เป็นกฎเดียวกับที่ home-responsive.css ใช้แก้อาการนี้ */
+@media (max-width: 767px) {
+
+  .home2-page .content-wrapper {
+    padding-left: 0 !important;
+  }
+}
+
+/* ═══ ≤ 939px ══════════════════════════════════════════════ */
+@media (max-width: 939px) {
+
+  /* ─── ระยะขอบหน้า ─────────────────────────────────────────
+     Helper.css:1865 ให้ .padding-l-30 / -r-30 = 30px ซึ่งกินพื้นที่
+     ไปเกือบ 1/5 ของจอ 360px */
+  .home2-page .priority-section,
+  .home2-page .pie-chart-section,
+  .home2-page .content-flex {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* ─── การ์ด Priority ─────────────────────────────────────
+     ของเดิมเป็นแถวเลื่อนแนวนอน (flex + overflow-x) การ์ดกว้างตรึง 340px
+     บนจอแคบกลายเป็นต้องปัดข้างเพื่อดูให้ครบ — เปลี่ยนเป็น grid เรียงลงมา */
+  .home2-page .priority-cards-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    overflow-x: visible;
+    padding-bottom: 4px;
+  }
+
+  .home2-page .pc-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 13px 14px 11px;
+    gap: 9px;
+  }
+
+  .home2-page .pc-value {
+    font-size: 1.5rem;
+  }
+
+  .home2-page .pc-title {
+    white-space: normal;
+  }
+
+  /* ─── การ์ด Pie ───────────────────────────────────────────
+     Site.css:4093 ให้ 1 คอลัมน์ที่ ≤768px แต่ช่วง 769-939 ยังเป็น
+     2 คอลัมน์จาก @media ≤1400px ซึ่งแคบเกินสำหรับกราฟ + ป้ายกำกับ */
+  .home2-page .pie-card {
+    min-width: 0;
+  }
+
+  .home2-page .pie-card-title {
+    white-space: normal;
+  }
+
+  /* ป้ายกำหนดส่ง 3 อัน — ห่อบรรทัดได้ ไม่ล้นออกขวา */
+  .home2-page .pie-card-due-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .home2-page .pie-due-tag {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  /* ─── ปฏิทิน + พาเนลเอกสาร : เรียงลงมาคนละแถว ────────────
+     bootstrap 3 ให้ col-md-* มีความกว้างตั้งแต่ 768px ขึ้นไป
+     ช่วง 768-939 จึงยังถูกบีบเป็น 8/4 ส่วนซึ่งแคบเกินไปสำหรับปฏิทิน */
+  .home2-page .content-flex {
+    display: block;
+  }
+
+  .home2-page .content-flex > [class*="col-"] {
+    float: none;
+    width: 100%;
+  }
+
+  /* ของเดิมเว้นระยะขวาไว้กันกับพาเนลที่อยู่ข้างกัน — เรียงลงมาแล้วไม่ต้อง */
+  .home2-page .calendar-section > .row.padding-r-20 {
+    padding-right: 0 !important;
+  }
+
+  .home2-page .calendar-section {
+    margin-bottom: 12px;
+  }
+
+  /* พาเนลเอกสารสูงตามเนื้อหา
+     checkScreenSize() เขียน max/min-height เป็น style inline ให้เท่ากับ
+     ความสูงปฏิทิน จึงต้อง !important — ฝั่ง JS มี early-return ที่ ≤939px
+     อยู่แล้ว ชุดนี้เป็นด่านสำรองกรณี resize ข้ามเบรกพอยต์ */
+  .home2-page .doc-body {
+    max-height: 60vh !important;
+    min-height: 0 !important;
+    overflow-y: auto;
+  }
+
+  /* ─── ปฏิทิน (FullCalendar) ───────────────────────────────
+     Site.css:4307 ให้ .customCalendar padding 0 24px 24px
+     บนจอ 360px หายไป 48px = 13% ของความกว้าง ตารางจึงถูกบีบ */
+  .home2-page .customCalendar {
+    padding: 0 10px 14px;
+  }
+
+  /* ให้ตารางสูงตามเนื้อหา ไม่เกิดตัวเลื่อนซ้อนในตัวปฏิทินจนเห็นวันไม่ครบ
+     (คู่กับ height/contentHeight = auto ที่ตั้งใน checkScreenSize) */
+  .home2-page .customCalendar .fc-view-harness {
+    height: auto !important;
+  }
+
+  .home2-page .customCalendar .fc-scroller {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* ช่องวันสูงพอให้นิ้วกดได้ และเห็น event ที่อยู่ข้างใน */
+  .home2-page .customCalendar .fc-daygrid-day-frame {
+    min-height: 46px;
+  }
+
+  .home2-page .customCalendar .fc-toolbar-title {
+    font-size: 15px;
+  }
+
+  .home2-page .customCalendar .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 8px;
+  }
+
+  .home2-page .customCalendar .fc-button {
+    min-height: 34px;
+    padding: 4px 10px;
+  }
+
+  .home2-page .customCalendar .fc-daygrid-day-number {
+    font-size: 12px;
+  }
+
+  /* ─── โมดัลรายการ (pie modal) ─────────────────────────────
+     modal-2 ย้าย .modal ไปแขวนที่ document.body ตอน mounted จึงอยู่นอก
+     .home2-page — เกาะ .pie-modal-content ที่เป็นคลาสของหน้านี้ตัวเดียว */
+  body .pie-modal-content .pie-modal-tabs {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  body .pie-modal-content .pie-tab-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 38px;
+    white-space: normal;
+  }
+
+  body .pie-modal-content .pie-modal-list-wrap {
+    max-height: none;
+  }
+
+  body .pie-modal-content .pie-modal-item {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 10px 12px;
+  }
+
+  body .pie-modal-content .pie-modal-item-left {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  body .pie-modal-content .pie-modal-item-project,
+  body .pie-modal-content .pie-modal-item-subject {
+    white-space: normal;
+  }
+
+  body .pie-modal-content .pie-modal-item-right {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+
+  body .pie-modal-content .pie-page-btn {
+    min-width: 38px;
+    min-height: 38px;
+  }
+}
+
+/* ═══ ≤ 639px : มือถือ ═════════════════════════════════════ */
+@media (max-width: 639px) {
+
+  .home2-page .priority-section,
+  .home2-page .pie-chart-section,
+  .home2-page .content-flex {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  /* ป้ายสเกล 0/25/50/75/100 ใต้แถบ — เหลือแค่หัวท้ายบนจอแคบ
+     ห้าตัวเลขบนความกว้าง ~300px เบียดกันจนอ่านไม่ออก */
+  .home2-page .pc-scale > span:nth-child(2),
+  .home2-page .pc-scale > span:nth-child(4),
+  .home2-page .dc-scale > span:nth-child(2),
+  .home2-page .dc-scale > span:nth-child(4) {
+    display: none;
+  }
+
+  .home2-page .pie-card-subtitle {
+    white-space: normal;
+  }
+
+  .home2-page .doc-body {
+    max-height: 70vh !important;
+  }
+
+  /* ปฏิทิน : ปุ่มและวันเล็กลงอีกขั้น */
+  .home2-page .customCalendar .fc-toolbar-title {
+    font-size: 14px;
+  }
+
+  .home2-page .customCalendar .fc-daygrid-day-number {
+    font-size: 11px;
+  }
+
+  .home2-page .customCalendar .fc-col-header-cell-cushion {
+    font-size: 10.5px;
+  }
+
+  /* หัวข้อกล่องปฏิทิน/เอกสาร ห่อบรรทัดได้ */
+  .home2-page .box-header .box-title {
+    white-space: normal;
+  }
+}
+
+/* ═══ 640 – 939px : tablet แนวตั้ง ═════════════════════════ */
+@media (min-width: 640px) and (max-width: 939px) {
+
+  /* มีที่พอสำหรับ 2 ช่อง */
+  .home2-page .priority-cards-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Site.css:4093 บังคับ 1 คอลัมน์ที่ ≤768px — คืนเป็น 2 ช่องในช่วงนี้
+     ต้องมี !important เพราะกฎเดิมอยู่ใน media query ที่ specificity เท่ากัน */
+  .home2-page .pie-cards-wrapper {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .home2-page .doc-body {
+    max-height: 46vh !important;
+  }
+}

@@ -1,0 +1,368 @@
+/*
+ * Skin: Black — Modern Override
+ * Mango CSM
+ */
+
+/* ============================================================
+   NAVBAR (main-header)
+   ============================================================ */
+
+.skin-black .main-header {
+  box-shadow: 0 2px 16px rgba(2, 35, 78, 0.3) !important;
+}
+
+.skin-black .main-header .navbar {
+  background-color: #ffffff !important;
+  max-height: 50px !important;
+  height: 50px !important;
+}
+
+/* Logo area */
+.skin-black .main-header .logo {
+  background-color: #02234e !important;
+  color: #fff !important;
+  border-bottom: 0 solid transparent !important;
+  border-right: 1px solid #eee !important;
+}
+.skin-black .main-header .logo:hover {
+  background-color: #02234e !important;
+}
+@media (max-width: 767px) {
+  .skin-black .main-header .logo {
+    background-color: #02234e !important;
+    color: #fff !important;
+    border-right: none !important;
+  }
+  .skin-black .main-header .logo:hover {
+    background-color: #1f1f1f !important;
+  }
+}
+
+/* Sidebar toggle */
+.skin-black .main-header .navbar > .sidebar-toggle,
+.skin-black .main-header .navbar .sidebar-toggle {
+  border-right: 1px solid #eee !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+.skin-black .main-header .navbar .sidebar-toggle:hover {
+  background: #02234e !important;
+  color: #ecf0f1 !important;
+}
+/* Burger bar lines — AdminLTE uses .icon-bar spans with background-color */
+.skin-black .main-header .navbar .sidebar-toggle .icon-bar {
+  background-color: #333 !important;
+}
+.skin-black .main-header .navbar .sidebar-toggle:hover .icon-bar {
+  background-color: #ecf0f1 !important;
+}
+
+/* Nav links */
+.skin-black .main-header .navbar .nav > li > a {
+  color: #333333 !important;
+  border-right: 1px solid #eee !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+.skin-black .main-header .navbar .nav > li > a:hover,
+.skin-black .main-header .navbar .nav > li > a:active,
+.skin-black .main-header .navbar .nav > li > a:focus,
+.skin-black .main-header .navbar .nav .open > a,
+.skin-black .main-header .navbar .nav .open > a:hover,
+.skin-black .main-header .navbar .nav .open > a:focus,
+.skin-black .main-header .navbar .nav > .active > a {
+  background: #f5f5f5 !important;
+  color: #333 !important;
+}
+
+/* Custom menu — no border */
+.skin-black .main-header .navbar .navbar-custom-menu .navbar-nav > li > a,
+.skin-black .main-header .navbar .navbar-right > li > a {
+  border-left: 0 !important;
+  border-right-width: 0 !important;
+  height: 50px !important;
+}
+
+/* ============================================================
+   DROPDOWN — modern card style
+   ============================================================ */
+
+.skin-black .main-header .navbar .navbar-custom-menu .navbar-nav > li > .dropdown-menu,
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu {
+  background: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(2, 35, 78, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  padding: 6px 0 !important;
+  min-width: 220px !important;
+  margin-top: 4px !important;
+  overflow: hidden !important;
+}
+
+.skin-black .main-header .navbar .navbar-custom-menu .navbar-nav > li > .dropdown-menu > li > a,
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu > li > a {
+  color: #1e293b !important;
+  font-size: 13px !important;
+  padding: 9px 18px !important;
+  transition: background 0.12s, color 0.12s !important;
+  background: transparent !important;
+}
+
+.skin-black .main-header .navbar .navbar-custom-menu .navbar-nav > li > .dropdown-menu > li > a:hover,
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu > li > a:hover {
+  background: #f0f7ff !important;
+  color: #02234e !important;
+}
+
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu > li > a > i {
+  color: #3b82f6 !important;
+  width: 18px !important;
+  text-align: center !important;
+}
+
+/* Notification dropdown */
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu > li.header {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+  border-bottom: 1px solid #f0f2f5 !important;
+}
+
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu .menu > li > a {
+  color: #334155 !important;
+  font-size: 12.5px !important;
+  padding: 9px 14px !important;
+  border-bottom: 1px solid #f8fafc !important;
+  white-space: normal !important;
+  transition: background 0.12s !important;
+}
+
+.navbar-custom-menu > .navbar-nav > li > .dropdown-menu .menu > li > a:hover {
+  background: #f0f7ff !important;
+}
+
+/* User header */
+.skin-black .main-header li.user-header {
+  background-color: #02234e !important;
+}
+
+/* ============================================================
+   SIDEBAR (main-sidebar)
+   ============================================================ */
+
+.skin-black .wrapper,
+.skin-black .main-sidebar,
+.skin-black .left-side {
+  background-color: #02234e !important;
+  box-shadow: 3px 0 20px rgba(2, 35, 78, 0.25) !important;
+}
+
+/* User panel */
+.skin-black .user-panel > .info,
+.skin-black .user-panel > .info > a {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.skin-black .user-panel {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-bottom: 10px !important;
+}
+
+/* Sidebar section header */
+.skin-black .sidebar-menu > li.header {
+  color: rgba(255, 255, 255, 0.35) !important;
+  background: transparent !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  padding: 12px 10px 4px !important;
+}
+
+/* Menu items */
+.skin-black .sidebar-menu > li > a {
+  color: rgba(255, 255, 255, 0.72) !important;
+  border-left: 3px solid transparent !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s !important;
+  border-radius: 0 6px 6px 0 !important;
+  margin: 1px 6px 1px 0 !important;
+}
+.skin-black .sidebar-menu > li:hover > a,
+.skin-black .sidebar-menu > li.menu-open > a {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-left-color: rgba(255, 255, 255, 0.35) !important;
+}
+.skin-black .sidebar-menu > li.active > a {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-left-color: #60a5fa !important;
+  font-weight: 600 !important;
+}
+
+/* Sidebar icon images */
+.skin-black .sidebar-menu > li > a > img {
+  opacity: 0.65 !important;
+  transition: opacity 0.15s !important;
+}
+.skin-black .sidebar-menu > li:hover > a > img,
+.skin-black .sidebar-menu > li.active > a > img,
+.skin-black .sidebar-menu > li.menu-open > a > img {
+  opacity: 1 !important;
+}
+
+/* Treeview arrow */
+.skin-black .sidebar-menu > li > a > .pull-right > .fa-angle-left {
+  color: rgba(255, 255, 255, 0.4) !important;
+  transition: transform 0.2s, color 0.15s !important;
+}
+.skin-black .sidebar-menu > li.menu-open > a > .pull-right > .fa-angle-left {
+  transform: rotate(-90deg) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Treeview submenu */
+.skin-black .sidebar-menu > li > .treeview-menu {
+  margin: 0 !important;
+  background: #011a3c !important;
+  padding: 4px 0 !important;
+}
+.skin-black .sidebar a {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+.skin-black .sidebar a:hover {
+  text-decoration: none !important;
+}
+.skin-black .sidebar-menu .treeview-menu > li > a {
+  color: rgba(255, 255, 255, 0.6) !important;
+  padding: 7px 5px 7px 26px !important;
+  font-size: 13px !important;
+  transition: background 0.12s, color 0.12s !important;
+}
+.skin-black .sidebar-menu .treeview-menu > li.active > a,
+.skin-black .sidebar-menu .treeview-menu > li > a:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+.skin-black .sidebar-menu .treeview-menu > li.active > a {
+  color: #93c5fd !important;
+  font-weight: 600 !important;
+}
+
+/* Treeview circle icons */
+.skin-black .sidebar-menu .treeview-menu > li > a > .far.fa-circle,
+.skin-black .sidebar-menu .treeview-menu > li > a > .fas.fa-circle {
+  font-size: 7px !important;
+  vertical-align: middle !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  margin-right: 6px !important;
+}
+.skin-black .sidebar-menu .treeview-menu > li > a:hover > .far.fa-circle,
+.skin-black .sidebar-menu .treeview-menu > li > a:hover > .fas.fa-circle,
+.skin-black .sidebar-menu .treeview-menu > li.active > a > .far.fa-circle,
+.skin-black .sidebar-menu .treeview-menu > li.active > a > .fas.fa-circle {
+  color: #93c5fd !important;
+}
+
+/* Sidebar search form */
+.skin-black .sidebar-form {
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  margin: 10px 10px !important;
+}
+.skin-black .sidebar-form input[type="text"],
+.skin-black .sidebar-form .btn {
+  box-shadow: none !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid transparent !important;
+  height: 35px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.skin-black .sidebar-form input[type="text"] {
+  border-radius: 6px 0 0 6px !important;
+}
+.skin-black .sidebar-form input[type="text"]:focus,
+.skin-black .sidebar-form input[type="text"]:focus + .input-group-btn .btn {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+.skin-black .sidebar-form .btn {
+  color: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 0 6px 6px 0 !important;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.main-footer {
+  border: none !important;
+  font-size: 13.5px !important;
+}
+
+/* ============================================================
+   CONTROL SIDEBAR
+   ============================================================ */
+
+.control-sidebar-dark {
+  background: #0f1e33 !important;
+}
+.control-sidebar-dark .nav-tabs.control-sidebar-tabs {
+  background: #0a1520 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.control-sidebar-dark .nav-tabs.control-sidebar-tabs > li > a {
+  color: rgba(255, 255, 255, 0.5) !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+}
+.control-sidebar-dark .nav-tabs.control-sidebar-tabs > li.active > a,
+.control-sidebar-dark .nav-tabs.control-sidebar-tabs > li > a:hover {
+  background: #0f1e33 !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+.control-sidebar-dark .control-sidebar-heading {
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  margin: 14px 0 6px !important;
+}
+.control-sidebar-dark .control-sidebar-subheading {
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+.control-sidebar-dark p {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 12.5px !important;
+}
+.control-sidebar-dark .control-sidebar-menu > li > a {
+  border-radius: 8px !important;
+  margin-bottom: 4px !important;
+  transition: background 0.15s !important;
+}
+.control-sidebar-dark .control-sidebar-menu > li > a:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.control-sidebar-dark .menu-icon {
+  border-radius: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  text-align: center !important;
+  font-size: 15px !important;
+}
+
+/* ============================================================
+   PACE LOADER
+   ============================================================ */
+
+.skin-black .pace .pace-progress {
+  background: #60a5fa !important;
+}
+.skin-black .pace .pace-activity {
+  border-top-color: #60a5fa !important;
+  border-left-color: #60a5fa !important;
+}

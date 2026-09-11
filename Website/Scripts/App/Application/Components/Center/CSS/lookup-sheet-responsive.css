@@ -1,0 +1,406 @@
+/* ─── Lookup / modal ตัวกลาง : Responsive (Tablet / Mobile) ──
+   ครอบ modal ตัวกลางที่ขอเข้ามาเอง ผ่าน prop sheet-class="ct-sheet"
+     - Pages/Center/ct-*.vue          ทั้ง 17 ตัว  (<modal>)
+     - Pages/Transaction/components/  ตัวที่เป็น modal (<modal>, <modal-2>, <modal-3>)
+
+   ≤ 639px       มือถือ        ชีตเต็มจอ ช่องค้นหาเรียงลงมาช่องละแถว
+   640 – 939px   tablet ตั้ง    เว้นขอบรอบ ช่องค้นหา 2 ช่องต่อแถว
+   ≥ 940px       ของเดิม       ไม่มี rule ไหนแตะเลย
+
+   ทุก selector นำหน้าด้วย .modal.ct-sheet — modal อื่นอีกราว 40 จุดที่ใช้
+   คอมโพเนนต์เดียวกันแต่ไม่ได้ส่ง prop มา จึงไม่ได้รับผลกระทบ
+
+   modal.vue / modal-2.vue / modal-3.vue ย้าย .modal ไปแขวนที่ document.body
+   ตอน mounted คลาสจึงต้องอยู่ที่ตัว .modal เอง ไม่ใช่ที่ root ของคอมโพเนนต์ */
+
+/* ═══ ≤ 939px : โครงชีต ════════════════════════════════════ */
+@media (max-width: 939px) {
+
+  /* Site.css:2076-2079 ให้ .modal-md/-lg/-lg-2/-xl กว้างเป็น % ของจอ
+     (50/60/70/80) พอจอแคบลงเนื้อหาจึงเบียดกันจนอ่านไม่ได้
+     ปลดความกว้างเป็น auto แล้วคุมด้วยระยะขอบแทน */
+  body .modal.ct-sheet .modal-dialog {
+    width: auto !important;
+    max-width: none !important;
+    margin: 12px !important;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  body .modal.ct-sheet .modal-content {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  body .modal.ct-sheet .modal-header {
+    padding-left: 14px;
+    padding-right: 8px;
+  }
+
+  body .modal.ct-sheet .modal-header h4 {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  body .modal.ct-sheet .modal-body {
+    max-width: 100%;
+    padding: 12px 14px;
+  }
+
+  /* ─── ช่องค้นหา ─── */
+  body .modal.ct-sheet .modal-search-bar .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  body .modal.ct-sheet .modal-search-bar [class*="col-"] {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body .modal.ct-sheet .modal-search-bar .form-group {
+    margin-bottom: 10px;
+  }
+
+  body .modal.ct-sheet label {
+    white-space: normal;
+  }
+
+  /* bootstrap 3 ให้ .input-group เป็น display:table ซึ่งไม่สนใจ min-width:0
+     ปุ่มค้นหาจึงดันช่องกรอกให้ล้น — เปลี่ยนเป็น flex แล้วให้ช่องกรอกหดได้ */
+  body .modal.ct-sheet .input-group {
+    display: flex;
+    width: 100%;
+  }
+
+  body .modal.ct-sheet .input-group > .form-control {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  body .modal.ct-sheet .input-group > .input-group-btn,
+  body .modal.ct-sheet .input-group > .input-group-addon {
+    flex: none;
+    width: auto;
+    white-space: nowrap;
+  }
+
+  /* เป้ากดขนาดนิ้ว */
+  body .modal.ct-sheet .form-control,
+  body .modal.ct-sheet .form-control.input-sm {
+    height: auto;
+    min-height: 38px;
+    font-size: 13.5px;
+  }
+
+  body .modal.ct-sheet .input-group-btn > .btn {
+    min-height: 38px;
+  }
+
+  /* ─── แถบสลับมุมมอง Table / Card ─── */
+  body .modal.ct-sheet .view-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  body .modal.ct-sheet .view-toggle,
+  body .modal.ct-sheet .emp-view-toggle {
+    flex: none;
+  }
+
+  body .modal.ct-sheet .view-btn {
+    min-height: 34px;
+  }
+
+  /* ─── ตาราง ag-grid ───────────────────────────────────────
+     ag-table.vue:857 คำนวณความสูงเป็น window.height - scale แล้วเขียน
+     เป็น style inline ตอน resize  ค่า scale ที่แต่ละ ct-* ส่งมาตั้งไว้
+     สำหรับจอ desktop (330-420px) บนมือถือจึงเหลือความสูงติดลบหรือใกล้ศูนย์
+     ต้องใช้ !important เพราะต้องทับ style inline */
+  body .modal.ct-sheet .content-body {
+    height: 46vh !important;
+    max-height: 46vh !important;
+    min-height: 190px;
+  }
+
+  /* ─── การ์ด (มุมมอง Card) ─── */
+  body .modal.ct-sheet .card-grid,
+  body .modal.ct-sheet .emp-card-grid,
+  body .modal.ct-sheet .copy-card-grid {
+    max-height: 46vh;
+  }
+
+  /* ─── แถวค้นหาที่ใช้ .d-flex (Helper.css:36) ───────────────
+     .row ที่ถูกสั่ง display:flex จะไม่สนใจ float ของ .col-* ข้างใน
+     คอลัมน์จึงเรียงข้างกันตลอดไม่ว่าจอแคบแค่ไหน — ให้ห่อบรรทัดได้ */
+  body .modal.ct-sheet .row.d-flex {
+    flex-wrap: wrap;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  body .modal.ct-sheet .row.d-flex > [class*="col-"] {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ─── ท้ายชีต : แบ่งหน้า + ปุ่มปิด ────────────────────────
+     Site.css:4687 ตั้ง flex-wrap:nowrap !important ไว้ ทำให้แถบแบ่งหน้า
+     กับปุ่มปิดยืนเรียงเดียวจนล้นออกขวา — ปลดให้ห่อบรรทัดได้ */
+  body .modal.ct-sheet .modal-footer,
+  body .modal.ct-sheet .modal-footer-actions {
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    gap: 8px;
+    padding: 10px 12px !important;
+  }
+
+  body .modal.ct-sheet .modal-footer .pull-left,
+  body .modal.ct-sheet .modal-footer .emp-footer-paging {
+    float: none !important;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* แถบเลขหน้ายาวกว่าจอ — ให้เลื่อนในกรอบตัวเอง ไม่ดันชีตให้กว้าง */
+  body .modal.ct-sheet .modal-footer .pagination {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body .modal.ct-sheet .modal-footer .pagination > li > a {
+    min-height: 32px;
+    white-space: nowrap;
+  }
+
+  body .modal.ct-sheet .modal-footer .btn {
+    min-height: 38px;
+  }
+
+  body .modal.ct-sheet .emp-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ─── การ์ดแบบเลือกได้หลายรายการ (Copy CSM) ───────────────
+     ช่อง checkbox เดิมกว้างตามขนาดจริงของ input (~13px) ซึ่งเล็กเกินไป
+     สำหรับนิ้ว — ขยายพื้นที่กดโดยไม่เปลี่ยนขนาดกล่องที่มองเห็น */
+  body .modal.ct-sheet .copy-item-card {
+    padding: 12px;
+  }
+
+  body .modal.ct-sheet .copy-item-checkbox {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    min-height: 34px;
+    margin: -6px 0 -6px -6px;
+    padding: 0;
+  }
+
+  body .modal.ct-sheet .copy-item-checkbox input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+  }
+
+  /* หัวข้อ/ชื่อเรื่องห่อบรรทัดได้ — ellipsis บรรทัดเดียวอ่านไม่รู้เรื่องบนจอแคบ */
+  body .modal.ct-sheet .copy-item-top {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  body .modal.ct-sheet .copy-item-subject,
+  body .modal.ct-sheet .copy-item-meta {
+    white-space: normal;
+  }
+
+  /* ─── ตารางปกติ (ที่ไม่ใช่ ag-grid) ─── */
+  body .modal.ct-sheet .table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ═══ ≤ 639px : มือถือ ═════════════════════════════════════ */
+@media (max-width: 639px) {
+
+  body .modal.ct-sheet .modal-dialog {
+    margin: 0 !important;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+
+  body .modal.ct-sheet .modal-content {
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+
+  body .modal.ct-sheet .modal-body {
+    padding: 10px 12px;
+  }
+
+  /* ช่องค้นหาเรียงลงมาช่องละแถว */
+  body .modal.ct-sheet .modal-search-bar [class*="col-"] {
+    float: none;
+    width: 100%;
+  }
+
+  /* แถวค้นหาเรียงลงมาช่องละแถวเต็มความกว้าง */
+  body .modal.ct-sheet .row.d-flex > [class*="col-"] {
+    flex: 1 1 100%;
+  }
+
+  /* การ์ดคอลัมน์เดียว — minmax(260px) เดิมล้นกรอบบนจอ 320-360px */
+  body .modal.ct-sheet .card-grid,
+  body .modal.ct-sheet .emp-card-grid,
+  body .modal.ct-sheet .copy-card-grid {
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  body .modal.ct-sheet .content-body {
+    height: 42vh !important;
+    max-height: 42vh !important;
+  }
+
+  /* ปุ่มค้นหาที่มีข้อความยาวให้ห่อบรรทัดได้ */
+  body .modal.ct-sheet .emp-search-row {
+    gap: 10px;
+  }
+
+  body .modal.ct-sheet .emp-search-input-wrap {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+/* ═══ 640 – 939px : tablet แนวตั้ง ═════════════════════════ */
+@media (min-width: 640px) and (max-width: 939px) {
+
+  body .modal.ct-sheet .modal-dialog {
+    margin: 20px !important;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+  }
+
+  /* มีที่พอสำหรับ 2 ช่องต่อแถว
+     ต่ำกว่า 768px คลาส col-sm-col-md-* ของ bootstrap ยังไม่ทำงาน
+     (ช่วง 640-767 จึงได้ 1 คอลัมน์) ส่วน 768-939 จะได้ col-md-4 = 33%
+     ซึ่งแคบเกินสำหรับช่องค้นหาที่มีปุ่มต่อท้าย — ตรึงไว้ที่ 50% ทั้งช่วง */
+  body .modal.ct-sheet .modal-search-bar [class*="col-"] {
+    float: left;
+    width: 50%;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  body .modal.ct-sheet .modal-search-bar .row {
+    margin-left: -6px;
+    margin-right: -6px;
+  }
+
+  body .modal.ct-sheet .card-grid,
+  body .modal.ct-sheet .emp-card-grid,
+  body .modal.ct-sheet .copy-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+/* ═══ ≤ 939px : modal ตัวกลางของ Transaction ════════════════
+   ตัวที่ไม่ได้ใช้ ag-table / card-grid แต่เป็นฟอร์มหรือตารางธรรมดา
+   กฎด้านบนครอบให้แล้วเรื่องความกว้าง ช่องกรอก และ footer
+   เหลือส่วนที่โครงต่างออกไป */
+@media (max-width: 939px) {
+
+  /* modal-2 / modal-3 ผูก jQuery UI draggable ไว้ที่ .modal-dialog แล้วสั่ง
+     .css({top:0,left:0}) ตอนเปิด ซึ่งกลายเป็น style inline ทับ margin ที่
+     กฎด้านบนตั้งไว้ — ตรึงตำแหน่งด้วย position:static ให้ margin ทำงานปกติ
+     และกัน transform ที่ draggable ใส่ตอนลากบนจอสัมผัส */
+  body .modal.ct-sheet .modal-dialog {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+  }
+
+  /* modal-3 ตั้ง modalSize เป็น modal-xl มาจาก data() ไม่ใช่ setSize()
+     จึงต้องปลดความกว้างของมันด้วย (กฎด้านบนครอบ [class*="modal-"] อยู่แล้ว
+     ผ่าน .modal-dialog แต่ย้ำ .modal-dialog-centered ที่ modal-3 ใส่เพิ่ม) */
+  body .modal.ct-sheet .modal-dialog.modal-dialog-centered {
+    align-items: stretch;
+  }
+
+  /* ตารางธรรมดา (ไม่ใช่ ag-grid) — เลื่อนในกรอบตัวเอง ไม่ดันชีตให้กว้าง
+     bootstrap 3 ให้ .table-responsive มีตัวเลื่อนเฉพาะ ≤767px
+     ช่วง 768-939 จึงถูกตัดทิ้งโดยไม่มีตัวเลื่อน */
+  body .modal.ct-sheet .table-responsive {
+    width: 100%;
+    margin-bottom: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body .modal.ct-sheet .table-responsive > .table {
+    margin-bottom: 0;
+  }
+
+  /* select2 : ตั้งความกว้างเป็น px ผ่าน style inline ตอน init
+     ต้องใช้ !important จึงจะทับได้ */
+  body .modal.ct-sheet .select2-container {
+    display: block;
+    width: 100% !important;
+  }
+
+  body .modal.ct-sheet .select2-container--bootstrap .select2-selection {
+    height: auto;
+    min-height: 38px;
+  }
+
+  /* datepicker : vue2-datepicker ตั้ง .mx-datepicker ไว้ที่ 210px */
+  body .modal.ct-sheet .mx-datepicker,
+  body .modal.ct-sheet .mx-input-wrapper {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  /* ฟอร์มในชีต : คอลัมน์เต็มแถว ระยะขอบไม่ซ้อน */
+  body .modal.ct-sheet .modal-body > .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  body .modal.ct-sheet textarea.form-control {
+    min-height: 84px;
+  }
+
+  /* ปุ่มใน footer ที่มีข้อความยาว — ห่อบรรทัดได้ ไม่ล้นออกขวา */
+  body .modal.ct-sheet .modal-footer .btn {
+    white-space: normal;
+    max-width: 100%;
+  }
+}
+
+/* ═══ ≤ 639px : มือถือ — ฟอร์มเรียงลงมาช่องละแถว ═══════════ */
+@media (max-width: 639px) {
+
+  body .modal.ct-sheet .modal-body > .row > [class*="col-"] {
+    float: none;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
