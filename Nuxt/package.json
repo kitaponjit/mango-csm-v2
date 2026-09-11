@@ -8,9 +8,14 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "nuxt": "4.5.2"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11"
   }
 }
