@@ -4,6 +4,7 @@ import { nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 const props = defineProps<{
   open: boolean
   title: string
+  closeLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -74,7 +75,7 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="target-dialog__close"
-          aria-label="Close dialog"
+          :aria-label="closeLabel || 'Close dialog'"
           @click="requestClose"
         >
           <span aria-hidden="true">×</span>

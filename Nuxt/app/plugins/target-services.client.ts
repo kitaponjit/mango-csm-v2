@@ -1,5 +1,6 @@
 import { createFileCapability } from '~/services/files/file-capability'
 import { createApiClient } from '~/services/http/api-client'
+import { createLocalizationAdapter } from '~/services/localization/localization-adapter'
 import { createInternalSessionAdapter } from '~/services/session/session-adapter'
 
 export default defineNuxtPlugin(() => {
@@ -17,12 +18,14 @@ export default defineNuxtPlugin(() => {
     onInvalidCredential: () => transport.handleInvalidCredential(),
   })
   const fileCapability = createFileCapability(runtime)
+  const localization = createLocalizationAdapter(window.localStorage)
 
   return {
     provide: {
       sessionAdapter: session,
       apiClient,
       fileCapability,
+      localization,
     },
   }
 })

@@ -25,6 +25,14 @@ describe('TargetDialog', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
+  it('accepts a localized accessible label for the close button', () => {
+    const wrapper = mount(TargetDialog, {
+      props: { open: true, title: 'เอกสารแนบ', closeLabel: 'ปิดหน้าต่าง' },
+    })
+
+    expect(wrapper.get('button').attributes('aria-label')).toBe('ปิดหน้าต่าง')
+  })
+
   it('emits close when the native dialog is cancelled', async () => {
     const wrapper = mount(TargetDialog, {
       props: { open: true, title: 'Attachment details' },
