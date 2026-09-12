@@ -520,21 +520,30 @@ Root `Default.aspx` simply redirects to `~/page/`.
 
 The REST/business-logic backend behind `$xt.getServer` / `$xt.getCustomerServer` is a separate .NET Framework **4.7.2** solution: **`MangoWebPoolService-DEV`**.
 
-- **Verified path on this machine:** `D:\Mango ERP\MangoWebPoolService-DEV` (solution `MangoWebPoolService.sln`)
+- **Path varies per dev machine** — the solution file is `MangoWebPoolService.sln` inside a `MangoWebPoolService-DEV` folder. Never assume a listed path is correct here; follow the RULE below and reuse the confirmed-paths table.
 - **Projects:** `MangoWebPoolService` (main web/API), `MangoMobileService`, `MangoReportService`, `SFC-DC-Service`, `MangoWebPoolService.Tests`
+- **Reusable knowledge:** `docs/backend/contract-navigation-knowledge.md` — verified auth/response/list contracts, ownership map, and navigation recipes. Read it before traversing the backend.
 
-### RULE — verify the backend path before any backend change
+### RULE — ask the dev for their backend path before any backend change
 
-Never assume the documented path is correct on the current machine.
+The backend folder lives in a **different location on every dev machine**. The dev must tell the Agent their machine's path — the Agent must ask for it and must never guess or assume a documented path.
 
-1. Check it: `Test-Path "D:\Mango ERP\MangoWebPoolService-DEV"`
-2. If it exists → proceed with backend edits.
-3. If not → locate the real folder and **record it back into this file** before editing:
+1. Ask the dev for their `MangoWebPoolService-DEV` folder path before any backend task.
+2. Verify it with `Test-Path "<dev-provided-path>"` — the folder must contain `MangoWebPoolService.sln`. If it checks out → proceed with backend edits.
+3. If the dev doesn't know the path → locate it, confirm the result with the dev, then proceed:
    ```powershell
    Get-ChildItem -Path D:\,C:\ -Recurse -Directory -Filter "MangoWebPoolService-DEV" -ErrorAction SilentlyContinue |
      Select-Object -ExpandProperty FullName
    ```
-4. Only edit once the path is confirmed and saved.
+4. **Record any newly confirmed path in the table below** before editing, so the next session on that machine can reuse it.
+5. Only edit backend code once the path is confirmed and saved.
+
+### Confirmed backend paths per machine
+
+| Machine / owner | Path |
+|---|---|
+| Dev machine (reported by dev, verified 2026-09-12, contains `MangoWebPoolService.sln`) | `C:\SourceCode\Mango Web Service Pool\MangoWebPoolService-DEV` |
+| Previous record (unverified on this machine) | `D:\Mango ERP\MangoWebPoolService-DEV` |
 
 ### RULE — look in `Areas/CSM` first
 
@@ -575,7 +584,7 @@ Dev URL     : http://localhost:4060   (browser-sync → IIS http://localhost:406
 Entry       : Scripts/App/Application/main.js
 Output      : Scripts/Bundle/Application.js (+ split chunks) — deploy whole folder
 Mount point : Page/Default.aspx  ->  <div id="app"><router-view/></div>
-Backend     : D:\Mango ERP\MangoWebPoolService-DEV  (Areas/CSM first)
+Backend     : per-machine path — see confirmed table in §11  (Areas/CSM first)
 ```
 
 | I need… | Go to |
@@ -596,5 +605,4 @@ Backend     : D:\Mango ERP\MangoWebPoolService-DEV  (Areas/CSM first)
 
 ### Further reading
 
-- `docs/CSM-Customer-Service-Manual.md` — developer manual (Thai/English) covering the Customer master, TRN_001–TRN_004, the customer portal, and screen-by-screen maps. *(Note: its Quick Reference cites dev ports 2050/2060; the current, verified ports are **4060/4061** as above.)*
-- `.claude/skills/csm-customer-service/SKILL.md` — project skill that auto-triggers on `v_csm_cus_*`, `v_csm_trn_*`, `customer-layout`, `getServer` / `getCustomerServer`, and `ag-table` work.
+- `.claude/skills/csm-customer-service/SKILL.md` — project skill that auto-triggers on `v_csm_cus_*`, `v_csm_trn_*`, `customer-layout`, `getServer` / `getCustomerServer`, and `ag-table` work. *(Known gap: its header references `docs/CSM-Customer-Service-Manual.md`, which is not present in this checkout — treat that reference as unresolved, but keep using the skill's API/table/component/route patterns; they remain valid.)*
