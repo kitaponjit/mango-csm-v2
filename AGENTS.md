@@ -62,7 +62,7 @@ Current checkout evidence:
 - `Nuxt/` is the target Nuxt 4 SPA boundary. It owns `/csm-next/**` and emits target artifacts under `Nuxt/.output/public/**`.
 - Detailed Website implementation rules, including legacy API/auth, routing, Vuex, naming, responsive twins, grids, and Webpack operation, belong in `Website/AGENTS.md`.
 - The legacy host injects runtime configuration and globals consumed by the Vue application. Preserve that host contract until its boundary is explicitly migrated.
-- The backend/API service is maintained separately from this checkout. Locate the actual repository and read its governance before making backend changes; historical paths in Website documentation are not portable facts.
+- The backend/API service is maintained separately from this checkout. Locate the actual repository and read its governance before making backend changes; historical paths in Website documentation are not portable facts. The backend folder path differs per dev machine — ask the dev for their local path and verify it per `Website/AGENTS.md` §11; never assume a documented path.
 - Do not invent backend endpoints, database schemas, deployment topology, or target-stack files when the owning repository or target configuration is absent.
 - The frontend target boundary is established for the first slice only. Do not treat that as evidence that the backend, hosting, or persistence targets are implemented.
 
