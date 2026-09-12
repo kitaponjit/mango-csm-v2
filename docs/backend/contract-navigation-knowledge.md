@@ -2,185 +2,332 @@
 
 | Field | Value |
 |---|---|
-| **Status** | Active reusable knowledge (agent navigation cache) |
-| **Created** | 2026-09-12 |
+| **Status** | Agent Navigation Cache (refactored from reconnaissance report, 2026-09-12) |
 | **Backend** | `MangoWebPoolService-DEV` (.NET Framework 4.8, MVC5 + WebAPI + OWIN + EF6, TFVC) |
-| **Method** | READ-ONLY reconnaissance scout (partial-targeted coverage, marginal-gain stop) + synthesis with adversarial review |
-| **Backend governance** | `MangoWebPoolService/AGENTS.md` + `CLAUDE.md` (authoritative for auth/envelope/data rules; read §§4–7 first) |
+| **Backend governance** | `MangoWebPoolService/AGENTS.md` §§4–7 + `CLAUDE.md` (authoritative; read before endpoint work) |
+| **Backend path** | Per-machine — ask the dev, verify `Test-Path` for `MangoWebPoolService.sln`, never hardcode |
+| **Method** | READ-ONLY recon (partial-targeted coverage, marginal-gain stop); this file is a refactor only — no re-scout, no new backend facts |
 
-> Purpose: let future Agents answer "what does the frontend depend on / where does it live / where do I start"
-> WITHOUT re-traversing the backend. Covers only frontend-relevant surfaces.
-> Status tags: `[VERIFIED]` = backend source read · `[OBSERVED]` = structure/surface seen ·
-> `[INFERRED]` = extrapolated, do not trust blindly · `[UNKNOWN]` = not found ·
-> `[REQUIRES_EXECUTION]` = runtime evidence needed. Never upgrade an assumption to verified
-> without direct backend evidence.
+## How to read this file
 
-## 1. Architecture & traversal spine
+Two layers. **Layer A (§§1–9)** is what an Agent reads before starting work — compact, decision-oriented.
+**Layer B (§10)** proves why — source locations and implementation evidence for when verification is needed.
+Rule: **source code wins over this document** (see §8).
 
-- Solution `MangoWebPoolService.sln`; projects: `MangoWebPoolService` (main), `MangoMobileService`,
-  `MangoReportService`, `SFC-DC-Service`, `MangoWebPoolService.Tests`.
-- Areas under `MangoWebPoolService/Areas`: `AccountingforLabor`, `Anywhere`, `AnywhereAPI`, `Api`,
-  `CSM`, `DC_System`, `Ext_API`, `Mint`, `Page`, `Planning`, `PrintApi`, `QCC`, `Report`. No CODEOWNERS file.
-- Traversal spine for any endpoint work:
-  `Controllers/_BasedController.cs` → `MangoWebPool/Authentication.cs` →
-  `Areas/{Area}/Controllers/` → `Areas/{Area}/Models/`.
-- Backend path differs per dev machine — ask the dev, verify `Test-Path` for `MangoWebPoolService.sln`,
-  never hardcode (see `Website/AGENTS.md` §11).
+Statement discipline — never merged into one sentence:
 
-## 2. Authentication contracts [VERIFIED, code-read, high confidence]
+```text
+FACT           → what the source confirms
+IMPLICATION    → what the fact means for frontend / future agents
+RECOMMENDATION → what the agent should do (labeled as such, not as backend behavior)
+POLICY         → rule from governance or explicit decision (labeled with its source)
+```
 
-| Domain | Header in | Backend validator | Failure behavior |
-|---|---|---|---|
-| Internal | `X-Mango-Auth` (hex via `MangoWebToken.dll` → JSON) | `Authentication.GetAuthorize` (`MangoWebPool/Authentication.cs:1468-1620`): `hr_emp` lookup → session row `app_authen` (calendar-checked) or `app_authen2` (+1 month); touches `last_access` unless `X-Mango-No-Touch: Y` | Missing/invalid token does **NOT** 403 in `OnAuthentication` — sets `X-MG-Auth-Error` response header, `is_authenticated=false`; each controller's `OnActionExecuting` returns **bare HTTP 403 with no envelope** (CSM pattern: `AccessDeniedStatus()`). Pipeline: `Controllers/_BasedController.cs:44-99` |
-| Customer portal | `X-Customer-Auth` | Separate pipeline `_BasedCustomerController` (NOT `_BasedController`) → `CustomerAuthorize.GetCustomerAuthorize` (`Areas/CSM/Models/Customer/Login.cs:69-145`): session `app_customer_authen(session_id, customer_code)`, +1h sliding touch, identity via `ar_cust UNION mg_csr_line_member`, default `maincode="MG1"` | `cus_auth.is_authen=false` → bare 403. **No** `X-MG-Auth-Error` header on this path |
-| Local ASP.NET | `X-Post-Back-Token` + `postback_token` cookie | Double-submit guard (`_BasedController.cs:44-50`): both present and differ → immediate 403; either absent → skipped (API clients unaffected) | Nuxt `useApiClient` must NOT send this header (or must mirror the cookie) |
-| Machine-to-machine OAuth (NOT UI login) | `Authorization: Bearer` | `OAuthController` / `OAuthAttribute`, `client_credentials` (`_BasedController.cs:222-340`) | **No SSO anywhere** — no SAML/OIDC interactive login. Target keeps token-header login [VERIFIED negative] |
+Status discipline:
 
-Headers the backend reads that the frontend must send:
-`X-Mango-Auth`, `X-Mango-Session-ID`, `X-Log-Code`, `X-Edit-Mode`, `X-Mango-No-Touch`.
-Confirm current `xtools.js` coverage by grep before porting to Nuxt.
+```text
+[VERIFIED]           backend source read, owner located
+[OBSERVED]           structure/surface seen, behavior not fully traced
+[INFERRED]           extrapolated — do not trust blindly
+[UNKNOWN]            not found — do not fill with assumption
+[REQUIRES_EXECUTION] runtime evidence needed
+[REQUESTED]          frontend expectation, NOT yet confirmed by backend — never upgrade to VERIFIED
+```
 
-Exceptions: outsource path `X-Mango-Outsorce: Y` (sic spelling, `GetAuthorizeOutSource`,
-`Authentication.cs:1665`); gateway path requires `X-Mango-Gateway: Y` plus token match.
-Session-expiry timing (MG_TIME value) [REQUIRES_EXECUTION].
+Knowledge classes used below: `CONTRACT` · `COMPATIBILITY CONSTRAINT` · `OBSERVED CONVENTION` ·
+`LEGACY QUIRK` · `NAVIGATION HEURISTIC` · `SECURITY/AUTH CONSTRAINT` · `RUNTIME-DEPENDENT` · `OPEN DECISION`.
 
-## 3. Response contracts [VERIFIED]
+---
 
-- Envelope `{ success, error, data }` with `success = IsNullOrEmpty(error)`, always HTTP 200 —
-  built ONLY in `_BasedController.JsonContentResult(data, error)` (`:137-196`), mirrored in
-  `_BasedCustomerController.JsonContentResult` (`:63-80`). Variants: raw `JsonContent(obj)`
-  (unwrapped), `JsonContentResultEvolt` / `JsonContentResultCenter` (200-vs-400). Rights/auth gates = bare 403.
-- **Killed assumption — envelope is NOT global.** Raw-`JsonContent` endpoints include:
-  `ManualReadList` / `ManualReadListV2` / `ReadPicture`, `Config_ReadList`, `Customer_Read`,
-  `GetSettings`, `Maincomp`, `StoreConfig`. Adapters must accept BOTH shapes.
-- **Killed assumption — no global list wrapper.** `{ data_rows, total }` is constructed ad hoc
-  inside each action, and shapes vary. Exact shapes of key endpoints:
-  - `ContactType` / `Priority` / `ServiceType` / `RequestType` → `{ data_rows, total = q.Count() }`
-    (`Areas/CSM/Controllers/CenterController.cs:174-191`)
-  - `ServiceType_Send_Bug` → `{ data_rows }`, NO total (`:113-129`);
-    `Customer_ReadList` → `{ data_rows }`, NO total (`MasterController.cs:1051-1057`)
-  - `GetSettings` → `{ data, total }` keys via raw `JsonContent` (`Models/Center/DataCenter.cs:105-117`)
-  - `Maincomp` → raw company object (`Anywhere/Controllers/CenterController.cs:653-667`);
-    `StoreConfig` → raw `sm_config` list (`Anywhere/Controllers/APIController.cs:294-309`,
-    takes caller-supplied `maincode`, NO `auth.maincode` scoping — never expose to portal);
-    `Manual*` → raw objects (`ManualController.cs:27-43`)
-  - Normalization rule: read `rsp.data.data_rows ?? rsp.data.data ?? rsp.data`, `.total` optional.
-  - For any NEW endpoint, read its action body (10–30 lines); never assume sibling sameness.
-    Sampling basis: canonical `ContactType` + complex `Customer_Create` + exceptions
-    `GetSettings` / `ServiceType_Send_Bug`; counts `data_rows` ×63+102+24, `JsonContent` ×166
-    vs `JsonContentResult` ×458 across CSM controllers.
-- POST bodies: `Dtl.json_request()` plus pre-declared anonymous `FromJson` shape — field names are
-  contract (e.g. Create/Update take `info` / `address` / `mobile` / `contact`, `:1067-1094`).
+# LAYER A — Agent Navigation Knowledge
 
-## 4. Localization [VERIFIED]
+## 1. Quick Navigation Map
 
-- `api/public/LanguageSelector?lang_code=TH` → 302 redirect to
-  `LangDisplay?lang_code&last_edit=yyyyMMddHHmmss` (last-edit = max `sm_ui_language.add_dt`);
-  `LangDisplay` returns `{ success: true, data: { lang: { langList, userLang }, uiLang } }`,
-  hand-built (not via `JsonContentResult`) + file cache + 1-year OutputCache + CORS allowlist
-  (`Areas/Api/Controllers/PublicController.cs:1192-1285`). `LangDisplay2` is file-based
-  (`app_data/languages2/`) returning raw `{ languages, translate }`.
-- Per-user default `auth.lang_web` (`TH`/`EN`, from `hr_emp.lang_web`, fallback `EN`)
-  (`Authentication.cs:1600`); `ChangeLanguage` exists on both `PublicController` (internal)
-  and `AuthCustomerController` (portal).
-- Adapter recipe: follow the redirect, cache by `last_edit`, `uiLang[var] ?? var`, `user_lang` cookie `lang`.
-- **Killed assumption:** `DD/MM/YYYY` is FRONTEND display only — backend culture is `en-US`
-  (`Global.asax.cs:20`) with ISO-local dates; `Dtl.parse_date` (inside sourceless `DataTools.dll`)
-  parses `yyyy-MM-dd` at call sites [INFERRED — edge formats REQUIRE_EXECUTION].
-- Exception: docker mode returns an empty object for language calls.
+```text
+Auth / session (internal) → Authentication.GetAuthorize          (E1)
+Portal auth               → _BasedCustomerController / Models/Customer/Login.cs  (E2)
+Manual listing            → CSM/Manual/ManualController → Models/Manual          (E4)
+Customer CRUD             → CSM/Master/MasterController → Models/Customer.cs     (E5)
+Lookups / settings        → CSM/Center/CenterController → Models/Center          (E6)
+Config                    → CSM/Config/ConfigController → Models/Config          (E7)
+Shared ERP                → Areas/Anywhere/Controllers/{Module}Controller        (E8)
+File download             → Api/FileController.DownLoad (+ token-minter hunt)    (E9)
+Print / documents         → PrintApi/DocumentController                         (E10)
+Realtime                  → SignalR/GlobalHubs.cs (SocketHub)                    (E11)
+Language                  → Api/PublicController.LanguageSelector/LangDisplay   (E12)
+```
 
-## 5. Ownership map (frontend capability → controller → model)
+`E#` = evidence entry in §10. **Do not start with repo-wide search unless the target is genuinely unknown**
+(`NAVIGATION HEURISTIC`).
 
-- `CSM/Center` (lookups + `GetSettings`): `Areas/CSM/Controllers/CenterController.cs` →
-  `Models/Center/*`. NOTE: `ContactType` SQL interpolates `auth.maincode` via string
-  (not parameterized) — legacy pattern, preserve, do not "fix" incidentally.
-- `CSM/Master` (Customer/Warranty/Contact/ServiceType CRUD + Excel import/export):
-  `MasterController.cs` → `Models/Customer.cs` (internal CRUD) vs `Models/Center/Customer.cs`
-  (CM/AR readlists) — TWO parallel customer models, do not confuse them.
-- `CSM/Manual` (Manual/FAQ): `ManualController.cs` → `Models/Manual/*`.
-- `CSM/Config` (Config/Active_Config/Holiday/Extension/State/SMTP): `ConfigController.cs` →
-  `Models/Config/*`.
-- Portal: `CustomerDataController` + `AuthCustomerController`
-  (Login / GetInitCustomerData / ChangeLanguage / Logout / GetOTP) on `_BasedCustomerController.cs:16-47`.
-  Portal `Login` + OTP round-trip (`Login.cs:158-228`) not traced — inspect before rebuilding login.
-- Other CSM controllers: `TBug`, `Chat` (rooms/poll/messages), `Gateway` (async dispatch),
-  `Data`, `API`, `Tools`, `Report`, `CSMItDev`. Route shape `CSM/{controller}/{action}`
-  (`CSMAreaRegistration.cs`).
-- `Anywhere/*` (ERP core, 29 controllers incl. AP/AR/GL/IC/PO/FA/MA/MRP/BD/EVAL/OF/OS/PM/RT/Memo/Master/Center/Config/Email/Etax/Ai):
-  `Anywhere/Controllers/{M}Controller.cs` → `Models/{M}/...` (screen-code = model name = Vue filename).
-  `AnywhereAPI/CSMController` = per-customer integrations (LoginMaintenance/ProjectMaintenance/LineOA).
-- File: `Areas/Api/Controllers/FileController.cs:72-130` —
-  `GET /Api/File/DownLoad?download&id&filename&noToken&isAnywhere`; `id` is a hex-tokenized path
-  unless `noToken`; S3/OBS backed; 404 if unresolvable; `download=true` + filename →
-  `application/octet-stream` (Anywhere) or copy-to-`download_export/` + redirect (non-Anywhere),
-  else inline with real filename.
-- Print: `Areas/PrintApi/Controllers/DocumentController.cs:33-310`
-  (`Create` / `CreatePDF` / `MergeDocumentWithPath` / `AnywhereDocument` / `DashBoardPlanning`).
-- Realtime: SignalR 2 hub `SocketHub` (`SignalR/GlobalHubs.cs:13-321`, `/signalr` via OWIN
-  `StartUp.cs:257-266`): row-lock + case-comment + program-update events; auth via token PARAM
-  (`JoinUserChannel(token2)`), not header. Which events the CSM UI subscribes needs a frontend
-  grep [INFERRED].
+## 2. Critical Contracts
 
-## 6. Navigation recipes (start here — never from repo-wide search)
+### 2.1 Authentication Contract Map
 
-- **Manual listing change** → `ManualController.cs:27-43` → `Models/Manual/*` → response shape
-  (raw, not envelope!) → stop unless the query changes (then persistence layer).
-- **Customer CRUD change** → `MasterController.cs:1051-1094` → `Models/Customer.cs` (verify which of
-  the two customer models applies) → round-trip test.
-- **Session/login change** → `_BasedController.cs:44-99` → `Authentication.GetAuthorize` →
-  controller `OnActionExecuting`. Portal → `_BasedCustomerController` → `Models/Customer/Login.cs`.
-- **New list endpoint** → read its action body for the `{ data_rows / total }` variant (10–30 lines);
-  grep `JsonContentResult` vs `JsonContent(` within that controller.
-- **File-link feature** → `FileController.DownLoad` → FIRST hunt the token minter
-  (grep `EncodeTokenHex` producers — minter currently [UNKNOWN], blocks Nuxt file links).
-- **Config bootstrap** → `GetSettings` (`mg_csr_config`) vs `StoreConfig` (`sm_config`) are DISTINCT
-  tables; confirm the consumer split by frontend usage grep.
+**Internal** (`CONTRACT` + `SECURITY/AUTH CONSTRAINT`) [VERIFIED — E1]
 
-## 7. Legacy contracts that must be preserved (all VERIFIED by code read)
+```text
+FACT:        Header X-Mango-Auth (hex via MangoWebToken.dll → JSON) → Authentication.GetAuthorize
+             → hr_emp lookup → session row app_authen
+             (calendar-checked) or app_authen2 (+1 month). last_access touched unless
+             X-Mango-No-Touch: Y.
+FACT:        Missing/invalid token does NOT 403 in OnAuthentication — sets X-MG-Auth-Error
+             header, is_authenticated=false; each controller's OnActionExecuting returns
+             bare HTTP 403 with NO envelope (CSM pattern: AccessDeniedStatus()).
+IMPLICATION: Adapters must surface X-MG-Auth-Error and treat bare 403 as session-expired.
+RECOMMENDATION: Send X-Mango-Auth + X-Mango-Session-ID + X-Log-Code + X-Edit-Mode
+             (+ X-Mango-No-Touch where applicable). Session-expiry (MG_TIME) timing is
+             RUNTIME-DEPENDENT.
+```
 
-1. URL shape `/{Area}/{Controller}/{Action}` (MVC routing, not REST).
-2. Dual response shapes (envelope AND raw) — adapters normalize, backend untouched.
-3. Per-endpoint `data_rows` / `total` variance (sometimes `data` / `total`, sometimes bare).
-4. Bare-403-on-auth-fail + `X-MG-Auth-Error` header (internal only).
-5. `maincode`-scoped reads (`WHERE maincode == auth.maincode`) on every read.
-6. `Dtl.json_request()` + pre-declared anonymous `FromJson` POST shapes — field names are contract.
-7. `ref string error → success` convention.
-8. `X-Mango-Outsorce` misspelling (sic — do not "correct" it).
-9. No direct MVC `Json()` returns.
-10. File token-in-`id` + inline-vs-attachment semantics.
-11. Language redirect + cache + `uiLang` fallback.
-12. No SSO.
+**Customer portal** (`CONTRACT`, separate pipeline) [VERIFIED — E2]
 
-## 8. Known exceptions
+```text
+FACT:        Portal controllers inherit _BasedCustomerController (NOT _BasedController).
+             X-Customer-Auth → CustomerAuthorize.GetCustomerAuthorize; session
+             app_customer_authen(session_id, customer_code), +1h sliding touch; identity
+             ar_cust UNION mg_csr_line_member; default maincode="MG1".
+FACT:        Failure → cus_auth.is_authen=false → bare 403. No X-MG-Auth-Error on this path.
+IMPLICATION: Internal and portal tokens are NOT interchangeable. Portal uses its own
+             login/logout/language endpoints on AuthCustomerController.
+```
 
-- `ContactType` string-interpolated `maincode` SQL (legacy, preserve).
-- `ServiceType_Send_Bug` / `Customer_ReadList` omit `total`; `GetSettings` uses `{ data, total }` keys.
-- Docker mode returns empty language payloads.
-- `StoreConfig(maincode)` trusts caller-supplied company code (with `MGF.Fake_auth` in sibling
-  `StoreAttachFile`) — internal use only.
-- Portal auth has no `X-MG-Auth-Error` header; outsource/gateway paths have extra header requirements.
+**Local ASP.NET** (`CONTRACT`) [VERIFIED — E1]
 
-## 9. Verification boundaries
+```text
+FACT:        X-Post-Back-Token header + postback_token cookie both present and differ
+             → immediate 403 before any auth decode. Either absent → check skipped.
+IMPLICATION: Nuxt useApiClient must NOT send this header (or must mirror the cookie).
+             (Frontend integration rule — not backend behavior.)
+```
 
-- **Safe to trust:** auth pipelines (all 3 domains), envelope source + dual-shape rule, sampled
-  per-endpoint list shapes, localization flow, ownership structure, the 12 legacy contracts.
-- **Must inspect source:** any unlisted action body before relying on its shape;
-  `Customer_Create` / `Update` field parity; portal `Login` + OTP (`Login.cs:158-228`).
-- **Must execute at runtime:** session-expiry (MG_TIME) timing; whether `Customer_ReadList`
-  honors server-side `skip` / `take` (matters for virtual scroll); `Dtl.parse_date` edge formats;
-  file-download token round-trip; CSM SignalR subscription names (frontend grep first).
+**Machine-to-machine OAuth** (`CONTRACT`, negative scope) [VERIFIED — E3]
 
-## 10. Open decisions
+```text
+FACT:        OAuthController/OAuthAttribute, client_credentials only — for external APIs,
+             unrelated to CSM/Anywhere UI login (token headers).
+POLICY:      No SSO in target (source: root AGENTS.md migration constraint).
+             No SAML/OIDC exists in backend; keep token-header login.
+```
 
-- Nuxt session behavior = OPEN (see `docs/migrations/future-auth-without-sso.md`): do NOT invent
-  auth mechanisms, introduce SSO, or change token semantics.
-- File-download token minter = [UNKNOWN] (blocks Nuxt file links until found).
-- Which `sm_config` keys the frontend needs = [INFERRED] (confirm by usage grep).
-- OAuth `test_api` scope consumers are out of CSM scope — ignore unless doing gateway work.
+**Exceptions** (`LEGACY QUIRK` / `OBSERVED CONVENTION`): outsource path `X-Mango-Outsorce: Y`
+(sic spelling, `GetAuthorizeOutSource`); gateway path needs `X-Mango-Gateway: Y` + token match.
+Portal Login+OTP round-trip untraced — inspect `Login.cs:158-228` before rebuilding login.
 
-## 11. Freshness / staleness notes
+### 2.2 Response Contract Map
 
-- Backend lives in TFVC and moves independently of this repo — revalidate on: new controllers/actions
-  (check envelope-vs-raw), new headers, session-table/auth changes, SignalR method renames.
-- Staleness tripwire: any bare-403 or shape mismatch surfacing in Nuxt adapter logs →
-  re-inspect that action body first before assuming a backend change.
+```text
+Response Contract
+├── Envelope   CONTRACT [VERIFIED — E13]: {success, error, data}, success =
+│              IsNullOrEmpty(error), always HTTP 200. Built ONLY in
+│              _BasedController.JsonContentResult(data,error), mirrored in
+│              _BasedCustomerController. Variants: JsonContentResultEvolt /
+│              JsonContentResultCenter (200-vs-400). Rights/auth gates = bare 403.
+├── Raw JSON   CONTRACT [VERIFIED — E13]: raw JsonContent(obj), unwrapped. Used by
+│              ManualReadList/V2/ReadPicture, Config_ReadList, Customer_Read,
+│              GetSettings, Maincomp, StoreConfig.
+├── List variants  OBSERVED CONVENTION [VERIFIED sampled — E14]:
+│              ContactType/Priority/ServiceType/RequestType → {data_rows,total};
+│              ServiceType_Send_Bug / Customer_ReadList → {data_rows}, NO total;
+│              GetSettings → {data,total} keys; Maincomp/StoreConfig/Manual* → raw.
+├── Exceptions KNOWN (details in §5 and §10-Evidence): docker-mode empty
+│              language payloads; StoreConfig caller-supplied maincode (internal only).
+└── Normalization strategy  NAVIGATION HEURISTIC:
+                           read rsp.data.data_rows ?? rsp.data.data ?? rsp.data;
+                           .total optional. For a NEW endpoint, inspect its action body
+                           (10–30 lines) before assuming sibling behavior — never assume
+                           siblings are identical.
+```
+
+### Claim C1 — No single global response contract [VERIFIED]
+
+```text
+Status: VERIFIED (JsonContent ×166 vs JsonContentResult ×458 across CSM controllers;
+        4 representative endpoints: canonical ContactType, complex Customer_Create,
+        exceptions GetSettings + ServiceType_Send_Bug)
+Scope: sampled CSM endpoints; pattern presumed — verify per-action.
+Implication: adapters normalize; backend untouched. "Global list wrapper" assumption is dead.
+Navigation: per-endpoint action body (§10-E14). Stop when envelope-vs-raw + list keys known.
+Escalation: re-inspect if adapter logs a shape mismatch (see §8).
+```
+
+### 2.3 Localization, File/Print, Realtime (compact contracts)
+
+- **Localization** (`CONTRACT`) [VERIFIED — E12]: `LanguageSelector?lang_code=TH` → 302 to
+  `LangDisplay?lang_code&last_edit=…` → `{success, data:{lang:{langList,userLang}, uiLang}}`,
+  file-cached, 1-yr OutputCache. Adapter: follow redirect, cache by `last_edit`,
+  `uiLang[var] ?? var`. `DD/MM/YYYY` is FRONTEND display only (backend `en-US`, ISO-local dates).
+- **File download** (`CONTRACT`) [VERIFIED — E9]: `GET /Api/File/DownLoad?…&id…`;
+  `id` is hex-tokenized path unless `noToken`; inline vs `application/octet-stream` semantics.
+  Token-minter endpoint [UNKNOWN] — blocks Nuxt file links until found (see §7).
+- **Print** (`CONTRACT`) [OBSERVED — E10]: `Areas/PrintApi/Controllers/DocumentController.cs:33-310`.
+- **Realtime** (`OBSERVED CONVENTION`) [OBSERVED/INFERRED — E11]: SignalR 2 `SocketHub`
+  (`/signalr`); row-lock + case-comment events; auth via token PARAM, not header.
+  Which events CSM UI subscribes needs a frontend grep.
+
+## 3. Capability / Ownership Map
+
+```text
+CSM/Center    lookups + GetSettings          → CenterController → Models/Center
+CSM/Master    Customer/Warranty CRUD + Excel → MasterController → Models/Customer.cs
+              (≠ Models/Center/Customer.cs CM/AR readlists — TWO parallel customer models)
+CSM/Manual    Manual/FAQ                     → ManualController → Models/Manual
+CSM/Config    Config/Active/Holiday/…        → ConfigController → Models/Config
+Portal        login/data/language/OTP        → AuthCustomerController + CustomerDataController
+              (on _BasedCustomerController) → Models/Customer/Login.cs
+Anywhere/*    ERP core, 29 controllers       → {Module}Controller → Models/{Module}
+              (screen-code = model name = Vue filename)
+AnywhereAPI   per-customer integrations      → CSMController (LoginMaintenance/…)
+Api           File + LanguageSelector        → FileController / PublicController
+PrintApi      documents                      → DocumentController
+SignalR       realtime hub                   → GlobalHubs.cs (SocketHub)
+```
+
+Route shape `/{Area}/{Controller}/{Action}` (`CONTRACT`, MVC routing, not REST).
+POST field names via `Dtl.json_request()` + pre-declared `FromJson` shapes are contract
+(e.g. Create/Update: `info/address/mobile/contact`).
+
+## 4. Navigation Recipes (with stop conditions)
+
+**R1 — Manual listing change.** Start: `ManualController.cs:27-43`. Inspect: `Models/Manual/*`
+(note: raw responses, not envelope). Continue if: query/filtering/pagination/persistence changes.
+Stop when: response contract + controller/model behavior understood. Escalate if: generated-query
+or runtime behavior matters. Evidence: E4.
+
+**R2 — Customer CRUD change.** Start: `MasterController.cs:1051-1094`. Inspect: confirm which of the
+two customer models applies. Continue if: field shapes change. Stop when: request/response parity
+understood. Escalate if: round-trip write behavior must be proven (execute). Evidence: E5.
+
+**R3 — Session/login change.** Start: `_BasedController.cs:44-99` → `Authentication.GetAuthorize`.
+Portal: `_BasedCustomerController` → `Models/Customer/Login.cs`. Stop when: validator + failure mode
+mapped. Continue if: validator chain or session sources change. Escalate if: expiry timing or OTP flow (execute / inspect `Login.cs:158-228`). Evidence: E1, E2.
+
+**R4 — New list endpoint.** Start: its action body (10–30 lines). Inspect: `JsonContentResult` vs
+`JsonContent(` in that controller. Stop when: envelope-vs-raw + list keys known. Escalate if:
+paging is server-side and UI depends on it (execute). Evidence: E13, E14.
+
+**R5 — File-link feature.** Start: `FileController.DownLoad`. FIRST hunt the token minter
+(grep `EncodeTokenHex` producers) — currently UNKNOWN, blocks links. Stop when: minter found and
+inline-vs-download semantics confirmed. Escalate if: minter cannot be found — record UNKNOWN, do not invent. Evidence: E9.
+
+**R6 — Config bootstrap.** Start: `GetSettings` (`mg_csr_config`) vs `StoreConfig` (`sm_config`) —
+DISTINCT tables. Inspect: frontend usage grep for the consumer split. Continue if: new config keys appear.
+Stop when: key ownership mapped. Escalate if: table ownership unclear. Evidence: E6, E8.
+
+## 5. Compatibility Constraints
+
+**Must Preserve** (`COMPATIBILITY CONSTRAINT`): 3 auth domains + token headers; dual
+envelope/raw compatibility; per-endpoint list variance; bare-403 + `X-MG-Auth-Error` (internal);
+`maincode`-scoped reads; `FromJson` field names; `ref string error → success`; file token-in-`id`
++ inline/attachment semantics; language redirect+cache + `uiLang` fallback; `/{Area}/{Controller}/{Action}`;
+no direct MVC `Json()` returns.
+
+**Legacy Quirks** (`LEGACY QUIRK`, observe — do not normalize incidentally):
+`X-Mango-Outsorce` misspelling; inconsistent response shapes; `ContactType` string-interpolated
+`maincode` SQL (see security note below).
+
+**Do Not Assume** (`NAVIGATION HEURISTIC`): envelope is global · every list has `total` ·
+siblings behave identically · `DD/MM/YYYY` is backend-enforced · portal accepts internal tokens.
+
+**Migration Constraints:** no SSO (`POLICY`, source: root AGENTS.md); Nuxt adapters adapt to
+existing backend behavior — no backend redesign for the target (`IMPLICATION`).
+
+**Security-reviewed observations** (fact ≠ policy):
+
+```text
+OBSERVED: ContactType builds SQL with string-interpolated maincode (not parameterized).
+RISK: legacy unsafe pattern.
+SCOPE DISCIPLINE (recommendation, not backend policy): do not silently expand unrelated
+refactoring during feature work; if modifying this path, reassess separately.
+
+OBSERVED: StoreConfig trusts caller-supplied maincode (sibling uses MGF.Fake_auth).
+RISK: company-code spoofing if exposed beyond internal callers.
+SCOPE DISCIPLINE: internal use only — never expose to portal; reassess if the call path changes.
+```
+
+## 6. Verification Boundaries
+
+- **Trust (no re-traversal):** auth pipelines, envelope source + dual-shape rule, sampled list
+  shapes, localization flow, ownership structure, §5 constraints, recipes R1–R6 start points.
+- **Inspect source:** any unlisted action body before relying on its shape; `Customer_Create/Update`
+  field parity; portal Login+OTP; SignalR subscription names (frontend grep first).
+- **Execute runtime:** MG_TIME expiry timing; `Customer_ReadList` server-side `skip/take`
+  (matters for virtual scroll); `Dtl.parse_date` edge formats; file-token round-trip.
+
+## 7. Open Decisions (remain open — do not invent)
+
+1. Nuxt session behavior — OPEN (see `docs/migrations/future-auth-without-sso.md`): no new auth,
+   no SSO, no token-semantics change.
+2. File-download token minter — UNKNOWN (blocks Nuxt file links; traversal: grep producers).
+3. `sm_config` keys the frontend needs — INFERRED (confirm by usage grep).
+4. Extra send-headers (`X-Mango-Session-ID`, `X-Log-Code`, `X-Edit-Mode`) — backend reads them
+   [VERIFIED]; current `xtools.js` coverage [REQUESTED] (verify by frontend grep before Nuxt port).
+
+## 8. When NOT to Trust This Knowledge
+
+Re-inspect source (that action/controller first) when ANY of these fires — **source wins**:
+
+```text
+- backend branch/TFVC version changed under you
+- new controller/action introduced
+- auth/session implementation changed
+- response shape mismatch appears in adapter logs
+- Nuxt adapter receives unexpected bare 403
+- file token behavior changes
+- SignalR method names change
+- any statement here contradicts code you are reading
+```
+
+## 9. Traversal Reduction (what this cache eliminates)
+
+```text
+Known task              Old traversal                                        Cached start + stop
+Manual list change      repo search → CSM → Manual → controller → model     R1: ManualController:27-43; stop at contract understood
+Customer CRUD           search → which Customer model?                      R2: MasterController:1051-1094 + 2-model warning
+Session/login           search auth infra                                   R3: _BasedController:44-99 → GetAuthorize
+New list shape          assume sibling sameness (WRONG)                     R4: read 10–30-line action body; stop at keys known
+File links              search File infra                                  R5: DownLoad + minter hunt first (known UNKNOWN)
+Config keys             confuse mg_csr_config vs sm_config                 R6: distinct-table rule + usage grep
+```
+
+## 10. Freshness (operational)
+
+- **Stable:** ownership boundaries, area structure, traversal spine, auth pipelines, no-SSO policy.
+- **Potentially volatile:** endpoint response shapes, session behavior/timing, SignalR methods,
+  config keys, file-token mechanics.
+- **Revalidation trigger:** any contract mismatch → revalidate that action first (§8).
+  Backend moves independently in TFVC — never assume this file tracks it in real time.
+
+---
+
+# LAYER B — Evidence / Deep Reference
+
+E1 Internal auth: `Controllers/_BasedController.cs:44-99` (pipeline incl. post-back guard `:44-50`,
+envelope builders `:137-196`) · `MangoWebPool/Authentication.cs:1468-1620` (`GetAuthorize`),
+`:1665` (outsource) · `Areas/CSM/Controllers/CenterController.cs:11-16`,
+`ManualController.cs:17-22` (`OnActionExecuting` gates) · `Global.asax.cs:20` (`en-US` culture).
+E2 Portal: `Areas/CSM/Controllers/_BasedCustomerController.cs:16-47` (pipeline,
+`JsonContentResult` `:63-80`) · `Areas/CSM/Models/Customer/Login.cs:69-145`
+(`GetCustomerAuthorize`), `:158-228` (Login+OTP, UNTRACED) · `CustomerDataController.cs`
+(403 gate).
+E3 OAuth/negative-SSO: `_BasedController.cs:222-340` (`OAuthController`, `OAuthAttribute`).
+E4 Manual: `ManualController.cs:27-43` · `Models/Manual/*` · `CSMAreaRegistration.cs` (route shape).
+E5 Customer CRUD: `MasterController.cs:1051-1057` (ReadList, `{data_rows}` no total),
+`:1067-1094` (Create/Update shapes) · `Models/Customer.cs` vs `Models/Center/Customer.cs`.
+E6 Center/lookups: `CenterController.cs:174-191` (ContactType `{data_rows,total}`),
+`:113-129` (Send_Bug, no total), `:356-360` (GetSettings raw) ·
+`Models/Center/DataCenter.cs:105-117` (`{data,total}`).
+E7 Config: `ConfigController.cs` (CSM) → `Models/Config/*`.
+E8 Anywhere: `Anywhere/Controllers/APIController.cs:294-309` (StoreConfig raw) ·
+`CenterController.cs:653-667` (Maincomp raw) · `AnywhereAPI/Controllers/CSMController.cs`.
+E9 File: `Areas/Api/Controllers/FileController.cs:72-130` (DownLoad body).
+E10 Print: `Areas/PrintApi/Controllers/DocumentController.cs:33-310`.
+E11 SignalR: `SignalR/GlobalHubs.cs:13-321` · OWIN `StartUp.cs:257-266`.
+E12 Language: `Areas/Api/Controllers/PublicController.cs:1192-1285` (LanguageSelector/LangDisplay,
+LangDisplay2 file-based) · `Authentication.cs:1600` (`lang_web`) · `AuthCustomerController.cs`
+(portal ChangeLanguage).
+E13 Envelope: `_BasedController.cs:137-196` vs raw `JsonContent(`; customer mirror
+`_BasedCustomerController.cs:63-80`.
+E14 List-shape sampling: canonical ContactType + complex Customer_Create + exceptions GetSettings /
+Send_Bug; counts `data_rows` ×63+102+24, `JsonContent` ×166 vs `JsonContentResult` ×458 (CSM).
+Remaining actions OBSERVED via counts, not per-action reads.
