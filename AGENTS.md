@@ -80,6 +80,7 @@ Current checkout evidence:
 - Match repository formatting and preserve existing comments unless the task requires otherwise.
 - Do not claim a build, test, parity check, or manual verification that was not actually performed.
 - Do not push directly to `main` — use topic branches with pull-request review and merge; delete branches after they are merged.
+- Review knowledge and governance PRs on two axes (design compliance + factual accuracy) before merge — single-axis review missed blocking errors.
 
 ## Legacy Compatibility Policy
 
