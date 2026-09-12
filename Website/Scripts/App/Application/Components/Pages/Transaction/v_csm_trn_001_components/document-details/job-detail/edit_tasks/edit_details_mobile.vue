@@ -388,27 +388,11 @@
                 </div>
               </fieldset>
 
-              <!-- Add worker / FAQ / Worker no. / AI — one row -->
+              <!-- Add worker / Worker no. / AI — one row -->
               <worker-ref-action :ref-worker-text="editDetailData.ref_worker_no"
                                  @add-worker="openAddWork('new')"
                                  @read-worker="openAddWork('read')"
                                  :refWorkerText="refWorkerCount">
-                <template slot="lead" v-if="false">
-                  <div class="form-group wa-faq-code-cell" v-if="false">
-                    <label class="text-bold">{{ ui.csm_trn_related_faq }}</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control input-sm text-bold wa-faq-code" v-bind:class="{'pointer': editDetailData['ref_faq'] != ''}" :placeholder="ui.csm_trn_search_faq_ph" @click.prevent="openFaq()" v-model="editDetailData['ref_faq']" readonly />
-                      <span class="input-group-btn">
-                        <button class="btn btn-sm bg-navy wa-icon-btn" @click="openFaqModal()" v-bind:disabled="formData.add_user != auth.userid && editDetailData.is_db"><i class="fa fa-search"></i></button>
-                        <button class="btn btn-sm btn-danger wa-icon-btn wa-icon-btn--danger" @click="clearData(editDetailData, ['ref_faq', 'faqname'])" v-bind:disabled="formData.add_user != auth.userid && editDetailData.is_db"><i class="fa fa-close"></i></button>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="form-group wa-faq-name-cell" v-if="false">
-                    <label>&nbsp;</label>
-                    <input type="text" class="form-control input-sm" :placeholder="ui.csm_trn_no_faq_match" v-model.trim="editDetailData['faqname']" readonly />
-                  </div>
-                </template>
                 <template slot="trail">
                   <button type="button" class="btn wa-ai-btn"
                           v-if=" editDetailData.status !='W'&& (formData.assign_empno == auth.empno || editDetailData.assign_empno == auth.empno || editDetailData.tester_empno == auth.empno ||isMyWorker)"
