@@ -12,13 +12,21 @@ description: >-
 
 # Mango CSM — Customer Service Frontend
 
+## Changelog (agent patches)
+
+- 2026-09-12 — ports: dev `4060 → IIS 4061` (was stale `2050/2060`); source `Website/AGENTS.md` §3.
+- 2026-09-12 — TRN_001 sub-folders: real content-named folders (was non-existent `Tab1..Tab4/`); source `Website/AGENTS.md` §7.
+- 2026-09-12 — response contract: dual-shape rule + normalization (was universal envelope/`total`); source `docs/backend/contract-navigation-knowledge.md` §§2,5.
+- 2026-09-12 — auth gaps: bare-403/`X-MG-Auth-Error`, extra send-headers, no-SSO; source `contract-navigation-knowledge.md` §§2,5,7.
+- Known gap (pre-existing, kept): header references `docs/CSM-Customer-Service-Manual.md`, not in this checkout — see `Website/AGENTS.md` §13.
+
 Conventions and ready-to-copy patterns for the CSM Customer Service frontend.
 Full reference: [docs/CSM-Customer-Service-Manual.md](../../../docs/CSM-Customer-Service-Manual.md).
 
 ## Stack & layout
 - Vue.js 2.6 + Vuex 3 + Vue Router 3 (history mode), ag-Grid Enterprise v26, served by ASP.NET 4.8.
 - Code lives in `Scripts/App/Application/`. Entry `main.js` → bundle `Scripts/Bundle/Application.js`, mounted in `Page/Default.aspx`.
-- Dev: `npm run dev` (localhost:2050, proxies backend 2060). Build: `npm run build`. **No automated tests.**
+- Dev: `npm run dev` (browser-sync localhost:4060 → IIS 4061). Build: `npm run build`. **No automated tests.**
 - 2-space indent, UTF-8, LF (`.editorconfig`). Many Thai labels — keep them.
 
 ## The #1 rule: pick the right API helper
@@ -31,6 +39,8 @@ Two fully separate auth domains. Using the wrong one breaks auth silently.
 | ASP.NET local | `$xt.getLocal` / `$xt.postLocalJson` | post-back token |
 
 `$xt` (from `Scripts/Others/Service/xtools.js`) is global. Utils: `$xt.isEmpty`, `int`, `dec(x,n)`, `formatNumber`, `formatDate`, `replaceZeroStart`, `checkEmpty`.
+
+Auth failure mode: a missing/invalid token does NOT 403 in the auth layer — backend sets `X-MG-Auth-Error` (internal only) and controllers return bare HTTP 403 with no envelope; treat bare 403 as session-expired. Backend also reads `X-Mango-Session-ID` / `X-Log-Code` / `X-Edit-Mode` / `X-Mango-No-Touch` — verify `xtools.js` coverage before relying on them. No SSO: keep token-header login.
 
 ## API call patterns (copy these)
 
@@ -46,7 +56,7 @@ async loadData() {
   this.$nextTick(() => this.initTable());
 }
 ```
-- Response envelope is `{ success, error, data }`; lists are at `rsp.data.data_rows.data` + `.total`.
+- Response envelope is `{ success, error, data }`, but it is NOT universal: some endpoints return raw JSON (`ManualReadList/V2/ReadPicture`, `Config_ReadList`, `Customer_Read`, `GetSettings`, `Maincomp`, `StoreConfig`). Lists are usually at `rsp.data.data_rows.data`, but `total` is per-endpoint (absent on `Customer_ReadList`, `ServiceType_Send_Bug`) — normalize as `rsp.data.data_rows ?? rsp.data.data ?? rsp.data` with optional `.total`. See `docs/backend/contract-navigation-knowledge.md` §§2,5 + recipe R4.
 - `encodeURIComponent` every user-supplied query param.
 
 **Save (create/update) with proper error + loading:**
@@ -124,7 +134,7 @@ menu_id: TRN_001=`10100`, TRN_002=`10400`, TRN_003=`10200`, TRN_004=`10300`, Con
 - `Pages/Customer/v_csm_cus_001.vue` — Customer master (New/Old tabs; Info/Mobile/Contact).
 - `Pages/Default/CustomerData.vue` / `CustomerDataView.vue` — Customer 360 view.
 - `Pages/Transaction/v_csm_trn_002.vue` — **Intake**: review new requests, batch create/reject.
-- `Pages/Transaction/v_csm_trn_001.vue` — **Ticket detail**: 4 tabs (detail/status/assign-history/history), QC, assign, approve, attach. Sub-parts in `v_csm_trn_001_components/Tab1..Tab4/`.
+- `Pages/Transaction/v_csm_trn_001.vue` — **Ticket detail**: 4 tabs (detail/status/assign-history/history), QC, assign, approve, attach. Sub-parts in `v_csm_trn_001_components/` (content-named folders: `document-details/`, `document-status/`, `document-history/`, `submission-history/`).
 - **Responsive twin:** the ticket Description tab renders `…/v_csm_trn_001_components/document-details/job-detail/edit_tasks/edit_details_mobile.vue` at ≤939px and `edit_details.vue` at ≥940px. `edit_details_mobile.vue` is `extends: EditDetails` — `<script>` is shared, `<template>` and scoped CSS are copies. **Edit both files in the same change.**
 - `Pages/Transaction/v_csm_trn_003.vue` — Training/Helpdesk.
 - `Pages/Transaction/v_csm_trn_004.vue` — Assign management (Request/Responsible/Assign/Tester).
@@ -140,4 +150,4 @@ menu_id: TRN_001=`10100`, TRN_002=`10400`, TRN_003=`10200`, TRN_004=`10300`, Con
 - [ ] New route has correct `mangoMenu.menu_id` + `checkUserRight`?
 - [ ] Prefer `Components/Pages/V2/` patterns when a V2 equivalent exists.
 - [ ] Touched `edit_details.vue`? Mirrored the markup/condition/style change in `edit_details_mobile.vue` (AGENTS.md §7)?
-- [ ] Verified manually with `npm run dev` (no test suite exists).
+- [ ] Verified manually against the running dev build (do not start `npm run dev` yourself — a watch build is normally already running; no test suite exists).
