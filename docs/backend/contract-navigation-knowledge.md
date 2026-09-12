@@ -51,7 +51,7 @@ Customer CRUD             → CSM/Master/MasterController → Models/Customer.cs
 Lookups / settings        → CSM/Center/CenterController → Models/Center          (E6)
 Config                    → CSM/Config/ConfigController → Models/Config          (E7)
 Shared ERP                → Areas/Anywhere/Controllers/{Module}Controller        (E8)
-File download             → Api/FileController.DownLoad (+ token-minter hunt)    (E9)
+File download             → Api/FileController.DownLoad (+ verbatim token pass-through) (E9)
 Print / documents         → PrintApi/DocumentController                         (E10)
 Realtime                  → SignalR/GlobalHubs.cs (SocketHub)                    (E11)
 Language                  → Api/PublicController.LanguageSelector/LangDisplay   (E12)
@@ -89,7 +89,8 @@ FACT:        Portal controllers inherit _BasedCustomerController (NOT _BasedCont
              ar_cust UNION mg_csr_line_member; default maincode="MG1".
 FACT:        Failure → cus_auth.is_authen=false → bare 403. No X-MG-Auth-Error on this path.
 IMPLICATION: Internal and portal tokens are NOT interchangeable. Portal uses its own
-             login/logout/language endpoints on AuthCustomerController.
+             login/logout/language endpoints on AuthCustomerController (portal ChangeLanguage exists:
+auth-gated, persists lang_web).
 ```
 
 **Local ASP.NET** (`CONTRACT`) [VERIFIED — E1]
@@ -128,7 +129,8 @@ Response Contract
 │              GetSettings, Maincomp, StoreConfig.
 ├── List variants  OBSERVED CONVENTION [VERIFIED sampled — E14]:
 │              ContactType/Priority/ServiceType/RequestType → {data_rows,total};
-│              ServiceType_Send_Bug / Customer_ReadList → {data_rows}, NO total;
+│              ServiceType_Send_Bug → {data_rows}, NO total; Customer_ReadList → {data_rows:{data,total}}
+│              nested (server-paged per model);
 │              GetSettings → {data,total} keys; Maincomp/StoreConfig/Manual* → raw.
 ├── Exceptions KNOWN (details in §5 and §10-Evidence): docker-mode empty
 │              language payloads; StoreConfig caller-supplied maincode (internal only).
@@ -159,7 +161,7 @@ Escalation: re-inspect if adapter logs a shape mismatch (see §8).
   `uiLang[var] ?? var`. `DD/MM/YYYY` is FRONTEND display only (backend `en-US`, ISO-local dates).
 - **File download** (`CONTRACT`) [VERIFIED — E9]: `GET /Api/File/DownLoad?…&id…`;
   `id` is hex-tokenized path unless `noToken`; inline vs `application/octet-stream` semantics.
-  Token-minter endpoint [UNKNOWN] — blocks Nuxt file links until found (see §7).
+  Token minted server-side in read-lists/uploads/exports via MGF.CreateTokenHex (stateless hex, no DB/expiry); Nuxt cannot mint (needs MangoWebToken.dll key) — pass minted filepath/pathto_hex/rsp.data verbatim; noToken forbidden (see §7).
 - **Print** (`CONTRACT`) [OBSERVED — E10]: `Areas/PrintApi/Controllers/DocumentController.cs:33-310`.
 - **Realtime** (`OBSERVED CONVENTION`) [OBSERVED/INFERRED — E11]: SignalR 2 `SocketHub`
   (`/signalr`); row-lock + case-comment events; auth via token PARAM, not header.
@@ -206,9 +208,10 @@ mapped. Continue if: validator chain or session sources change. Escalate if: exp
 `JsonContent(` in that controller. Stop when: envelope-vs-raw + list keys known. Escalate if:
 paging is server-side and UI depends on it (execute). Evidence: E13, E14.
 
-**R5 — File-link feature.** Start: `FileController.DownLoad`. FIRST hunt the token minter
-(grep `EncodeTokenHex` producers) — currently UNKNOWN, blocks links. Stop when: minter found and
-inline-vs-download semantics confirmed. Escalate if: minter cannot be found — record UNKNOWN, do not invent. Evidence: E9.
+**R5 — File-link feature.** Start: `FileController.DownLoad`. Take the minted token from the
+read-list/upload/export response (filepath/pathto_hex/rsp.data) and pass it verbatim — never
+construct ids from raw paths. Stop when: link round-trips. Escalate if: orphan path with no
+minting read (needs backend mint proxy — do not invent). Evidence: E9.
 
 **R6 — Config bootstrap.** Start: `GetSettings` (`mg_csr_config`) vs `StoreConfig` (`sm_config`) —
 DISTINCT tables. Inspect: frontend usage grep for the consumer split. Continue if: new config keys appear.
@@ -258,7 +261,7 @@ SCOPE DISCIPLINE: internal use only — never expose to portal; reassess if the 
 
 1. Nuxt session behavior — OPEN (see `docs/migrations/future-auth-without-sso.md`): no new auth,
    no SSO, no token-semantics change.
-2. File-download token minter — UNKNOWN (blocks Nuxt file links; traversal: grep producers).
+2. File-download token minter — FOUND: MGF.CreateTokenHex in read-lists/uploads/exports (E9); Nuxt passes minted tokens through, cannot mint.
 3. `sm_config` keys the frontend needs — INFERRED (confirm by usage grep).
 4. Extra send-headers (`X-Mango-Session-ID`, `X-Log-Code`, `X-Edit-Mode`) — backend reads them
    [VERIFIED]; current `xtools.js` coverage [REQUESTED] (verify by frontend grep before Nuxt port).
@@ -286,7 +289,7 @@ Manual list change      repo search → CSM → Manual → controller → model 
 Customer CRUD           search → which Customer model?                      R2: MasterController:1051-1094 + 2-model warning
 Session/login           search auth infra                                   R3: _BasedController:44-99 → GetAuthorize
 New list shape          assume sibling sameness (WRONG)                     R4: read 10–30-line action body; stop at keys known
-File links              search File infra                                  R5: DownLoad + minter hunt first (known UNKNOWN)
+File links              search File infra                                  R5: DownLoad + verbatim token pass-through
 Config keys             confuse mg_csr_config vs sm_config                 R6: distinct-table rule + usage grep
 ```
 
@@ -312,7 +315,7 @@ E2 Portal: `Areas/CSM/Controllers/_BasedCustomerController.cs:16-47` (pipeline,
 (403 gate).
 E3 OAuth/negative-SSO: `_BasedController.cs:222-340` (`OAuthController`, `OAuthAttribute`).
 E4 Manual: `ManualController.cs:27-43` · `Models/Manual/*` · `CSMAreaRegistration.cs` (route shape).
-E5 Customer CRUD: `MasterController.cs:1051-1057` (ReadList, `{data_rows}` no total),
+E5 Customer CRUD: `MasterController.cs:1051-1057` (ReadList → `{data_rows:{data,total}}` nested,
 `:1067-1094` (Create/Update shapes) · `Models/Customer.cs` vs `Models/Center/Customer.cs`.
 E6 Center/lookups: `CenterController.cs:174-191` (ContactType `{data_rows,total}`),
 `:113-129` (Send_Bug, no total), `:356-360` (GetSettings raw) ·
@@ -325,7 +328,7 @@ E10 Print: `Areas/PrintApi/Controllers/DocumentController.cs:33-310`.
 E11 SignalR: `SignalR/GlobalHubs.cs:13-321` · OWIN `StartUp.cs:257-266`.
 E12 Language: `Areas/Api/Controllers/PublicController.cs:1192-1285` (LanguageSelector/LangDisplay,
 LangDisplay2 file-based) · `Authentication.cs:1600` (`lang_web`) · `AuthCustomerController.cs`
-(portal ChangeLanguage).
+(portal ChangeLanguage: auth-gated lang_web setter).
 E13 Envelope: `_BasedController.cs:137-196` vs raw `JsonContent(`; customer mirror
 `_BasedCustomerController.cs:63-80`.
 E14 List-shape sampling: canonical ContactType + complex Customer_Create + exceptions GetSettings /

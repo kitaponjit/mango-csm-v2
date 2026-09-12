@@ -60,7 +60,6 @@ npm run build:prod  # same as build (npm run pub is another alias)
 | `webpack.common.js` | shared: entry discovery, loaders, `vue$ → vue/dist/vue.esm.js` alias, asset rules |
 | `webpack.dev.config.js` | merged dev: filesystem cache, no minify, no splitChunks, `BrowserSyncPlugin`, eval source maps |
 | `webpack.prod.config.js` | merged prod: Terser (keeps `console`), filesystem cache in `.webpack-cache-prod`, `LimitChunkCountPlugin` max 100 |
-| `webpack.config.js` | **legacy leftover** — the old single-file prod config. Not referenced by any npm script. Do not edit it. |
 
 **There are no automated tests in this project.** Verify changes by exercising the running dev build in the browser.
 

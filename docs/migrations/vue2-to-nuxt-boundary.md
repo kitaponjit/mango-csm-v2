@@ -26,7 +26,7 @@ Observed in the current working copy:
 - `Website/Scripts/App/Application/Store/store.js` creates a Vuex store with shared code/config/company state, asynchronous actions using the global `$xt` service helper, alert handling through `$msg`, and a `global.store` export.
 - `Website/Page/Default.aspx` is an ASP.NET-rendered host page. It computes URLs and server settings from the request and `Web.config` app settings, emits runtime globals, creates `<div id="app"><router-view></router-view></div>`, loads legacy script globals, and finally loads `Scripts/bundle/Application.js`.
 - `Website/webpack.common.js` discovers `Scripts/App/*/main.js` entries and emits bundles under `Scripts/Bundle`. The development config adds history fallback and BrowserSync on port `4060` proxying IIS on port `4061`; the production config cleans and minifies output.
-- `Website/webpack.config.js` is present but is documented by `Website/AGENTS.md` as a legacy leftover not referenced by the package scripts.
+- Only `Website/webpack.common/dev/prod.config.js` remain (`webpack.config.js`, a dead single-file config, was removed).
 - No `Website/nuxt.config.*` or `Website/vite.config.*` exists. No Nuxt/Vite boundary or target entry point is established by repository files.
 
 Applicable governance was read before this record was written:
