@@ -23,6 +23,8 @@ Treat these targets as project requirements. Do not silently replace them or inv
 - `Website/AGENTS.md` governs detailed legacy Vue 2, Webpack, ASP.NET host, API, routing, component, and Website workflow behavior.
 - `Website/CLAUDE.md` directs agents to `Website/AGENTS.md`; it is not a second implementation manual.
 - `Website/.claude/skills/` contains narrow workflow/domain guidance. Apply it when its trigger scope matches the task.
+- Verified backend contracts, ownership, and navigation recipes live in `docs/backend/contract-navigation-knowledge.md`. Read it before traversing the backend.
+- UI/style consistency evidence lives in `docs/migrations/future-ui-consistency.md` (baseline + UI-1..UI-5) and `docs/ui-consistency/layout-inventory.md` (exhaustive page inventory).
 - Legacy rules preserve compatibility where needed, but do not authorize expanding legacy architecture or overriding the migration target.
 - Use the narrowest useful governance scope. Do not duplicate Website implementation detail in this file.
 
@@ -53,8 +55,8 @@ Current checkout evidence:
 | Webpack 5 → Vite | `TRANSITIONAL` | Legacy Website scripts still use Webpack; the independent `Nuxt/` target uses Nuxt's Vite build and separate output ownership. |
 | ASP.NET Framework 4.8 → .NET 7 | `LEGACY` | The checkout contains Framework/IIS host evidence but no .NET 7 project; do not rewrite Framework code incidentally. |
 | IIS-only → IIS + Docker | `LEGACY` | IIS configuration exists and Docker topology is not established; do not assume Docker replaces or embeds IIS. |
-| SQL Server → SQLite | `UNKNOWN` | Backend/data-access code is not in this checkout; determine ownership and relational semantics before selecting SQLite. |
-| MongoDB introduction | `UNKNOWN` | No MongoDB implementation is evidenced; do not assign data to MongoDB without an explicit ownership decision. |
+| SQL Server → SQLite | `UNKNOWN` | Backend/data-access code is not in this checkout; determine ownership and relational semantics before selecting SQLite. A read-only survey of the separate backend found EF6 data access alongside extensive interpolated raw SQL in CSM scope (e.g. `SqlFetch2` in `Areas/CSM/Controllers/CenterController.cs`, `APIController.cs:221`); the ownership decision is still required. |
+| MongoDB introduction | `UNKNOWN` | No MongoDB implementation is evidenced; do not assign data to MongoDB without an explicit ownership decision. Append-only logs/chat are the only fit candidate identified; still requires an explicit decision. |
 
 ## Repository Boundaries
 
@@ -77,6 +79,7 @@ Current checkout evidence:
 - Do not read third-party trees such as `node_modules/` when manifests or targeted project files are sufficient.
 - Match repository formatting and preserve existing comments unless the task requires otherwise.
 - Do not claim a build, test, parity check, or manual verification that was not actually performed.
+- Do not push directly to `main` — use topic branches with pull-request review and merge; delete branches after they are merged.
 
 ## Legacy Compatibility Policy
 
@@ -138,6 +141,7 @@ Current checkout evidence:
 - Follow `Website/AGENTS.md` for legacy Website build and browser-validation rules.
 - For governance-only changes, reread the edited file, inspect the final diff, run `git diff --check`, and confirm no unrelated file changed.
 - State skipped validation explicitly. Evidence must precede completion claims.
+- Unit or component test success (e.g. Vitest) is not integration or UAT evidence. Production authorization additionally requires real-environment evidence plus owner sign-off.
 
 ## Change Safety
 
@@ -146,16 +150,17 @@ Current checkout evidence:
 - Do not modify nested governance files merely to duplicate root migration policy.
 - If a nested rule is materially wrong, record the conflict and request a scoped governance change unless the current task explicitly authorizes that nested edit.
 - When uncertainty materially blocks the current task, report `OPEN MIGRATION QUESTION:` in the task result. Persist it in governance only when governance/documentation is part of the task or a designated decision log exists.
+- When a reference target is missing, annotate the gap instead of silently deleting the reference. Re-verify delegated findings against source before relying on them for blocking decisions.
 
 ## Open Migration Questions
 
 The current checkout leaves these decisions unresolved:
 
-- Target state ownership and shared-context policy for routes beyond the first slice.
-- Vite/target artifact deployment automation and the retirement criteria for Webpack.
-- Owning .NET 7 backend project, API boundary, and IIS/Docker topology.
-- SQLite/MongoDB ownership, SQL Server feature mapping, cross-store consistency, migration, and rollback.
-- Legacy endpoint/host retirement criteria after behavioral parity is demonstrated.
+- Target state ownership and shared-context policy for routes beyond the first slice. Recommended direction: one slice per route, Master-first; shared primitives centrally gated.
+- Vite/target artifact deployment automation and the retirement criteria for Webpack. Recommended direction: per-route strangler; the dead `Website/webpack.config.js` has been removed.
+- Owning .NET 7 backend project, API boundary, and IIS/Docker topology. Recommended direction: IIS-only .NET 7 unless proven otherwise; requires a topology sheet from the backend/platform owner.
+- SQLite/MongoDB ownership, SQL Server feature mapping, cross-store consistency, migration, and rollback. Recommended direction: SQLite-first (configs, then tickets, then reproduced sessions); MongoDB only for append-only logs/chat with explicit sign-off.
+- Legacy endpoint/host retirement criteria after behavioral parity is demonstrated. Recommended direction: per-route checklist plus approvals; retireable today: nothing.
 
 Report an unresolved item as `OPEN MIGRATION QUESTION:` only when it materially blocks the current task; do not invent an architectural answer.
 
@@ -178,5 +183,7 @@ Legacy frontend           : Website/
 Legacy host               : Website/Page/Default.aspx
 Target frontend           : Nuxt/ (Nuxt 4 SPA, Vite, /csm-next/**)
 Backend                   : separate repository; locate and verify before editing
+Backend contracts         : docs/backend/contract-navigation-knowledge.md
+UI consistency evidence   : docs/migrations/future-ui-consistency.md + docs/ui-consistency/layout-inventory.md
 Target direction          : Nuxt + Vite + .NET 7 + IIS/Docker + SQLite/MongoDB
 ```
