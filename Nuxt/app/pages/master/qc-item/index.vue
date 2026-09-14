@@ -216,18 +216,25 @@ async function uploadFile() {
 }
 
 async function exportFile() {
+  const exportWindow = globalThis.open?.('about:blank', '_blank')
   exportStatus.value = 'loading'
   exportError.value = ''
 
   const result = await service.exportFile()
   if (!result.ok) {
+    exportWindow?.close()
     exportStatus.value = 'error'
     exportError.value = result.error.message
     return
   }
 
   const url = files.openUrl(result.data, { download: true })
-  globalThis.open?.(url, '_blank', 'noopener')
+  if (exportWindow && !exportWindow.closed) {
+    exportWindow.location.href = url
+  }
+  else {
+    globalThis.open?.(url, '_blank', 'noopener')
+  }
   exportStatus.value = 'success'
 }
 

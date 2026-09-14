@@ -247,17 +247,24 @@ describe('QCItem page access and read state', () => {
     getContext.mockReturnValue({ isAuthenticated: true })
     apiGet
       .mockResolvedValueOnce({ ok: true, status: 200, data: [] })
-      .mockResolvedValueOnce({ ok: true, status: 200, data: 'server-token' })
+    let resolveExport!: (result: unknown) => void
+    apiGet.mockReturnValueOnce(new Promise(resolve => { resolveExport = resolve }))
     apiOpenUrl.mockReturnValue('/service/Api/File/DownLoad?download=true&id=server-token')
-    const open = vi.fn()
+    const exportWindow = { closed: false, location: { href: '' } }
+    const open = vi.fn().mockReturnValue(exportWindow)
     vi.stubGlobal('open', open)
     const wrapper = mount(QCItemPage)
     await flushPromises()
-    await wrapper.get('[data-testid="qcitem-export"]').trigger('click')
+    void wrapper.get('[data-testid="qcitem-export"]').trigger('click')
+    await nextTick()
+
+    expect(open).toHaveBeenCalledWith('about:blank', '_blank')
+    expect(apiOpenUrl).not.toHaveBeenCalled()
+    resolveExport({ ok: true, status: 200, data: 'server-token' })
     await flushPromises()
 
     expect(apiOpenUrl).toHaveBeenCalledWith('server-token', { download: true })
-    expect(open).toHaveBeenCalledWith('/service/Api/File/DownLoad?download=true&id=server-token', '_blank', 'noopener')
+    expect(exportWindow.location.href).toBe('/service/Api/File/DownLoad?download=true&id=server-token')
   })
 
   it('exposes accessible action labels and disables Save while the replace-all request is pending', async () => {
