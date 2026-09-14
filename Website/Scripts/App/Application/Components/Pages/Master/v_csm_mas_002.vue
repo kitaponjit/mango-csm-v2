@@ -170,11 +170,11 @@
               </div>
               <div class="wm-field">
                 <label class="wm-label">Start Date</label>
-                <input type="text" class="wm-input" :value="formData.war_date_start | date()" readonly />
+                <input type="text" class="wm-input" :value="$date(formData.war_date_start)" readonly />
               </div>
               <div class="wm-field">
                 <label class="wm-label">End Date</label>
-                <input type="text" class="wm-input" :value="formData.war_date_end | date()" readonly />
+                <input type="text" class="wm-input" :value="$date(formData.war_date_end)" readonly />
               </div>
             </div>
             <div class="wm-grid wm-grid--2col">
@@ -253,8 +253,8 @@
                   <td><span class="ric-code">{{ x.war_code }}</span></td>
                   <td>{{ x.war_des }}</td>
                   <td>{{ x.cust_name }}</td>
-                  <td style="text-align:center;">{{ x.war_date_start | date() }}</td>
-                  <td style="text-align:center;">{{ x.war_date_end | date() }}</td>
+                  <td style="text-align:center;">{{ $date(x.war_date_start) }}</td>
+                  <td style="text-align:center;">{{ $date(x.war_date_end) }}</td>
                   <td>{{ x.ic_docno }}</td>
                   <td style="text-align:center;">{{ x.ic_itemno }}</td>
                 </tr>

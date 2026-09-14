@@ -28,10 +28,10 @@
                   <td align="center" class="text-bold">{{z.itemno}}</td>
                   <td>{{z.pre_des}}</td>
                   <td align="center" :class="statusClass('text-', z.status)">{{z.status}}</td>
-                  <td align="center">{{z.warst_date | date('DD/MM/YYYY')}}</td>
-                  <td align="center">{{z.warend_date | date('DD/MM/YYYY')}}</td>
-                  <td align="center">{{z.mast_date | date('DD/MM/YYYY')}}</td>
-                  <td align="center">{{z.maend_date | date('DD/MM/YYYY')}}</td>
+                  <td align="center">{{$date(z.warst_date, 'DD/MM/YYYY')}}</td>
+                  <td align="center">{{$date(z.warend_date, 'DD/MM/YYYY')}}</td>
+                  <td align="center">{{$date(z.mast_date, 'DD/MM/YYYY')}}</td>
+                  <td align="center">{{$date(z.maend_date, 'DD/MM/YYYY')}}</td>
                 </tr>
 
               </template>

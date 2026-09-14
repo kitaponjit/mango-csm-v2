@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import VueCompositionAPI from '@vue/composition-api'
 
 import routes from './routes'
 
@@ -57,7 +56,6 @@ import feather from 'vue-icon'
 import VuePictureSwipe from 'vue-picture-swipe'
 import vueEventCalendar from 'vue-event-calendar'
 import VueSweetalert2 from 'vue-sweetalert2'
-import VueCurrencyFilter from 'vue-currency-filter'
 import ElementLoading from 'vue-element-loading'
 import VueSelect2 from 'v-select2-component'
 
@@ -118,20 +116,14 @@ window.jsondiffpatch = jsondiffpatch
 
 
 Vue.config.keyCodes.f2 = 113
-Vue.filter('date', formatDateFilter)
-Vue.filter('number', formatNumberFilter)
+Vue.prototype.$date = formatDateFilter
+Vue.prototype.$num = formatNumberFilter
 Vue.use(VueRouter)
 Vue.use(VTooltip)
 Vue.use(feather, 'v-icon')
 Vue.use(vueEventCalendar, { locale: 'en', color: '#010c1b' })
 Vue.use(VueSweetalert2)
 Vue.use(echartsPlugin, { echarts })
-Vue.use(VueCurrencyFilter, {
-  thousandsSeparator: ',',
-  fractionCount: 2,
-  fractionSeparator: '.',
-})
-Vue.use(VueCompositionAPI)
 Vue.use(ColorPanel)
 Vue.use(ColorPicker)
 Vue.use(VScrollSync, { throttle: 1 })

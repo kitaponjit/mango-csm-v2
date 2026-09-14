@@ -81,7 +81,7 @@
                             <div style="font-weight:700;color:#1e293b;font-size:12.5px;">{{x.job_no}}</div>
                             <div style="font-size:11px;color:#64748b;margin-top:2px;">ผู้ปฏิบัติงาน : {{x.worker_name}}</div>
                           </div>
-                          <span class="pull-right">{{ui.csm_v2_date || 'วันที่'}} : {{x.due_date | date()}}</span>
+                          <span class="pull-right">{{ui.csm_v2_date || 'วันที่'}} : {{$date(x.due_date)}}</span>
                         </a>
                       </li>
                     </ul>
@@ -909,8 +909,8 @@
 
 
         $linq(this.datalist).foreach(d => {
-          //  d.job_date = this.$options.filters.date(d.job_date, "DD/MM/YYYY HH:mm");
-          //d.assign_date = this.$options.filters.date(d.assign_date, "DD/MM/YYYY HH:mm");
+          //  d.job_date = this.$date(d.job_date, "DD/MM/YYYY HH:mm");
+          //d.assign_date = this.$date(d.assign_date, "DD/MM/YYYY HH:mm");
 
           d.job_priority_text = this.priorityName(d.job_priority);
           d.job_priority_code = d.job_priority;

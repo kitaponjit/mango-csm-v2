@@ -152,11 +152,11 @@
                             </td>
                             <td align="center">{{ index + 1 }}</td>
                             <td align="center"><span class="csm-reqno">{{ v.reqno }}</span></td>
-                            <td align="center">{{ v.add_dt | date('DD/MM/YYYY HH:mm') }}</td>
-                            <td align="center">{{ v.date_convenient1 | date('DD/MM/YYYY') }}</td>
-                            <td align="center">{{ v.stdate_convenient1 | date('HH:mm') }} - {{ v.enddate_convenient1 | date('HH:mm') }}</td>
-                            <td align="center">{{ v.date_convenient2 | date('DD/MM/YYYY') }}</td>
-                            <td align="center">{{ v.stdate_convenient2 | date('HH:mm') }} - {{ v.enddate_convenient2 | date('HH:mm') }}</td>
+                            <td align="center">{{ $date(v.add_dt, 'DD/MM/YYYY HH:mm') }}</td>
+                            <td align="center">{{ $date(v.date_convenient1, 'DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(v.stdate_convenient1, 'HH:mm') }} - {{ $date(v.enddate_convenient1, 'HH:mm') }}</td>
+                            <td align="center">{{ $date(v.date_convenient2, 'DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(v.stdate_convenient2, 'HH:mm') }} - {{ $date(v.enddate_convenient2, 'HH:mm') }}</td>
                             <td>{{ v.contract_tel }}</td>
                             <td v-if="isMango()" align="center">{{ v.module }}</td>
                             <td v-if="!isMango()" align="center">{{ v.locname }}</td>
@@ -176,8 +176,8 @@
                             <td align="center">{{ v.checker_name }}</td>
                             <td v-if="showHStatusColumns" align="center">{{ v.req_name }}</td>
                             <td v-if="showHStatusColumns" align="center">{{ v.assign_name }}</td>
-                            <td v-if="showHStatusColumns" align="center">{{ v.response_date | date('DD/MM/YYYY') }}</td>
-                            <td v-if="showHStatusColumns" align="center">{{ v.due_date | date('DD/MM/YYYY') }}</td>
+                            <td v-if="showHStatusColumns" align="center">{{ $date(v.response_date, 'DD/MM/YYYY') }}</td>
+                            <td v-if="showHStatusColumns" align="center">{{ $date(v.due_date, 'DD/MM/YYYY') }}</td>
                             <td v-if="showHStatusColumns" align="center">{{ v.item_name || '' }}</td>
                             <td v-if="showHStatusColumns" align="center" class="fw-bold">{{ v.diff_days != null ? v.diff_days + ' ' + ui.erp_day : '' }}</td>
                           </tr>
@@ -252,11 +252,11 @@
                           <tr v-for="(v, index) in g.detail" :key="'rej_' + v.reqno + '_' + index" class="csm-data-row csm-row--reject">
                             <td align="center">{{ index + 1 }}</td>
                             <td align="center"><span class="csm-reqno">{{ v.reqno }}</span></td>
-                            <td align="center">{{ v.add_dt | date('DD/MM/YYYY HH:mm') }}</td>
-                            <td align="center">{{ v.date_convenient1 | date('DD/MM/YYYY') }}</td>
-                            <td align="center">{{ v.stdate_convenient1 | date('HH:mm') }} - {{ v.enddate_convenient1 | date('HH:mm') }}</td>
-                            <td align="center">{{ v.date_convenient2 | date('DD/MM/YYYY') }}</td>
-                            <td align="center">{{ v.stdate_convenient2 | date('HH:mm') }} - {{ v.enddate_convenient2 | date('HH:mm') }}</td>
+                            <td align="center">{{ $date(v.add_dt, 'DD/MM/YYYY HH:mm') }}</td>
+                            <td align="center">{{ $date(v.date_convenient1, 'DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(v.stdate_convenient1, 'HH:mm') }} - {{ $date(v.enddate_convenient1, 'HH:mm') }}</td>
+                            <td align="center">{{ $date(v.date_convenient2, 'DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(v.stdate_convenient2, 'HH:mm') }} - {{ $date(v.enddate_convenient2, 'HH:mm') }}</td>
                             <td>{{ v.contract_tel }}</td>
                             <td align="center">{{ v.module }}</td>
                             <td>{{ v.subject }}</td>

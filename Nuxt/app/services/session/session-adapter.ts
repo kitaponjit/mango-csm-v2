@@ -9,6 +9,7 @@ export interface SessionContext {
 
 export interface SessionAdapter {
   getContext(): SessionContext
+  establishSession(credential: string): boolean
   redirectToLogin(): void
 }
 
@@ -17,8 +18,10 @@ export interface InternalCredentialProvider {
   handleInvalidCredential(): void
 }
 
-interface StorageReader {
+interface StoragePort {
   getItem(key: string): string | null
+  setItem(key: string, value: string): void
+  removeItem(key: string): void
 }
 
 interface NavigationPort {
@@ -26,7 +29,7 @@ interface NavigationPort {
 }
 
 interface InternalSessionOptions {
-  storage: StorageReader
+  storage: StoragePort
   navigation: NavigationPort
   loginPath: string
 }
@@ -54,6 +57,15 @@ export function createInternalSessionAdapter(
 
   const redirectToLogin = () => options.navigation.assign(options.loginPath)
 
+  const clearCredential = () => {
+    try {
+      options.storage.removeItem(credentialKey)
+    }
+    catch {
+      // In-memory invalidation still prevents reuse when browser storage is unavailable.
+    }
+  }
+
   const session: SessionAdapter = {
     getContext() {
       const isAuthenticated = !invalid && readCredential() !== null
@@ -62,6 +74,21 @@ export function createInternalSessionAdapter(
         scope: 'internal',
         status: invalid ? 'invalid' : isAuthenticated ? 'authenticated' : 'anonymous',
         isAuthenticated,
+      }
+    },
+    establishSession(credential) {
+      const normalized = credential.trim()
+      if (!normalized) {
+        return false
+      }
+
+      try {
+        options.storage.setItem(credentialKey, normalized)
+        invalid = false
+        return true
+      }
+      catch {
+        return false
       }
     },
     redirectToLogin,
@@ -73,6 +100,7 @@ export function createInternalSessionAdapter(
     },
     handleInvalidCredential() {
       invalid = true
+      clearCredential()
       redirectToLogin()
     },
   }

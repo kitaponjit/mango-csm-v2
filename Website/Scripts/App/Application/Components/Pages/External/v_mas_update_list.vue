@@ -39,7 +39,7 @@
                         <td align="center"><span class="label label-info">{{x.revision}}</span></td>
                         <td class="cx-subject"><a href="#" @click.prevent="showAttachment(x)"><i class="far fa-images"></i> {{x.subject}}</a></td>
                         <td align="center"><span class="cx-docno">{{x.module}}</span></td>
-                        <td align="center">{{x.add_dt | date()}}</td>
+                        <td align="center">{{$date(x.add_dt)}}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -66,7 +66,7 @@
               <span class="cx-shot__zoom"><i class="fas fa-search-plus"></i></span>
             </a>
             <div class="cx-shot__body">
-              <span class="cx-shot__no">{{(idx+1)|number(0)}}</span>
+              <span class="cx-shot__no">{{$num((idx+1), 0)}}</span>
               <span class="cx-shot__desc">{{y.description}}</span>
             </div>
           </div>

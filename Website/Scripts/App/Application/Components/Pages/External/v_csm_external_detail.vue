@@ -75,21 +75,21 @@
                     <span class="cx-date__ico"><i class="fa fa-calendar"></i></span>
                     <div class="cx-date__body">
                       <span class="cx-date__key">ติดต่อกลับ</span>
-                      <label class="cx-date__val">{{formData['response_date']|date('DD/MM/YYYY')}}</label>
+                      <label class="cx-date__val">{{$date(formData['response_date'], 'DD/MM/YYYY')}}</label>
                     </div>
                   </div>
                   <div class="cx-date cx-date--warn">
                     <span class="cx-date__ico"><i class="far fa-calendar-times"></i></span>
                     <div class="cx-date__body">
                       <span class="cx-date__key">วันที่ครบกำหนด</span>
-                      <label class="cx-date__val">{{formData['due_date']|date('DD/MM/YYYY')}}</label>
+                      <label class="cx-date__val">{{$date(formData['due_date'], 'DD/MM/YYYY')}}</label>
                     </div>
                   </div>
                   <div class="cx-date cx-date--ok">
                     <span class="cx-date__ico"><i class="far fa-calendar-check"></i></span>
                     <div class="cx-date__body">
                       <span class="cx-date__key">วันที่แล้วเสร็จ</span>
-                      <label class="cx-date__val">{{formData['complete_date']|date('DD/MM/YYYY')}}</label>
+                      <label class="cx-date__val">{{$date(formData['complete_date'], 'DD/MM/YYYY')}}</label>
                     </div>
                   </div>
                 </div>
@@ -145,7 +145,7 @@
                         <i class="fas fa-user"></i>
                         {{idx+1}}. {{xt.isEmpty(x.customer_code) ? x.req_name : x.customer_name}}
                       </span>
-                      <span class="cx-bubble__time"><i class="far fa-clock"></i> {{x.add_dt|date('DD/MM/YYYY HH:mm:ss')}}</span>
+                      <span class="cx-bubble__time"><i class="far fa-clock"></i> {{$date(x.add_dt, 'DD/MM/YYYY HH:mm:ss')}}</span>
                     </div>
                     <span class="cx-bubble__text">{{x.description}}</span>
                   </div>
@@ -188,7 +188,7 @@
                       </a>
                       <div class="cx-file__desc" v-if="x.description">{{x.description}}</div>
                       <div class="cx-file__meta">
-                        {{idx+1}}. {{x.add_dt | date('DD/MM/YYYY HH:mm')}}
+                        {{idx+1}}. {{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}
                         <span class="cx-file__ext">{{getFileExt(x.filename)}}</span>
                         <i class="fas fa-times" v-if="x.add_user===auth.userid"></i>
                       </div>

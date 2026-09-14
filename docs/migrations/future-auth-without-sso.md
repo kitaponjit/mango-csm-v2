@@ -8,6 +8,8 @@ This is a documentation and discovery record captured from the frontend checkout
 
 The internal first-slice `SessionAdapter`, authenticated GET `ApiClient`, runtime configuration, and file capability were implemented through PR #4 and exercised by the manual route in PR #8. This does not close AUTH-1: backend/security confirmation of token provenance, validation, lifetime, rotation, revocation, and logout semantics remains required before production cutover. Customer authentication and confirmed provider-specific retirement also remain future work.
 
+Source-backed validation against the separately supplied .NET backend is recorded in [Authentication Contract Validation Evidence](../testcases/auth-contract-validation-2026-09-11.md). That evidence confirms the `X-Mango-Auth` issuance and transport boundary and records the remaining live-environment and security-owner blockers for GitHub Issue #11.
+
 ## Project Decision
 
 SSO will not be used in the target architecture.

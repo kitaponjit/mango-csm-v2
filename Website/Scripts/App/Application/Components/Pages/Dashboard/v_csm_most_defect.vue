@@ -5,7 +5,7 @@
         <section class="content-header">
           <h1>
             Majors Defect Dashboard
-            <small> at {{date_range[0] | date('MMM YYYY')}} - {{date_range[1] | date('MMM YYYY')}}</small>
+            <small> at {{$date(date_range[0], 'MMM YYYY')}} - {{$date(date_range[1], 'MMM YYYY')}}</small>
           </h1>
           <ol class="breadcrumb">
             <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
@@ -73,12 +73,12 @@
                       <tr v-for="x,idx in dashDetail" v-if="dashDetail.length">
                         <td align="center">{{idx+1}}</td>
                         <td align="center">{{x.csm_no}}</td>
-                        <td align="center">{{x.csm_date | date()}}</td>
+                        <td align="center">{{$date(x.csm_date)}}</td>
                         <td align="left">{{ !x.refcode ? '' : '(' + x.refcode + ')' }} {{x.projname}}</td>
                         <td align="left">{{x.customer_name}}</td>
                         <td align="left">{{x.subject}}</td>
                         <td align="left">{{x.subject_detail}}</td>
-                        <td align="center">{{x.due_date | date()}}</td>
+                        <td align="center">{{$date(x.due_date)}}</td>
                         <td align="left">{{x.responsible}}</td>
                         <td align="left">{{x.worker}}</td>
                         <td align="center" :style="{'color': statusColor[x.status] || ''}">{{x.status_name}}</td>

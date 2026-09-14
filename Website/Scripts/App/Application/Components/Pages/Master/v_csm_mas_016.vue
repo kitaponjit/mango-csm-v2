@@ -57,9 +57,9 @@
                               <td align="center">{{x.subject}}</td>
                               <td align="center" :class="statusClass(x.active)">{{statusName(x.active)}}</td>
                               <td align="center">{{x.adduser}}</td>
-                              <td align="center">{{x.add_dt|date}}</td>
+                              <td align="center">{{$date(x.add_dt)}}</td>
                               <td align="center">{{x.edituser}}</td>
-                              <td align="center">{{x.edit_dt|date}}</td>
+                              <td align="center">{{$date(x.edit_dt)}}</td>
                             </tr>
                           </tbody>
                         </table>

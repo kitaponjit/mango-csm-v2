@@ -898,9 +898,9 @@
                   </div>
                   <hr>
                   <div class="panel-footer-v2 p-0  d-flex justify-content-between">
-                    <span class="m-0 text-secondary-cc" v-if="status_text == 'P'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ xt.isEmpty(x.worker_end_date) ? '-' : x.worker_end_date | date('DD/MM/YYYY') }}</span></span>
-                    <span class="m-0 text-secondary-cc" v-else-if="status_text == 'HW'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ xt.isEmpty(x.due_date) ? '-' : x.due_date | date('DD/MM/YYYY') }}</span></span>
-                    <span class="m-0 text-secondary-cc" v-else-if="x.job_status == 'W' || x.job_status == 'I'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ xt.isEmpty(x.due_date) ? '-' : x.due_date | date('DD/MM/YYYY') }}</span></span>
+                    <span class="m-0 text-secondary-cc" v-if="status_text == 'P'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ $date(xt.isEmpty(x.worker_end_date) ? '-' : x.worker_end_date, 'DD/MM/YYYY') }}</span></span>
+                    <span class="m-0 text-secondary-cc" v-else-if="status_text == 'HW'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ $date(xt.isEmpty(x.due_date) ? '-' : x.due_date, 'DD/MM/YYYY') }}</span></span>
+                    <span class="m-0 text-secondary-cc" v-else-if="x.job_status == 'W' || x.job_status == 'I'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ $date(xt.isEmpty(x.due_date) ? '-' : x.due_date, 'DD/MM/YYYY') }}</span></span>
                     <div v-show="status_text == 'Y' || x.job_status == 'Y'">
                       <button class="form-control border-radius-10 hidden-xs" :class="[x.total_ans == 0 ? 'bg-success-v2-10 text-success-v2' : 'bg-secondary-v3']" @click="Score_Read('web',x)">
                         <img :src="`${baseUrl}Content/Images/Icon SVG/engineering_material-symbols-${x.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
@@ -984,8 +984,8 @@
                   <span>{{ ui.csm_v2_appointment_date }}</span>
                 </div>
                 <div class="d-flex flex-column margin-t-5 margin-l-25">
-                  <span>{{ chkstatus_detail.date_convenient1 }} {{ chkstatus_detail.st1_time | date('HH:mm:ss')}} - {{ chkstatus_detail.end1_time | date('HH:mm:ss')}}</span>
-                  <span>{{ chkstatus_detail.date_convenient2 }} {{ chkstatus_detail.st2_time | date('HH:mm:ss')}} - {{ chkstatus_detail.end2_time | date('HH:mm:ss')}} {{ ui.csm_v2_alternative_date }}</span>
+                  <span>{{ chkstatus_detail.date_convenient1 }} {{ $date(chkstatus_detail.st1_time, 'HH:mm:ss')}} - {{ $date(chkstatus_detail.end1_time, 'HH:mm:ss')}}</span>
+                  <span>{{ chkstatus_detail.date_convenient2 }} {{ $date(chkstatus_detail.st2_time, 'HH:mm:ss')}} - {{ $date(chkstatus_detail.end2_time, 'HH:mm:ss')}} {{ ui.csm_v2_alternative_date }}</span>
                 </div>
               </div>
             </div>
@@ -1021,17 +1021,17 @@
               <ul class="progress-vartical-step">
                 <li class="progress__item " v-bind:class="{'progress__item--active': ['N', 'HW', 'P', 'Y'].includes(status_text)}">
                   <p class="progress__title text-success-v2">{{ ui.csm_v2_submission_date }}</p>
-                  <p class="progress__info text-secondary-v2" v-if="chkstatus_detail.add_dt">{{ ui.csm_v2_date }} {{ chkstatus_detail.add_dt | date('DD/MM/YYYY HH:mm') }}</p>
+                  <p class="progress__info text-secondary-v2" v-if="chkstatus_detail.add_dt">{{ ui.csm_v2_date }} {{ $date(chkstatus_detail.add_dt, 'DD/MM/YYYY HH:mm') }}</p>
                 </li>
                 <li class="progress__item" v-bind:class="{'progress__item--active': ['HW', 'P', 'Y'].includes(status_text)}">
                   <p class="progress__title text-success-v2">{{ ui.csm_v2_status_pending }} <img v-if="['HW', 'P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}Content/Images/Icon SVG/image-search.svg`" width="20" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type === 'B'))" /></p>
-                  <p class="progress__info text-secondary-v2" v-if="['HW', 'P', 'Y'].includes(status_text)">{{ chkstatus_detail.response_date | date('DD/MM/YYYY HH:mm') }}</p>
-                  <p class="progress__info text-secondary-v2" v-if="['HW', 'P', 'Y'].includes(status_text)">{{ ui.csm_v2_due_date }} <span class="text-success-v2">{{chkstatus_detail.due_date | date('DD/MM/YYYY')}}</span></p>
+                  <p class="progress__info text-secondary-v2" v-if="['HW', 'P', 'Y'].includes(status_text)">{{ $date(chkstatus_detail.response_date, 'DD/MM/YYYY HH:mm') }}</p>
+                  <p class="progress__info text-secondary-v2" v-if="['HW', 'P', 'Y'].includes(status_text)">{{ ui.csm_v2_due_date }} <span class="text-success-v2">{{$date(chkstatus_detail.due_date, 'DD/MM/YYYY')}}</span></p>
                 </li>
                 <li class="progress__item" v-bind:class="{'progress__item--active': ['P', 'Y'].includes(status_text)}">
                   <p class="progress__title text-success-v2">{{ ui.csm_v2_status_in_progress }} <img v-if="['P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}Content/Images/Icon SVG/image-search.svg`" width="20" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type === 'A'))" /></p>
-                  <p class="progress__info text-secondary-v2" v-if="['P', 'Y'].includes(status_text)">{{ chkstatus_detail.worker_start_date | date('DD/MM/YYYY HH:mm') }}</p>
-                  <p class="progress__info text-secondary-v2" v-if="['P', 'Y'].includes(status_text)">{{ ui.csm_v2_due_date }} <span class="text-success-v2">{{chkstatus_detail.worker_end_date | date('DD/MM/YYYY')}}</span></p>
+                  <p class="progress__info text-secondary-v2" v-if="['P', 'Y'].includes(status_text)">{{ $date(chkstatus_detail.worker_start_date, 'DD/MM/YYYY HH:mm') }}</p>
+                  <p class="progress__info text-secondary-v2" v-if="['P', 'Y'].includes(status_text)">{{ ui.csm_v2_due_date }} <span class="text-success-v2">{{$date(chkstatus_detail.worker_end_date, 'DD/MM/YYYY')}}</span></p>
                 </li>
                 <li class="progress__item" :class="{'progress__item--active': status_text === 'Y'}">
                   <p class="progress__title text-success-v2" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -1039,7 +1039,7 @@
                     <img v-if="['P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}Content/Images/Icon SVG/image-search.svg`" width="20" style="vertical-align: middle; cursor: pointer;" @click="viewImage(chkstatus_detail.pics.filter(pic => ['S1', 'Y'].includes(pic.item_type)))" />
                     <i v-if="['Y'].includes(status_text) && is_mango === 'Y'" class="far fa-file text-black" style="font-size: 17px; cursor: pointer;" @click="viewImage(chkstatus_detail.pics.filter(pic => ['T'].includes(pic.item_type)))"></i>
                   </p>
-                  <p class="progress__info text-secondary-v2" v-if="status_text == 'Y'">{{ ui.csm_v2_status_done }} <span class="text-success-v2">{{chkstatus_detail.complete_date | date('DD/MM/YYYY')}}</span></p>
+                  <p class="progress__info text-secondary-v2" v-if="status_text == 'Y'">{{ ui.csm_v2_status_done }} <span class="text-success-v2">{{$date(chkstatus_detail.complete_date, 'DD/MM/YYYY')}}</span></p>
                 </li>
 
               </ul>

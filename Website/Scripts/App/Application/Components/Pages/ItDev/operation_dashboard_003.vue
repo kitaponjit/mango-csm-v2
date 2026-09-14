@@ -57,7 +57,7 @@
   </div>
 </template>
 <script>
-  import { onMounted, ref } from '@vue/composition-api';
+  import { onMounted, ref } from 'vue';
 import * as mathjs from 'mathjs';
 import Vue from 'vue';
 import Layout from './dashboard_layout.vue';

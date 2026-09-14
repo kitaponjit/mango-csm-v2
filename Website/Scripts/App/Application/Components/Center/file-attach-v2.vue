@@ -112,7 +112,7 @@
                     <span class="user-tag">{{x.adduser}}</span>
                   </td>
                   <td class="text-center">
-                    <span class="date-text">{{x.add_dt | date()}}</span>
+                    <span class="date-text">{{$date(x.add_dt)}}</span>
                   </td>
                 </tr>
               </draggable>

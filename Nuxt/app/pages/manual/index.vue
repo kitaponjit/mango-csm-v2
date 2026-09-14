@@ -20,6 +20,7 @@ import { createManualService } from '~/features/manual/manual-service'
 
 type SearchMode = 'date' | 'revision'
 type ViewStatus = 'idle' | 'loading' | 'ready' | 'error'
+type AccessStatus = 'checking' | 'authenticated' | 'anonymous'
 
 const api = useApiClient()
 const files = useFileCapability()
@@ -46,6 +47,7 @@ const selectedRow = ref<ManualRow | null>(null)
 const attachments = ref<ManualAttachment[]>([])
 const attachmentStatus = ref<ViewStatus>('idle')
 const attachmentError = ref('')
+const accessStatus = ref<AccessStatus>('checking')
 
 const visibleRows = computed(() => filterManualRows(rows.value, activeModule.value))
 const dialogTitle = computed(() => selectedRow.value
@@ -111,13 +113,19 @@ function closeAttachments() {
   attachmentStatus.value = 'idle'
 }
 
-onMounted(() => {
+async function initializeManualPage() {
   if (!session.getContext().isAuthenticated) {
+    accessStatus.value = 'anonymous'
     session.redirectToLogin()
     return
   }
 
-  void search()
+  accessStatus.value = 'authenticated'
+  await search()
+}
+
+onMounted(() => {
+  void initializeManualPage()
 })
 </script>
 
@@ -131,7 +139,19 @@ onMounted(() => {
       </div>
     </header>
 
-    <section class="target-panel" aria-labelledby="manual-filters-title">
+    <TargetState
+      v-if="accessStatus === 'checking'"
+      kind="loading"
+      :title="t('manual.authChecking')"
+    />
+    <TargetState
+      v-else-if="accessStatus === 'anonymous'"
+      kind="error"
+      :title="t('manual.authRequired')"
+      :message="t('manual.authUnavailable')"
+    />
+
+    <section v-else class="target-panel" aria-labelledby="manual-filters-title">
       <form class="target-panel__section" @submit.prevent="search">
         <h2 id="manual-filters-title" class="target-section-title">{{ t('manual.filters') }}</h2>
         <fieldset class="manual-mode">
@@ -246,6 +266,7 @@ onMounted(() => {
     </section>
 
     <TargetDialog
+      v-if="accessStatus === 'authenticated'"
       :open="selectedRow !== null"
       :title="dialogTitle"
       :close-label="t('manual.close')"

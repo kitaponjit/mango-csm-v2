@@ -82,7 +82,7 @@
                               <td class="text-center">{{idx+1}}.</td>
                               <td>{{x.revision}}</td>
                               <td><a href="#" @click.prevent="showAttachment(x)">{{x.subject}}</a></td>
-                              <td>{{x.add_dt | date()}}</td>
+                              <td>{{$date(x.add_dt)}}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -124,7 +124,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="(y, idx) in dataAttachment">
-                    <td>{{(idx+1)|number(0)}}</td>
+                    <td>{{$num((idx+1), 0)}}</td>
                     <td>
                       <p><a :href="filePath(y.filepath)" target="_blank"><img :src="filePath(y.filepath)" class="img-responsive" /></a></p>
                     </td>

@@ -71,7 +71,7 @@
                   </p>
                 </td>
                 <td><textarea class="form-control input-sm" rows="5" v-model.trim="x.description" readonly></textarea></td>
-                <!-- <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td> -->
+                <!-- <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td> -->
                 </tr>
               </tbody>
             </table>

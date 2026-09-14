@@ -92,7 +92,7 @@
 
         <!-- Footer: Date -->
         <div class="gm-attach-card-foot">
-          <i class="fas fa-clock"></i> {{ x.add_dt | date('DD/MM/YYYY HH:mm') }}
+          <i class="fas fa-clock"></i> {{ $date(x.add_dt, 'DD/MM/YYYY HH:mm') }}
         </div>
       </div>
     </div>

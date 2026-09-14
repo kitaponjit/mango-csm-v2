@@ -491,7 +491,7 @@
                   <td><datepicker input-class="form-control" v-model="x.end_dt" :disabled="x.is_edit == false"></datepicker></td>
                   <td><input type="text" class="vm-input" v-model="x.remark"></td>
                   <td class="text-center vm-td-meta">{{x.adduser}}</td>
-                  <td class="text-center vm-td-meta">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                  <td class="text-center vm-td-meta">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                 </tr>
                 <tr v-if="LicenseData.length === 0">
                   <td class="vm-empty" colspan="10"><i class="fas fa-inbox"></i> ไม่มีข้อมูล</td>
@@ -596,7 +596,7 @@
                     </template>
                   </td>
                   <td class="vm-td-meta text-center">{{x.adduser}}</td>
-                  <td class="vm-td-meta text-center">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                  <td class="vm-td-meta text-center">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                 </tr>
               </tbody>
             </table>
@@ -652,9 +652,9 @@
                   </td>
                   <td><input type="text" class="vm-input" v-model.trim="x.remark" maxlength="500" placeholder="หมายเหตุ..."></td>
                   <td class="vm-td-meta text-center">{{x.adduser}}</td>
-                  <td class="vm-td-meta text-center">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                  <td class="vm-td-meta text-center">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                   <td class="vm-td-meta text-center">{{x.edituser}}</td>
-                  <td class="vm-td-meta text-center">{{x.edit_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                  <td class="vm-td-meta text-center">{{$date(x.edit_dt, 'DD/MM/YYYY HH:mm')}}</td>
                 </tr>
               </tbody>
             </table>
@@ -705,8 +705,8 @@
               <tbody>
                 <tr v-for="(x,idx) in warrantyData" :key="idx">
                   <td class="text-center">{{idx+1}}</td>
-                  <td>{{x.start_dt | date()}}</td>
-                  <td>{{x.end_dt | date()}}</td>
+                  <td>{{$date(x.start_dt)}}</td>
+                  <td>{{$date(x.end_dt)}}</td>
                   <td class="text-center">{{x.overdue}}</td>
                   <td>
                     <a v-if="x.filepath" :href="['png','jpeg','jpg','mp4'].includes(getFileExt(x.filename)) ? createFilePath(x.filepath) : downLoadFile(x)" target="_blank" class="vm-file-link">
@@ -714,7 +714,7 @@
                     </a>
                   </td>
                   <td class="vm-td-meta text-center">{{x.adduser}}</td>
-                  <td class="vm-td-meta text-center">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                  <td class="vm-td-meta text-center">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                 </tr>
               </tbody>
             </table>
@@ -761,8 +761,8 @@
               <tbody>
                 <tr v-for="(x,idx) in maData" :key="idx">
                   <td class="text-center">{{idx+1}}</td>
-                  <td>{{x.start_dt | date()}}</td>
-                  <td>{{x.end_dt | date()}}</td>
+                  <td>{{$date(x.start_dt)}}</td>
+                  <td>{{$date(x.end_dt)}}</td>
                   <td class="text-center">{{x.overdue}}</td>
                   <td>
                     <a v-if="x.filepath" :href="['png','jpeg','jpg','mp4'].includes(getFileExt(x.filename)) ? createFilePath(x.filepath) : downLoadFile(x)" target="_blank" class="vm-file-link">
@@ -770,7 +770,7 @@
                     </a>
                   </td>
                   <td class="vm-td-meta text-center">{{x.adduser}}</td>
-                  <td class="vm-td-meta text-center">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                  <td class="vm-td-meta text-center">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                 </tr>
               </tbody>
             </table>

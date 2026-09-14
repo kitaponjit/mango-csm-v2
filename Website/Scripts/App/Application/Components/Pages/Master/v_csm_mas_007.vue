@@ -65,9 +65,9 @@
                                   <td>{{x.pre_des}}</td>
                                   <td>{{x.respon_type == 'W' ? 'Worker' : 'Checker'}}</td>
                                   <td class="text-nowrap nowrap" nowrap>{{x.adduser}}</td>
-                                  <td class="text-nowrap nowrap" nowrap align="center">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                                  <td class="text-nowrap nowrap" nowrap align="center">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                   <td class="text-nowrap nowrap" nowrap>{{x.edituser}}</td>
-                                  <td class="text-nowrap nowrap" nowrap align="center">{{x.edit_dt|date('DD/MM/YYYY HH:mm')}}</td>
+                                  <td class="text-nowrap nowrap" nowrap align="center">{{$date(x.edit_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                 </tr>
                               </tbody>
                             </table>

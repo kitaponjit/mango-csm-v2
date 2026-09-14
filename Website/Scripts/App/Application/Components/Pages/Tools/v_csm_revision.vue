@@ -47,7 +47,7 @@
                         <td align="center">{{x.module}}</td>
                         <td>{{itemTypeName(x.item_type)}}</td>
                         <td>{{reqTypeName(x.req_type)}}</td>
-                        <td align="center">{{x.complete_date | date()}}</td>
+                        <td align="center">{{$date(x.complete_date)}}</td>
                         <td>{{x.add_user}}</td>
                       </tr>
                     </tbody>

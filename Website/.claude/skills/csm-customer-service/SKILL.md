@@ -24,9 +24,9 @@ Conventions and ready-to-copy patterns for the CSM Customer Service frontend.
 Full reference: [docs/CSM-Customer-Service-Manual.md](../../../docs/CSM-Customer-Service-Manual.md).
 
 ## Stack & layout
-- Vue.js 2.6 + Vuex 3 + Vue Router 3 (history mode), ag-Grid Enterprise v26, served by ASP.NET 4.8.
+- Vue.js 2.7 + Vuex 3 + Vue Router 3 (history mode), ag-Grid Enterprise v26, served by ASP.NET 4.8.
 - Code lives in `Scripts/App/Application/`. Entry `main.js` → bundle `Scripts/Bundle/Application.js`, mounted in `Page/Default.aspx`.
-- Dev: `npm run dev` (browser-sync localhost:4060 → IIS 4061). Build: `npm run build`. **No automated tests.**
+- Build: Vite 5. Dev: `npm run dev` (watch → `Scripts/Bundle`) or `npm run dev:hmr` (Vite HMR on 4062). Build: `npm run build`. **No automated tests.**
 - 2-space indent, UTF-8, LF (`.editorconfig`). Many Thai labels — keep them.
 
 ## The #1 rule: pick the right API helper

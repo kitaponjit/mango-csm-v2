@@ -941,7 +941,7 @@
                    + `<i class="fas ${s.icon}" style="font-size:9px;"></i>${s.text}</span>`;
             }
           }],
-          ["due_date", this.ui.erp_due_date, "text", { width: 130, align: "center", cellRenderer: (p) => p.value ? this.$options.filters.date(p.value, "DD/MM/YYYY") : "" }]
+          ["due_date", this.ui.erp_due_date, "text", { width: 130, align: "center", cellRenderer: (p) => p.value ? this.$date(p.value, "DD/MM/YYYY") : "" }]
         ];
         agr.setHeader(agr.createHeaderFromArray(fields));
         agr.setDisplay(this.statusDetailList);
@@ -1054,8 +1054,8 @@
         $linq(this.detailList).foreach(d => {
           d.job_priority_text = this.priorityName(d.job_priority);
           d.job_priority_code = d.job_priority;
-          d.job_date = this.$options.filters.date(d.job_date, "DD/MM/YYYY");
-          d.assign_date = this.$options.filters.date(d.assign_date, "DD/MM/YYYY");
+          d.job_date = this.$date(d.job_date, "DD/MM/YYYY");
+          d.assign_date = this.$date(d.assign_date, "DD/MM/YYYY");
           this.$set(d, "ont", ii);
           ii++;
         });
@@ -1205,7 +1205,7 @@
 
         // === รายละเอียดระดับเอกสาร (trimmed rows) — ใช้ตอบคำถามว่า "ทำไมใบนี้ช้า" ===
         const ROW_CAP = 200;
-        let fmtDate = (d) => d ? this.$options.filters.date(d, "DD/MM/YYYY") : "";
+        let fmtDate = (d) => d ? this.$date(d, "DD/MM/YYYY") : "";
         let sortedRows = rows.slice().sort((a, b) => {
           // เลยกำหนดมาก่อน แล้วเรียงตามวันที่เปิดเอกสารเก่าสุดก่อน (ค้างนาน = น่าสนใจ)
           let ao = a.over_due === "O" ? 0 : 1;

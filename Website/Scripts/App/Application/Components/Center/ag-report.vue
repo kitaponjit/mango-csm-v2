@@ -34,7 +34,7 @@
 </style>
 
 <script>
-  import { computed, onBeforeMount, onMounted, reactive, ref } from '@vue/composition-api'
+  import { computed, onBeforeMount, onMounted, reactive, ref } from 'vue'
 
   import 'ag-grid-enterprise/dist/styles/ag-grid.css'
   import 'ag-grid-enterprise/dist/styles/ag-theme-alpine.css'

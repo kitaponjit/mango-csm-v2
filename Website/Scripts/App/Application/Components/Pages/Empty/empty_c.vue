@@ -18,7 +18,7 @@
 </template>
 
 <script type="text/javascript">
-  import { ref, set, reactive, computed, onMounted, onUpdated, nextTick } from '@vue/composition-api'
+  import { ref, set, reactive, computed, onMounted, onUpdated, nextTick } from 'vue'
   let page = null
   export default {
     setup(props, { refs, emit, parent, root }) {

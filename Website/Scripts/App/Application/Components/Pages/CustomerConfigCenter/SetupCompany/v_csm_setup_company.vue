@@ -25,7 +25,7 @@
               </li>
               <li class="pull-right" v-if="!xt.isEmpty(mainCompany.maincode)">
                 <div class="margin-t-10 margin-r-20">
-                  <p>Edit by : {{mainCompany.edituser}} Edit Date : {{mainCompany.edit_dt | date('DD/MM/YYYY HH:mm:ss')}}</p>
+                  <p>Edit by : {{mainCompany.edituser}} Edit Date : {{$date(mainCompany.edit_dt, 'DD/MM/YYYY HH:mm:ss')}}</p>
                 </div>
               </li>
             </ul>

@@ -16,8 +16,11 @@
   string printServer;
   string hostServer;
   string mangoSocketUrl;
+  string viteDevServer;
   void Page_Load(object o, EventArgs e)
   {
+
+    viteDevServer = (System.Configuration.ConfigurationManager.AppSettings["ViteDevServer"] ?? "").TrimEnd('/');
 
     host = Request.Url.Scheme + "://" + Request.Url.Authority;
     baseUrl = Request.Url.Scheme + "://" + Request.Url.Authority + Request.ApplicationPath.TrimEnd('/') + "/";
@@ -125,6 +128,9 @@
   <link rel="stylesheet" href="<%=baseUrl%>Scripts/Others/Notify/toastr.css" />
   <link rel="stylesheet" href="<%=baseUrl%>Content/Other/animate.css" />
   <link rel="stylesheet" href="<%=baseUrl%>Content/icheck-material.min.css" />
+  <% if (string.IsNullOrEmpty(viteDevServer)) { %>
+  <link rel="stylesheet" href="<%=baseUrl%>Scripts/Bundle/Application.css?version_time=<%=Server.UrlEncode(appJsHash) %>" />
+  <% } %>
 
   <base href="<%=baseUrl %>" />
 </head>
@@ -195,6 +201,11 @@
   </script>
 
   <!-- Application.js (Run App) -->
-  <script src="<%=baseUrl%>Scripts/bundle/Application.js?v=<%=noCacheTs %>"></script>
+  <% if (string.IsNullOrEmpty(viteDevServer)) { %>
+  <script type="module" src="<%=baseUrl%>Scripts/Bundle/Application.js?v=<%=noCacheTs %>"></script>
+  <% } else { %>
+  <script type="module" src="<%=viteDevServer%>/@vite/client"></script>
+  <script type="module" src="<%=viteDevServer%>/Scripts/App/Application/main.js"></script>
+  <% } %>
 </body>
 </html>

@@ -28,9 +28,9 @@
             <td>{{x.module}}</td>
             <td>{{x.remark}}</td>
             <td>{{x.adduser}}</td>
-            <td align="center">{{x.add_dt|date('DD/MM/YYYY HH:mm')}}</td>
+            <td align="center">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
             <td>{{x.edituser}}</td>
-            <td align="center">{{x.edit_dt|date('DD/MM/YYYY HH:mm')}}</td>
+            <td align="center">{{$date(x.edit_dt, 'DD/MM/YYYY HH:mm')}}</td>
           </tr>
         </tbody>
       </table>

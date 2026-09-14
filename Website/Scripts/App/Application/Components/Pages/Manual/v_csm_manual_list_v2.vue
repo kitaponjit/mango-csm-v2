@@ -46,7 +46,7 @@
                 <tbody>
                   <tr v-for="(x,idx) in filterData">
                     <td align="center" class="mv2-idx">{{idx+1}}.</td>
-                    <td align="center" class="mv2-num">{{x.add_dt | date()}}</td>
+                    <td align="center" class="mv2-num">{{$date(x.add_dt)}}</td>
                     <td align="center"><span class="mv2-pill" v-if="x.platform">{{x.platform}}</span></td>
                     <td align="center"><span class="mv2-mod" v-if="x.module">{{x.module}}</span></td>
                     <td align="center"><a class="mv2-doc" v-bind:href="openReq(x)" target="_blank">{{x.job_no}}</a></td>
@@ -88,7 +88,7 @@
                   <span class="cx-shot__zoom"><i class="fas fa-search-plus"></i></span>
                 </a>
                 <div class="cx-shot__body">
-                  <span class="cx-shot__no">{{(idx+1)|number(0)}}</span>
+                  <span class="cx-shot__no">{{$num((idx+1), 0)}}</span>
                   <span class="cx-shot__desc">{{y.description}}</span>
                 </div>
               </div>

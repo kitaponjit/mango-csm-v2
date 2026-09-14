@@ -59,7 +59,7 @@
                     </td>
                     <td class="tf-4-5 nowrap-text"><a href="#" class="text-underline-hover text-primary" @click.prevent="sendShowFile(x)">{{x.docfilename}}</a></td>
                     <td align="center">{{x.adduser}}</td>
-                    <td align="center">{{x.add_dt | date()}}</td>
+                    <td align="center">{{$date(x.add_dt)}}</td>
 
                   </tr>
                 </draggable>

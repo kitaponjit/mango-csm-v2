@@ -13,7 +13,7 @@ yarn-error.log*
 
 # Cache
 .cache/
-.webpack-cache-prod/
+.vite/
 .eslintcache
 
 # OS

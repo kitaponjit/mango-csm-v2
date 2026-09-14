@@ -25,7 +25,7 @@
                   <span class="cx-cond" v-for="x in condData" v-if="x.field_name">
                     <b>{{x.option.display_name}} {{x['operatorx']}}</b> {{displayCondValue(x)}}
                   </span>
-                  <span class="cx-cond cx-cond--time"><i class="far fa-clock"></i> {{reportedDate|date('DD/MM/YYYY HH:mm')}}</span>
+                  <span class="cx-cond cx-cond--time"><i class="far fa-clock"></i> {{$date(reportedDate, 'DD/MM/YYYY HH:mm')}}</span>
                 </div>
               </div>
               <slot name="display"></slot>
@@ -226,7 +226,7 @@
         this.$set(this.selectedRow, 'display_value', displayValue);
       },
       displayCondValue(x) {
-        return x.option.field_type === 'date' ? this.$options.filters.date(x.value, 'DD/MM/YYYY') : (x.display_value || x.value);
+        return x.option.field_type === 'date' ? this.$date(x.value, 'DD/MM/YYYY') : (x.display_value || x.value);
       },
       async excel() {
         //page.loadingBox.show();

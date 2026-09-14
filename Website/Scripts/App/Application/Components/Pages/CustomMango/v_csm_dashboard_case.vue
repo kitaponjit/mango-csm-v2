@@ -461,7 +461,7 @@
                         </button>
                         <div class="md-bubble-meta">
                           <strong>{{ comment.add_user }}</strong>
-                          <small>{{ comment.add_dt | date('DD/MM/YYYY HH:mm') }}</small>
+                          <small>{{ $date(comment.add_dt, 'DD/MM/YYYY HH:mm') }}</small>
                         </div>
                         <div class="md-bubble-text">{{ comment.description.text || comment.description }}</div>
                         <div v-if="comment.description.files && comment.description.files.length" class="md-bubble-files">

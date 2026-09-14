@@ -177,7 +177,7 @@
                           <span class="rn-noti__no">{{ ui.erp_document_no }} <b>{{ x.job_no }}</b></span>
                           <span class="rn-noti__meta" v-show="!xt.isEmpty(x.pre_des)"><i class="fas fa-city"></i> {{ ui.csm_v2_project }} : {{ x.pre_des }}</span>
                           <span class="rn-noti__meta" v-show="!xt.isEmpty(x.dpt_name)"><i class="fas fa-sitemap"></i> {{ ui.csm_layout_dept_short }} : {{ x.dpt_name }}</span>
-                          <span class="rn-noti__due" v-if="x.alr_duedate"><i class="far fa-calendar-times"></i> {{ ui.erp_due_date }} : {{ x.alr_duedate | date('DD/MM/YYYY') }}</span>
+                          <span class="rn-noti__due" v-if="x.alr_duedate"><i class="far fa-calendar-times"></i> {{ ui.erp_due_date }} : {{ $date(x.alr_duedate, 'DD/MM/YYYY') }}</span>
                         </span>
                         <i class="fas fa-chevron-right rn-noti__go"></i>
                       </a>

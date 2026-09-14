@@ -27,12 +27,12 @@
                       <span class="rpt-chip">
                         <i class="far fa-calendar-alt"></i>
                         <em class="rpt-chip__k">{{gf_.Reported_Date||'Reported Date'}}</em>
-                        <b class="rpt-chip__v">{{reportedDate | date('DD/MM/YYYY')}}</b>
+                        <b class="rpt-chip__v">{{$date(reportedDate, 'DD/MM/YYYY')}}</b>
                       </span>
                       <span class="rpt-chip">
                         <i class="far fa-clock"></i>
                         <em class="rpt-chip__k">{{ ui.erp_time }}</em>
-                        <b class="rpt-chip__v">{{reportedDate | date('HH:mm:ss')}}</b>
+                        <b class="rpt-chip__v">{{$date(reportedDate, 'HH:mm:ss')}}</b>
                       </span>
                     </div>
                     <div class="rpt-meta-center" v-if="condText">
@@ -413,7 +413,7 @@
         this.$set(this.selectedRow, 'display_value', displayValue)
       },
       displayCondValue(x) {
-        return x.option.field_type === 'date' ? this.$options.filters.date(x.value, 'DD/MM/YYYY') : (x.display_value || x.value)
+        return x.option.field_type === 'date' ? this.$date(x.value, 'DD/MM/YYYY') : (x.display_value || x.value)
       },
       async excel() {
         /* Excel : Use Export Center */

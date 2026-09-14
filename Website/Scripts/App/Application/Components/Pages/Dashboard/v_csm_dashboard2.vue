@@ -48,7 +48,7 @@
                 <i class="fas fa-table"></i>
                 <span>สรุปรายงานรับแจ้งซ่อมบ้านหลังโอน (After Sales)</span>
               </div>
-              <div class="d2-card__meta"><i class="fas fa-hand-pointer"></i> คลิกแถวสรุปเพื่อกรองโครงการ &middot; {{detailRows.length | number(0)}} โครงการ</div>
+              <div class="d2-card__meta"><i class="fas fa-hand-pointer"></i> คลิกแถวสรุปเพื่อกรองโครงการ &middot; {{$num(detailRows.length, 0)}} โครงการ</div>
             </div>
             <div class="d2-scroll">
               <table class="d2-tbl">
@@ -92,20 +92,20 @@
                     <td colspan="8" class="d2-sum__label">
                       <i class="fas fa-check-circle" v-if="x.checked"></i>{{x.projtype_name || 'ไม่ระบุ'}}
                     </td>
-                    <td>{{x.accu_total | number(0)}}</td>
-                    <td>{{x.accu_complete | number(0)}}</td>
-                    <td>{{x.accu_inprogress | number(0)}}</td>
-                    <td>{{x.complete_per | number(0)}}%</td>
+                    <td>{{$num(x.accu_total, 0)}}</td>
+                    <td>{{$num(x.accu_complete, 0)}}</td>
+                    <td>{{$num(x.accu_inprogress, 0)}}</td>
+                    <td>{{$num(x.complete_per, 0)}}%</td>
                     <td :rowspan="rptHeader.length" class="d2-gap" v-if="idx == 0"></td>
-                    <td>{{x.prev_total | number(0)}}</td>
-                    <td>{{x.prev_complete | number(0)}}</td>
-                    <td>{{x.prev_inprogress | number(0)}}</td>
-                    <td>{{x.prev_none | number(0)}}</td>
+                    <td>{{$num(x.prev_total, 0)}}</td>
+                    <td>{{$num(x.prev_complete, 0)}}</td>
+                    <td>{{$num(x.prev_inprogress, 0)}}</td>
+                    <td>{{$num(x.prev_none, 0)}}</td>
                     <td :rowspan="rptHeader.length" class="d2-gap" v-if="idx == 0"></td>
-                    <td>{{x.this_total | number(0)}}</td>
-                    <td>{{x.this_complete | number(0)}}</td>
-                    <td>{{x.this_inprogress | number(0)}}</td>
-                    <td>{{x.this_none | number(0)}}</td>
+                    <td>{{$num(x.this_total, 0)}}</td>
+                    <td>{{$num(x.this_complete, 0)}}</td>
+                    <td>{{$num(x.this_inprogress, 0)}}</td>
+                    <td>{{$num(x.this_none, 0)}}</td>
                   </tr>
                 </tbody>
                 <tbody class="d2-detail" :class="{'d2-fade': fadein}">
@@ -118,22 +118,22 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_accu_total}">{{r.row.accu_total | number(0)}}</td>
-                    <td>{{r.row.accu_complete | number(0)}}</td>
-                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_accu_inprogress}">{{r.row.accu_inprogress | number(0)}}</td>
-                    <td class="d2-b d2-b--good" :style="{'--w': r.w_complete_per}">{{r.row.complete_per | number(0)}}%</td>
+                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_accu_total}">{{$num(r.row.accu_total, 0)}}</td>
+                    <td>{{$num(r.row.accu_complete, 0)}}</td>
+                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_accu_inprogress}">{{$num(r.row.accu_inprogress, 0)}}</td>
+                    <td class="d2-b d2-b--good" :style="{'--w': r.w_complete_per}">{{$num(r.row.complete_per, 0)}}%</td>
 
                     <td :rowspan="detailRows.length" class="d2-gap" v-if="idx == 0"></td>
-                    <td>{{r.row.prev_total | number(0)}}</td>
-                    <td>{{r.row.prev_complete | number(0)}}</td>
-                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_prev_inprogress}">{{r.row.prev_inprogress | number(0)}}</td>
-                    <td>{{r.row.prev_none | number(0)}}</td>
+                    <td>{{$num(r.row.prev_total, 0)}}</td>
+                    <td>{{$num(r.row.prev_complete, 0)}}</td>
+                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_prev_inprogress}">{{$num(r.row.prev_inprogress, 0)}}</td>
+                    <td>{{$num(r.row.prev_none, 0)}}</td>
 
                     <td :rowspan="detailRows.length" class="d2-gap" v-if="idx == 0"></td>
-                    <td>{{r.row.this_total | number(0)}}</td>
-                    <td>{{r.row.this_complete | number(0)}}</td>
-                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_this_inprogress}">{{r.row.this_inprogress | number(0)}}</td>
-                    <td>{{r.row.this_none | number(0)}}</td>
+                    <td>{{$num(r.row.this_total, 0)}}</td>
+                    <td>{{$num(r.row.this_complete, 0)}}</td>
+                    <td class="d2-b d2-b--bad" :style="{'--w': r.w_this_inprogress}">{{$num(r.row.this_inprogress, 0)}}</td>
+                    <td>{{$num(r.row.this_none, 0)}}</td>
                   </tr>
                   <tr v-if="!detailRows.length">
                     <td colspan="22" class="d2-empty"><i class="fas fa-inbox"></i> ไม่พบข้อมูลในเดือนที่เลือก</td>

@@ -243,7 +243,7 @@
                             <button class="btn btn-sm btn-success" @click="saveQC" v-bind:disabled="!xt.isEmpty(qc_user) || (formData.request_empno != auth.empno)"><i class="fa fa-save"></i> บันทึกแบบประเมิน</button>
                           </div>
                           <div class="col-lg-6 col-md-6 col-sm-6">
-                            <span class="pull-right">ผู้ประเมิน : {{qc_user || ""}} วันที่ : {{qc_date | date('DD/MM/YYYY HH:mm')}}</span>
+                            <span class="pull-right">ผู้ประเมิน : {{qc_user || ""}} วันที่ : {{$date(qc_date, 'DD/MM/YYYY HH:mm')}}</span>
                           </div>
                         </div>
                       </fieldset>
@@ -498,7 +498,7 @@
                                   <tbody>
                                     <tr v-for="x,idx in historyData" v-bind:class="{'bg-warning': x.job_status == 'W', 'bg-info': x.job_status == 'I', 'bg-success': x.job_status == 'Y'}">
                                       <th><a v-bind:href="baseUrl + 'page/Transaction/v_csm_trn_001/?job_no='+x.job_no" target="_blank">{{x.job_no}}</a></th>
-                                      <td>{{x.job_date|date()}}</td>
+                                      <td>{{$date(x.job_date)}}</td>
                                       <td>{{x.subject}}</td>
                                       <td>{{xt.isEmpty(x.pre_event) ? x.dpt_name : x.pre_des}}</td>
                                       <td>{{x.request_empname}}</td>
@@ -670,15 +670,15 @@
                                         <td>{{x.tester_empno_name}}</td>
                                         <!--edit date-->
                                         <td><datepicker input-class="form-control input-sm" v-model="x.response_date" overdate="" :disabled="(x.isViewOnly && !x.showEditOnly && !x.isTesterOnly)||(x.isTesterOnly && !x.showEditOnly && is_mango())||  (['Y', 'C', 'N'].includes(x.approve_status) && !xt.isEmpty(x.tester_approve))"></datepicker></td>
-                                          <!--<td v-if="is_mango()"><b>{{x.response_date | date}}</b></td>-->
+                                          <!--<td v-if="is_mango()"><b>{{$date(x.response_date)}}</b></td>-->
                                         <td><datepicker input-class="form-control input-sm text-danger" v-model="x.due_date" overdate="" :disabled="(x.isViewOnly && !x.showEditOnly && !x.isTesterOnly)||(x.isTesterOnly && !x.showEditOnly && is_mango())||  (['Y', 'C', 'N'].includes(x.approve_status) && !xt.isEmpty(x.tester_approve))"></datepicker></td>
-                                        <!--<td v-if="is_mango()" class="text-danger"><b>{{x.due_date | date}}</b></td>-->
+                                        <!--<td v-if="is_mango()" class="text-danger"><b>{{$date(x.due_date)}}</b></td>-->
                                         <!--edit date-->
-                                        <td><b>{{x.worker_end_date | date}}</b></td>
-                                          <!--<td><b>{{x.worker_end_date | date}}<a ><i class="fas fa-edit"></i></a></b></td>-->
-                                        <td>{{x.send_pretest_dt | date}}</td>
+                                        <td><b>{{$date(x.worker_end_date)}}</b></td>
+                                          <!--<td><b>{{$date(x.worker_end_date)}}<a ><i class="fas fa-edit"></i></a></b></td>-->
+                                        <td>{{$date(x.send_pretest_dt)}}</td>
                                         <td align="center"><p class="text-danger"><b>{{x.overdue > 0 ? x.overdue : ''}}</b></p></td>
-                                        <td class="text-success"><b>{{x.complete_date | date}}</b></td>
+                                        <td class="text-success"><b>{{$date(x.complete_date)}}</b></td>
                                         <td>
                                           <label :class="{'label label-success': x.approve_status == 'Y' && x.tester_approve == 'Y',
                                                             'label label-danger': x.approve_status == 'C' && x.tester_approve == 'Y',
@@ -1929,8 +1929,8 @@
                                                         <td>{{x.serial_number}}</td>
                                                         <td>{{x.war_code}}</td>
                                                         <td>{{x.remark}}</td>
-                                                        <td>{{x.startdate | date()}}</td>
-                                                        <td>{{x.enddate | date()}}</td>
+                                                        <td>{{$date(x.startdate)}}</td>
+                                                        <td>{{$date(x.enddate)}}</td>
 
                                                         <!-- <td v-if="x.lifetime != 'Y'">{{x.overdueY}} {{x.overdueM}} {{x.overdueD}}</td> -->
                                                         <td v-if="x.lifetime != 'Y'">{{x.remainingCus}}</td>
@@ -1940,12 +1940,12 @@
                                                           <span v-else>{{x.vendor}}</span>
                                                         </td>
                                                         <td>
-                                                          <span v-if="!xt.isEmpty(x.ic_docno) && !xt.isEmpty(x.ic_itemno)">{{x.war_date_start | date()}}</span>
-                                                          <span v-else>{{x.vendor_start_dt | date()}}</span>
+                                                          <span v-if="!xt.isEmpty(x.ic_docno) && !xt.isEmpty(x.ic_itemno)">{{$date(x.war_date_start)}}</span>
+                                                          <span v-else>{{$date(x.vendor_start_dt)}}</span>
                                                         </td>
                                                         <td>
-                                                          <span v-if="!xt.isEmpty(x.ic_docno) && !xt.isEmpty(x.ic_itemno)">{{x.war_date_end | date()}}</span>
-                                                          <span v-else>{{x.vendor_end_dt | date()}}</span>
+                                                          <span v-if="!xt.isEmpty(x.ic_docno) && !xt.isEmpty(x.ic_itemno)">{{$date(x.war_date_end)}}</span>
+                                                          <span v-else>{{$date(x.vendor_end_dt)}}</span>
                                                         </td>
                                                         <td>
                                                           {{ x.remainingVendor}}
@@ -1998,7 +1998,7 @@
                                                     {{x.itemno}}. <b>{{x.comment_user}}</b>
                                                   </div>
                                                   <div class="col-lg-6 col-md-6 col-sm-6">
-                                                    <b class="pull-right">{{x.add_dt|date('DD/MM/YYYY HH:mm:ss')}}</b>
+                                                    <b class="pull-right">{{$date(x.add_dt, 'DD/MM/YYYY HH:mm:ss')}}</b>
                                                   </div>
                                                 </div>
                                                 <div class="row">
@@ -2087,7 +2087,7 @@
                                                   </p>
                                                 </td>
                                                 <td><textarea class="form-control input-sm" rows="5" v-model.trim="x.description" v-bind:readonly="(x.add_user != auth.userid || isView) && !isAdmin"></textarea></td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2138,7 +2138,7 @@
                                                 </td>
                                                 <td><textarea class="form-control input-sm" rows="5" v-model.trim="x.description" v-bind:readonly="(x.add_user != auth.userid || isView) && !isAdmin"></textarea></td>
                                                 <td><textarea class="form-control input-sm" rows="5" v-model.trim="x.description2" v-bind:readonly="(x.add_user != auth.userid || isView) && !isAdmin"></textarea></td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2187,7 +2187,7 @@
                                                   </p>
                                                 </td>
                                                 <td><textarea class="form-control input-sm" rows="5" v-model.trim="x.description" v-bind:readonly="(x.add_user != auth.userid || isView) && !isAdmin"></textarea></td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2239,7 +2239,7 @@
                                                   </p>
                                                 </td>
                                                 <td><textarea class="form-control input-sm" rows="5" v-model.trim="x.description" v-bind:readonly="(x.add_user != auth.userid || isView) && !isAdmin"></textarea></td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2291,7 +2291,7 @@
                                                   <textarea class="form-control input-sm" rows="5" v-model.trim="x.description"
                                                             v-bind:readonly="((x.add_user != auth.userid || isView) && editDetailData.tester_empno != auth.empno) && !isAdmin"></textarea>
                                                 </td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2328,7 +2328,7 @@
                                                 <td>
                                                   <input type="text" class="form-control input-sm" v-model="x.description2" maxlength="100" v-bind:disabled="x.adduser != auth.userid" />
                                                 </td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2363,7 +2363,7 @@
                                                 <td>
                                                   <textarea class="form-control input-sm" rows="5" readonly>{{ getParsedDescription(x.description2) }}</textarea>
                                                 </td>
-                                                <td>{{x.add_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                                                <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -2426,7 +2426,7 @@
                                         <td>
                                           <label v-bind:class="{'label label-success': x.status == 'Y', 'label label-danger': x.status == 'C', 'label label-primary': x.status == 'N'}" style="font-size:12px">{{x.status == 'Y' ? 'อนุมัติเรียบร้อย' : x.status == 'C' ? 'ไม่อนุมัติ' : x.status == 'N' ? 'รอการอนุมัติ' : ''}}</label>
                                         </td>
-                                        <td align="center">{{x.appdatetime | date('DD/MM/YYYY HH:mm')}}</td>
+                                        <td align="center">{{$date(x.appdatetime, 'DD/MM/YYYY HH:mm')}}</td>
                                         <td>{{x.remark_cancel}}</td>
                                       </tr>
                                     </tbody>
@@ -2470,7 +2470,7 @@
                       </thead>
                       <tbody>
                         <tr v-for="x in statusData">
-                          <td>{{x.add_dt|date('DD/MM/YYYY HH:mm:ss')}}</td>
+                          <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm:ss')}}</td>
                           <td>
                             {{statusName(x.job_status)}}
                           </td>
@@ -2500,7 +2500,7 @@
                       </thead>
                       <tbody>
                         <tr v-for="x in assignmentData">
-                          <td>{{x.add_dt|date('DD/MM/YYYY HH:mm:ss')}}</td>
+                          <td>{{$date(x.add_dt, 'DD/MM/YYYY HH:mm:ss')}}</td>
                           <td>{{x.ref_itemno || 0}}</td>
                           <td>
                             {{x.req_emp_name}}
@@ -2530,7 +2530,7 @@
                       </thead>
                       <tbody>
                         <tr v-for="x in csmHistotyData">
-                          <td>{{x.edit_dt|date('DD/MM/YYYY HH:mm:ss')}}</td>
+                          <td>{{$date(x.edit_dt, 'DD/MM/YYYY HH:mm:ss')}}</td>
                           <td>
                             <span v-if="x.edit_type=='H'">Hold</span>
                             <span v-if="x.edit_type=='C'">Open</span>

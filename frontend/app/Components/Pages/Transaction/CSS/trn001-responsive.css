@@ -1,0 +1,1436 @@
+/* ─── v_csm_trn_001 : Responsive (Tablet / Mobile) ─────────
+   ≤ 639px       มือถือ        ฟอร์ม 1 คอลัมน์
+   640 – 939px   tablet ตั้ง    ฟอร์ม 2 คอลัมน์ ระยะขอบกว้างขึ้น
+   ≥ 940px       ของเดิม       มี rule เดียวคือคืนตัวเลื่อนแนวนอน
+                               ให้ตารางส่วนงาน (แก้บั๊กเดิม ดูท้ายไฟล์)
+
+   เฟสที่ทำแล้ว : 1 โครงหน้า/การเลื่อน/แท็บ/แถบปุ่ม
+                  2 ฟอร์มและการ์ดหัวข้อ
+                  3 สถานะ + ความสำคัญ
+   ยังไม่ทำ     : 4 ตารางส่วนงาน → การ์ด, 5 ชีตแก้ไขส่วนงาน
+
+   ทุก selector นำหน้าด้วย body .trn001-page
+   ลูกทุกตัวใช้ <style scoped> ซึ่งเติม [data-v-xxx] มาให้ 1 คลาส
+   จึงต้องมี type selector (body) พ่วงมาด้วยเพื่อให้ชนะการเทียบ
+   ไม่แตะ CSS กลางและไม่แตะ <style scoped> เดิมแม้แต่บรรทัดเดียว */
+
+/* ─── ตัวแปร + เฟส 1-3 (≤ 939px) ───────────────────────── */
+@media (max-width: 939px) {
+
+  .trn001-page {
+    --t-paper:      #ffffff;
+    --t-paper-2:    #f4f7fc;
+    --t-paper-3:    #e8f0fa;
+    --t-ink:        #0a1c3d;
+    --t-ink-2:      #44567a;
+    --t-ink-3:      #6f7f9c;
+    --t-rule:       #ccd7e8;
+    --t-rule-soft:  #e3eaf5;
+    --t-navy:       #1748a8;
+    --t-navy-deep:  #0b2a63;
+    --t-navy-soft:  #b3c7e8;
+    --t-ok:         #0d7a58;
+    --t-warn:       #a06805;
+    --t-danger:     #bd2740;
+    --t-pad:        16px;
+    --t-e: cubic-bezier(.2, .7, .25, 1);
+  }
+
+  body.dark-mode .trn001-page {
+    --t-paper:      #060e1e;
+    --t-paper-2:    #0d1729;
+    --t-paper-3:    #152239;
+    --t-ink:        #e9effb;
+    --t-ink-2:      #a4b3ce;
+    --t-ink-3:      #6d7d9c;
+    --t-rule:       #243350;
+    --t-rule-soft:  #1a2740;
+    --t-navy:       #6f9cf0;
+    --t-navy-deep:  #16305c;
+    --t-navy-soft:  #2d4f8a;
+    --t-ok:         #4fc39a;
+    --t-warn:       #e0b055;
+    --t-danger:     #ef7186;
+  }
+
+  /* ═══ เฟส 1 : โครงหน้า ═══════════════════════════════ */
+
+  /* .dd-shell ตรึงไว้ที่ calc(100vh - 190px) แล้วมีตัวเลื่อนของตัวเอง
+     ซ้อนอยู่ใน .content-body ที่ก็เป็นตัวเลื่อนอีกชั้น บนจอเล็กเหลือ
+     พื้นที่อ่านน้อยมาก และ 100vh ไม่นิ่งเพราะแถบ URL ของเบราว์เซอร์
+     → ปล่อยให้ .dd-shell สูงตามเนื้อหา ใช้ .content-body เลื่อนตัวเดียว */
+  body .trn001-page .dd-shell {
+    display: block !important;
+    height: auto !important;
+  }
+
+  body .trn001-page .dd-scroll {
+    flex: none !important;
+    overflow: visible !important;
+  }
+
+  body .trn001-page .content-body {
+    height: calc(100vh - 100px);
+    height: calc(100dvh - 100px);
+  }
+
+  body .trn001-page .content {
+    padding: 0 !important;
+  }
+
+  body .trn001-page .content-body > [class*="col-"] {
+    padding-left: var(--t-pad);
+    padding-right: var(--t-pad);
+  }
+
+  /* Site.css ตั้ง .tabbable-line เป็น overflow:hidden ไว้ตัดมุมโค้ง
+     ซึ่งทำให้ position:sticky ของแถบปุ่มด้านล่างไม่ทำงาน */
+  body .trn001-page .tabbable-line {
+    overflow: visible !important;
+    margin-bottom: 0;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
+
+  /* ตารางส่วนงานมีตัวเลื่อนแนวตั้งของตัวเอง (max-height:100vh-310px)
+     ซ้อนอีกชั้น — ปลดออก ให้เลื่อนที่หน้าอย่างเดียว (แนวนอนยังเลื่อนได้) */
+  body .trn001-page .task-table-wrapper {
+    max-height: none !important;
+  }
+
+  /* ─── แท็บเอกสาร / แท็บย่อย : เลื่อนแนวนอนแทนการตัดบรรทัด ─── */
+  body .trn001-page .tabbable-line > .nav-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 4px 0 !important;
+  }
+
+  body .trn001-page .tabbable-line > .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  body .trn001-page .tabbable-line > .nav-tabs > li {
+    flex: none;
+  }
+
+  body .trn001-page .tabbable-line > .nav-tabs > li > a {
+    padding: 10px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  /* ป้ายโครงการ PPN / แผน — pull-right ใช้ไม่ได้ในแถบ flex nowrap */
+  body .trn001-page .tabbable-line > .nav-tabs > li.pull-right {
+    float: none !important;
+  }
+
+  /* ─── แถบปุ่มติดขอบล่าง ─── */
+  body .trn001-page .dd-actionbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    padding: 8px 10px !important;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    background: var(--t-paper) !important;
+    border-top: 1px solid var(--t-rule);
+    box-shadow: 0 -4px 14px -8px rgba(10, 28, 61, .35) !important;
+  }
+
+  body .trn001-page .dd-actionbar .row {
+    margin: 0;
+  }
+
+  body .trn001-page .dd-actionbar .row > [class*="col-"] {
+    padding: 0;
+  }
+
+  body .trn001-page .dd-actionbar .form-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+  }
+
+  body .trn001-page .dd-actionbar .form-toolbar .btn {
+    flex: 1 1 auto;
+    min-width: 112px;
+    min-height: 40px;
+    margin: 0 !important;
+    border-radius: 3px;
+  }
+
+  /* ─── กล่องข้อความเตือน ─── */
+  body .trn001-page .modern-callout {
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 12.5px;
+  }
+
+  body .trn001-page .modern-callout .mc-header {
+    font-size: 12.5px;
+  }
+
+  /* ═══ เฟส 2 : ฟอร์ม ══════════════════════════════════ */
+
+  body .trn001-page .section-card,
+  body .trn001-page .gemini-card {
+    margin-bottom: 14px;
+    border: 1px solid var(--t-rule);
+    border-radius: 3px;
+    box-shadow: none;
+  }
+
+  body .trn001-page .section-card-header,
+  body .trn001-page .gemini-card-header {
+    padding: 11px 13px;
+    gap: 9px;
+  }
+
+  body .trn001-page .section-card-icon,
+  body .trn001-page .gemini-card-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 2px;
+    font-size: 12px;
+  }
+
+  body .trn001-page .section-card-title,
+  body .trn001-page .gemini-card-title {
+    font-size: 13.5px;
+  }
+
+  body .trn001-page .section-card-body {
+    padding: 14px 13px !important;
+  }
+
+  /* ป้ายชื่อฟิลด์แบบตัวเล็กเว้นระยะกว้าง (คงฟอนต์เดิมของระบบ) */
+  body .trn001-page .field-label {
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--t-ink-3);
+  }
+
+  body .trn001-page .form-group {
+    margin-bottom: 12px;
+  }
+
+  /* ช่องกรอก : ขอบบาง มุมคม สูงพอให้นิ้วกดได้ */
+  body .trn001-page .form-control,
+  body .trn001-page .form-control.input-sm {
+    height: auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 13.5px;
+    color: var(--t-ink);
+    border: 1px solid var(--t-rule);
+    border-radius: 2px;
+    box-shadow: none;
+  }
+
+  body .trn001-page .form-control:focus {
+    border-color: var(--t-navy) !important;
+    box-shadow: 0 0 0 3px rgba(23, 72, 168, .14);
+  }
+
+  body .trn001-page select.form-control {
+    padding-right: 28px;
+  }
+
+  body .trn001-page textarea.form-control {
+    min-height: 84px;
+    line-height: 1.55;
+  }
+
+  /* ปุ่มค้นหา / ล้างค่า ที่ลอยอยู่ในช่องกรอก — ขยายให้กดง่าย */
+  body .trn001-page .input-shell .form-control {
+    padding-right: 40px;
+  }
+
+  body .trn001-page .input-shell.has-two .form-control {
+    padding-right: 72px;
+  }
+
+  body .trn001-page .input-shell .input-action {
+    width: 30px;
+    height: 30px;
+    border-radius: 2px;
+  }
+
+  body .trn001-page .input-shell.has-two .input-action.search {
+    right: 36px;
+  }
+
+  /* ═══ เฟส 2b : ทับภาษาภาพเดิมให้ตรงกับดีไซน์ ═════════
+     ของเดิมเป็นแนว Gemini/Material — มุมมน 12-20px ไล่เฉดสี pill tab
+     ดีไซน์เป็นแนวทะเบียนกระดาษ — เส้น hairline มุมคม สีทึบ */
+
+  body .trn001-page .content-wrapper {
+    background: var(--t-paper) !important;
+  }
+
+  /* กรอบขาวของ .tabbable-line ซ้อนกับการ์ดข้างในเปล่า ๆ */
+  body .trn001-page .tabbable-line {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body .trn001-page .tabbable-line > .tab-content {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  /* ─── แท็บ : pill → ขีดเส้นใต้ ─── */
+  body .trn001-page .tabbable-line > .nav-tabs {
+    background: transparent !important;
+    border-bottom: 1px solid var(--t-rule) !important;
+  }
+
+  body .trn001-page .tabbable-line > .nav-tabs > li > a,
+  body .trn001-page .tabbable-line > .nav-tabs > li > a:hover,
+  body .trn001-page .tabbable-line > .nav-tabs > li > a:focus {
+    margin: 0 !important;
+    padding: 11px 12px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: var(--t-ink-3) !important;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  body .trn001-page .tabbable-line > .nav-tabs > li.active > a,
+  body .trn001-page .tabbable-line > .nav-tabs > li.active > a:hover,
+  body .trn001-page .tabbable-line > .nav-tabs > li.active > a:focus {
+    color: var(--t-ink) !important;
+    font-weight: 600;
+    border-bottom-color: var(--t-navy) !important;
+  }
+
+  /* แถบไล่สีใต้แท็บที่ active */
+  body .trn001-page .tabbable-line > .nav-tabs > li.active > a::after {
+    display: none;
+  }
+
+  /* ─── หัวการ์ด : ไล่เฉดสี → สีทึบ มุมคม ─── */
+  body .trn001-page .section-card-info .section-card-header,
+  body .trn001-page .section-card-primary .section-card-header,
+  body .trn001-page .gemini-card-header,
+  body .trn001-page .modern-section .ms-header,
+  body .trn001-page .modern-section-success .ms-header {
+    padding: 11px 13px !important;
+    background: var(--t-navy-deep) !important;
+    color: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  body .trn001-page .modern-section .ms-header i {
+    color: #fff !important;
+  }
+
+  body .trn001-page .modern-section {
+    margin-bottom: 14px;
+    border: 1px solid var(--t-rule);
+    border-radius: 3px;
+    box-shadow: none;
+  }
+
+  body .trn001-page .modern-section .ms-body {
+    padding: 13px;
+  }
+
+  /* ─── callout → บันทึกกำกับ : เส้นซ้าย พื้นอ่อน มุมคม ─── */
+  body .trn001-page .modern-callout {
+    gap: 3px;
+    margin-bottom: 10px;
+    padding: 10px 13px;
+    border: 0;
+    border-left: 3px solid var(--t-navy);
+    border-radius: 0 2px 2px 0;
+    box-shadow: none;
+    font-size: 12.5px;
+  }
+
+  body .trn001-page .modern-callout .mc-header {
+    gap: 7px;
+    margin-bottom: 1px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  body .trn001-page .modern-callout .mc-header i {
+    font-size: 11px;
+  }
+
+  body .trn001-page .modern-callout-danger {
+    border-left-color: var(--t-danger);
+    background: rgba(189, 39, 64, .07);
+  }
+
+  body .trn001-page .modern-callout-warning {
+    border-left-color: var(--t-warn);
+    background: rgba(160, 104, 5, .09);
+  }
+
+  body .trn001-page .modern-callout-info,
+  body .trn001-page .modern-callout-pink {
+    border-left-color: var(--t-navy);
+    background: rgba(23, 72, 168, .07);
+  }
+
+  /* ─── ปุ่ม : มุมคม ─── */
+  body .trn001-page .btn {
+    border-radius: 2px;
+  }
+
+  /* label ทั้งระบบตั้ง white-space:nowrap ไว้ ข้อความยาวจึงล้นแถว */
+  body .trn001-page label {
+    white-space: normal;
+  }
+
+  /* ─── ประวัติการแจ้งงานของลูกค้า : ไม่แสดงบนจอเล็กตามที่กำหนด ─── */
+  body .trn001-page #CustomerHistoryBox {
+    display: none !important;
+  }
+
+  /* ฟอร์มอยู่ในคอลัมน์ซ้าย 50% ส่วนคอลัมน์ขวาคือกล่องประวัติที่ซ่อนไปแล้ว
+     แต่คอลัมน์ยังกินพื้นที่ครึ่งจอเป็นแถบว่าง — ยุบทั้งคู่ให้เต็มความกว้าง
+     (คอลัมน์ขวายังอยู่เผื่อตาราง TENDER_JOB ที่เป็น v-if) */
+  body .trn001-page .col-sm-6:has(> #CustomerHistoryBox),
+  body .trn001-page .col-sm-6:has(+ .col-sm-6 > #CustomerHistoryBox) {
+    float: none;
+    width: 100%;
+  }
+
+  /* ═══ เฟส 3 : สถานะ + ความสำคัญ ══════════════════════ */
+
+  body .trn001-page .status-priority-wrapper {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin: 0 0 14px !important;
+    padding: 0;
+  }
+
+  body .trn001-page .status-priority-wrapper > [class*="col-"] {
+    width: auto;
+    padding: 0 !important;
+  }
+
+  body .trn001-page .status-priority-wrapper .modern-card {
+    margin-bottom: 0;
+    padding: 14px 16px;
+    border: 1px solid var(--t-rule);
+    border-radius: 3px;
+    box-shadow: none;
+  }
+
+  body .trn001-page .status-priority-wrapper .card-label {
+    margin-bottom: 14px;
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--t-ink-3);
+  }
+
+  /* .step-label เป็น absolute top:30px — พอการ์ดเตี้ยลงจะถูก overflow ตัดหาย */
+  body .trn001-page .status-priority-wrapper .stepper-container {
+    padding-bottom: 26px;
+  }
+
+  body .trn001-page .status-priority-wrapper .step-label {
+    font-size: 11px;
+  }
+
+  body .trn001-page .status-priority-wrapper .priority-badge {
+    border-radius: 2px !important;
+    box-shadow: none !important;
+  }
+
+  /* ═══ เฟส 3b : การ์ดผู้เกี่ยวข้อง ═══════════════════════
+     .assign-grid เดิมเป็น auto-fit minmax(330px) — บนจอ 375 การ์ดกว้าง
+     เกินคอลัมน์ และ .assign-ledger เป็น 3 คอลัมน์ทำให้อีเมลถูกตัดทิ้ง
+     เหลือที่ว่างด้านขวาเป็นแถบ ปรับเป็นคู่ ป้าย/ค่า เรียงลงมาแทน */
+  body .trn001-page .assign-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  body .trn001-page .assign-card {
+    padding: 13px 13px 14px;
+    background: var(--t-paper-2);
+    border: 1px solid var(--t-rule);
+    border-left: 3px solid var(--t-navy);
+    border-radius: 2px;
+    box-shadow: none;
+  }
+
+  body .trn001-page .assign-card-assign {
+    border-left-color: var(--t-ok);
+  }
+
+  body .trn001-page .assign-card-top {
+    gap: 10px;
+    padding-right: 34px;
+  }
+
+  body .trn001-page .assign-monogram {
+    width: 34px;
+    height: 34px;
+    border-radius: 2px;
+    font-size: 13px;
+  }
+
+  body .trn001-page .assign-role {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--t-navy);
+  }
+
+  body .trn001-page .assign-card-assign .assign-role {
+    color: var(--t-ok);
+  }
+
+  body .trn001-page .assign-name {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--t-ink);
+  }
+
+  body .trn001-page .assign-nick {
+    padding: 1px 6px;
+    font-size: 10px;
+    border: 1px solid var(--t-rule);
+    border-radius: 2px;
+  }
+
+  /* ปุ่มค้นหาลอยมุมขวาบน ไม่กินความกว้างของชื่อ */
+  body .trn001-page .assign-search-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 2px;
+  }
+
+  /* ป้ายซ้าย ค่าขวา แถวละรายการ — อีเมลได้ความกว้างเต็ม ไม่โดนตัด */
+  body .trn001-page .assign-ledger {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px 12px;
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid var(--t-rule-soft);
+  }
+
+  body .trn001-page .assign-ledger .ledger-cell {
+    display: contents;
+  }
+
+  body .trn001-page .assign-ledger .ledger-label {
+    padding-top: 2px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--t-ink-3);
+  }
+
+  body .trn001-page .assign-ledger .ledger-value {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--t-ink);
+    text-overflow: ellipsis;
+  }
+
+  body .trn001-page .assign-ledger .ledger-value.is-blank {
+    color: var(--t-ink-3);
+  }
+
+  /* ═══ เฟส 4 : ตารางส่วนงาน → การ์ด ══════════════════════
+     17 คอลัมน์อยู่บนจอ 375 ไม่ได้ ทุก <td> มีคลาส td-* อยู่แล้ว
+     จึงจัดใหม่ด้วย flex order ล้วน ไม่ต้องแตะโครง markup
+     ป้ายกำกับดึงจาก data-label ที่อ้างสตริง ui.* เดิมของ <th> */
+  body .trn001-page .task-table-wrapper,
+  body .trn001-page .table-responsive {
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  body .trn001-page .table-task,
+  body .trn001-page .table-task > tbody {
+    display: block;
+    width: 100%;
+    border: 0;
+  }
+
+  body .trn001-page .table-task > thead {
+    display: none;
+  }
+
+  body .trn001-page .table-task tbody tr.task-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0 0 12px;
+    padding: 0 0 13px;
+    border: 1px solid var(--t-rule);
+    border-radius: 3px;
+    animation: trn-task-rise .4s var(--t-e) backwards;
+  }
+
+  @keyframes trn-task-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  body .trn001-page .table-task tbody tr.task-row:nth-child(2) { animation-delay: .05s; }
+  body .trn001-page .table-task tbody tr.task-row:nth-child(3) { animation-delay: .1s; }
+  body .trn001-page .table-task tbody tr.task-row:nth-child(4) { animation-delay: .15s; }
+  body .trn001-page .table-task tbody tr.task-row:nth-child(n+5) { animation-delay: .2s; }
+
+  body .trn001-page .table-task tbody tr.task-row > td {
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+    vertical-align: baseline;
+  }
+
+  /* ป้ายกำกับแทนหัวตารางที่ถูกซ่อน */
+  body .trn001-page .table-task tbody tr.task-row > td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--t-ink-3);
+  }
+
+  /* ─── แถบหัวการ์ด : ลำดับ + Module + สถานะ ─── */
+  body .trn001-page .table-task tbody tr.task-row > td.td-check,
+  body .trn001-page .table-task tbody tr.task-row > td.td-no,
+  body .trn001-page .table-task tbody tr.task-row > td.td-module,
+  body .trn001-page .table-task tbody tr.task-row > td.td-status {
+    order: 1;
+    padding: 10px 5px;
+    background: var(--t-paper-2);
+    border-bottom: 1px solid var(--t-rule-soft);
+  }
+
+  body .trn001-page .table-task tbody tr.task-row > td:first-child {
+    padding-left: 12px;
+  }
+
+  body .trn001-page .table-task tbody tr.task-row > td.td-module {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  body .trn001-page .table-task tbody tr.task-row > td.td-status {
+    flex: none;
+    padding-right: 12px;
+    text-align: right;
+  }
+
+  /* ─── หัวเรื่อง ─── */
+  body .trn001-page .table-task tbody tr.task-row > td.td-subject {
+    order: 2;
+    flex: 1 1 100%;
+    padding: 12px 12px 0;
+  }
+
+  body .trn001-page .table-task tbody tr.task-row > td.td-subject .subject-text {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--t-ink);
+    white-space: normal;
+  }
+
+  /* tooltip แบบ hover ใช้ไม่ได้บนจอสัมผัส และหัวเรื่องแสดงเต็มอยู่แล้ว */
+  body .trn001-page .table-task tbody tr.task-row > td.td-subject .subject-tooltip {
+    display: none !important;
+  }
+
+  /* ─── ชิปประเภทงาน ───
+     flex-wrap ไหลตามความกว้างที่เหลือ ไม่ได้ไหลตาม order — ถ้าไม่บังคับให้
+     กลุ่มนี้เต็มบรรทัด ช่องผู้ปฏิบัติงานจะไหลขึ้นมาต่อท้ายชิปบนจอกว้าง */
+  body .trn001-page .table-task tbody tr.task-row > td.td-type {
+    order: 3;
+    flex: none;
+    padding: 10px 0 0 12px;
+    font-size: 11.5px;
+    color: var(--t-ink-2);
+  }
+
+  body .trn001-page .table-task tbody tr.task-row > td.td-reqtype {
+    order: 3;
+    flex: 1 1 auto;
+    padding: 10px 12px 0 10px;
+    font-size: 11.5px;
+    color: var(--t-ink-3);
+  }
+
+  /* ─── ผู้ปฏิบัติงาน / ผู้ตรวจ ─── */
+  body .trn001-page .table-task tbody tr.task-row > td.td-worker,
+  body .trn001-page .table-task tbody tr.task-row > td.td-checker {
+    order: 4;
+    flex: 1 1 50%;
+    max-width: 50%;
+    margin-top: 13px;
+    padding: 12px 12px 0;
+    border-top: 1px dotted var(--t-rule);
+  }
+
+  /* ─── กลุ่มวันที่ ─── */
+  body .trn001-page .table-task tbody tr.task-row > td.td-date,
+  body .trn001-page .table-task tbody tr.task-row > td.td-date-sm,
+  body .trn001-page .table-task tbody tr.task-row > td.td-overdue {
+    order: 5;
+    flex: 1 1 50%;
+    max-width: 50%;
+    padding: 13px 12px 0;
+    text-align: left;
+  }
+
+  /* ─── สถานะอนุมัติ ─── */
+  body .trn001-page .table-task tbody tr.task-row > td.td-approve {
+    order: 6;
+    flex: 1 1 100%;
+    margin-top: 13px;
+    padding: 12px 12px 0;
+    border-top: 1px dotted var(--t-rule);
+  }
+
+  /* ─── ปุ่มดำเนินการ ─── */
+  body .trn001-page .table-task tbody tr.task-row > td.td-link {
+    order: 7;
+    flex: none;
+    padding: 14px 0 0 12px;
+  }
+
+  body .trn001-page .table-task tbody tr.task-row > td.td-action {
+    order: 8;
+    flex: none;
+    padding: 14px 12px 0 8px;
+  }
+
+  /* ─── ชิ้นส่วนภายในการ์ด ─── */
+  body .trn001-page .table-task .badge-no {
+    width: 22px;
+    height: 22px;
+    border-radius: 2px;
+    font-size: 11px;
+  }
+
+  body .trn001-page .table-task .module-tag {
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--t-navy-soft);
+    border-radius: 2px;
+    color: var(--t-navy);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+  }
+
+  body .trn001-page .table-task .status-pill,
+  body .trn001-page .table-task .approve-badge,
+  body .trn001-page .table-task .type-badge,
+  body .trn001-page .table-task .overdue-badge,
+  body .trn001-page .table-task .link-badge {
+    border-radius: 2px;
+  }
+
+  body .trn001-page .table-task .status-pill {
+    font-size: 9.5px;
+    letter-spacing: .09em;
+  }
+
+  body .trn001-page .table-task .person-name,
+  body .trn001-page .table-task .date-text {
+    font-size: 12.5px;
+    color: var(--t-ink);
+  }
+
+  body .trn001-page .table-task .link-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 14px;
+  }
+
+  body .trn001-page .table-task .action-btn-group .btn-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 2px;
+  }
+}
+
+/* ─── ที่ว่างริมซ้าย (ผูกกับเบรกพอยต์ sidebar ของ AdminLTE ไม่ใช่ของดีไซน์) ──
+   ต่ำกว่า 768px AdminLTE เลื่อน .main-sidebar ออกนอกจอ (translate -230px)
+   แต่ .sidebar-mini.sidebar-collapse .content-wrapper ยังกัน padding-left 50px
+   ไว้ให้รางมินิ (specificity 0,3,0 ชนะ @media max-width:835px ของ Site.css)
+   → เหลือเป็นแถบว่างริมซ้าย ขอบซ้าย/ขวาจึงไม่สมดุล */
+@media (max-width: 767px) {
+
+  body .trn001-page .content-wrapper {
+    padding-left: 0 !important;
+  }
+}
+
+/* ─── 640 – 767px : เลื่อนเบรกพอยต์ sm ของ bootstrap ลงมาที่ 640 ──
+   ดีไซน์เริ่มโหมด tablet ที่ 640 แต่ bootstrap 3 เริ่ม col-sm-* ที่ 768
+   ช่วงคาบเกี่ยวนี้จึงไม่มีคอลัมน์ใดได้ความกว้างเลย = 1 คอลัมน์
+   ให้ค่าเดียวกับ grid sm ของ bootstrap เป๊ะ ๆ พฤติกรรมจึงเหมือน 768 ทุกอย่าง */
+@media (min-width: 640px) and (max-width: 767px) {
+
+  body .trn001-page .col-sm-1,
+  body .trn001-page .col-sm-2,
+  body .trn001-page .col-sm-3,
+  body .trn001-page .col-sm-4,
+  body .trn001-page .col-sm-5,
+  body .trn001-page .col-sm-6,
+  body .trn001-page .col-sm-7,
+  body .trn001-page .col-sm-8,
+  body .trn001-page .col-sm-9,
+  body .trn001-page .col-sm-10,
+  body .trn001-page .col-sm-11,
+  body .trn001-page .col-sm-12 {
+    float: left;
+  }
+
+  body .trn001-page .col-sm-1  { width: 8.33333333%; }
+  body .trn001-page .col-sm-2  { width: 16.66666667%; }
+  body .trn001-page .col-sm-3  { width: 25%; }
+  body .trn001-page .col-sm-4  { width: 33.33333333%; }
+  body .trn001-page .col-sm-5  { width: 41.66666667%; }
+  body .trn001-page .col-sm-6  { width: 50%; }
+  body .trn001-page .col-sm-7  { width: 58.33333333%; }
+  body .trn001-page .col-sm-8  { width: 66.66666667%; }
+  body .trn001-page .col-sm-9  { width: 75%; }
+  body .trn001-page .col-sm-10 { width: 83.33333333%; }
+  body .trn001-page .col-sm-11 { width: 91.66666667%; }
+  body .trn001-page .col-sm-12 { width: 100%; }
+}
+
+/* ─── Tablet ตั้ง (640 – 939px) ─────────────────────────── */
+@media (min-width: 640px) and (max-width: 939px) {
+
+  .trn001-page {
+    --t-pad: 28px;
+  }
+
+  body .trn001-page .tabbable-line > .nav-tabs > li > a {
+    padding: 11px 14px;
+    font-size: 13.5px;
+  }
+
+  body .trn001-page .section-card-body {
+    padding: 18px 16px !important;
+  }
+
+  body .trn001-page .dd-actionbar {
+    padding: 10px 14px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+
+  body .trn001-page .dd-actionbar .form-toolbar .btn {
+    flex: 0 0 auto;
+    min-width: 150px;
+  }
+
+  /* การ์ดความสำคัญถูก hidden-sm (768-991) ซ่อนไว้ — ดีไซน์ให้แสดงคู่กับสถานะ */
+  body .trn001-page .status-priority-wrapper > .hidden-md.hidden-sm {
+    display: flex !important;
+  }
+
+  body .trn001-page .assign-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* กลุ่มวันที่ 3 ช่องต่อแถวเมื่อมีความกว้างพอ */
+  body .trn001-page .table-task tbody tr.task-row > td.td-date,
+  body .trn001-page .table-task tbody tr.task-row > td.td-date-sm,
+  body .trn001-page .table-task tbody tr.task-row > td.td-overdue {
+    flex-basis: 33.3333%;
+    max-width: 33.3333%;
+  }
+}
+
+/* ─── มือถือ (≤ 639px) ─────────────────────────────────── */
+@media (max-width: 639px) {
+
+  body .trn001-page .tabbable-line > .nav-tabs > li > a {
+    padding: 9px 11px;
+    font-size: 12.5px;
+  }
+
+  body .trn001-page .section-card-header,
+  body .trn001-page .gemini-card-header {
+    padding: 10px 11px;
+  }
+
+  body .trn001-page .section-card-body {
+    padding: 12px 11px !important;
+  }
+
+  body .trn001-page .dd-actionbar .form-toolbar .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    font-size: 12.5px;
+  }
+
+  body .trn001-page .status-priority-wrapper .modern-card {
+    padding: 13px 14px;
+  }
+}
+
+/* ─── สัมผัส — hover ค้างบนจอสัมผัส ─────────────────────── */
+/* ═══ เฟส 5 : โมดัลแก้ไขส่วนงาน → ชีตเต็มจอ ══════════════════
+   modal-2 ย้าย .modal ไปแขวนที่ document.body ตอน mounted
+   (modal-2.vue:149 กัน stacking context ซ้อน) จึงอยู่นอก .trn001-page
+   job_detail.vue mounted() ติดคลาส .trn001-sheet ให้ .modal ตรง ๆ จึงเกาะได้
+   โครง flex column ของ .modal-dialog / .modal-content มีอยู่แล้วใน
+   Site.css จึงเหลือแค่ทำให้เต็มจอ ตรึงแถบแท็บ และให้เนื้อหาเลื่อนชั้นเดียว */
+@media (max-width: 939px) {
+
+  body .modal.trn001-sheet {
+    --s-paper:      #ffffff;
+    --s-paper-2:    #f4f7fc;
+    --s-paper-3:    #e8f0fa;
+    --s-ink:        #0a1c3d;
+    --s-ink-2:      #44567a;
+    --s-ink-3:      #6f7f9c;
+    --s-rule:       #ccd7e8;
+    --s-navy:       #1748a8;
+    --s-navy-deep:  #0b2a63;
+    --s-pad:        16px;
+    padding: 0 !important;
+  }
+
+  body.dark-mode .modal.trn001-sheet {
+    --s-paper:      #060e1e;
+    --s-paper-2:    #0d1729;
+    --s-paper-3:    #152239;
+    --s-ink:        #e9effb;
+    --s-ink-2:      #a4b3ce;
+    --s-ink-3:      #6d7d9c;
+    --s-rule:       #243350;
+    --s-navy:       #6f9cf0;
+    --s-navy-deep:  #16305c;
+  }
+
+  /* ─── ตัวชีต ───────────────────────────────────────────────
+     ต้นเหตุที่ช่องกรอกทุกช่องล้นออกขวา :
+     Site.css:2085 ให้ .modal-xl-2 เป็น position:fixed ตั้งแต่ ≤1366px
+     และ Site.css:2119 ให้ width:auto !important ที่ ≤767px
+     กล่อง position:fixed ที่ width:auto และไม่ได้กำหนด left/right
+     จะใช้การวัดแบบ shrink-to-fit คือ "กว้างตามเนื้อหาข้างใน"
+     ไม่ใช่กว้างตามจอ  ผลคือกรอบชีตถูกลูกดันให้กว้างเกินจอ
+     แล้ว width:100% / max-width:100% ของลูกก็อ้างกับกรอบที่กว้างเกินนั้น
+     กลายเป็นวงกลม — แก้ที่ลูกเท่าไรก็ไม่หาย
+
+     กำหนด left/right/top/bottom ให้ครบ width:auto จึงเปลี่ยนไปวัดจากจอ
+     ใส่ !important กันสไตล์ inline ที่ jQuery UI draggable เขียนลงมา
+     (modal-2.vue:96 ผูก draggable ไว้ที่ .modal-dialog) มาเลื่อนชีตหลุดจอ */
+  body .modal.trn001-sheet .modal-dialog {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+  }
+
+  body .modal.trn001-sheet .modal-content {
+    height: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* modal-2.vue:96 ผูก jQuery UI draggable ไว้ที่ .modal-dialog แล้วสั่ง
+     .css({top:0,left:0}) ตอนเปิด ซึ่งกลายเป็น style inline ที่ทับ CSS ปกติ
+     ทำให้ right/bottom ไม่มีผลคู่กัน — ย้ำด้วย !important ด้านบนแล้ว
+     เหลือกัน transform ที่ draggable ใส่ตอนลากบนจอสัมผัส */
+  body .modal.trn001-sheet .modal-dialog {
+    transform: none !important;
+  }
+
+  /* กันไม่ให้ลูกตัวใดดันกรอบให้กว้างเกินจออีก
+     .modal-body เป็นตัวเลื่อนแนวตั้งอยู่แล้ว (Site.css) เพิ่มการตัดแนวนอน
+     เพื่อให้ของที่กว้างเกินถูกจำกัด ไม่ใช่ไปขยายกรอบ */
+  body .modal.trn001-sheet .modal-body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* ─── หัวชีต ─── */
+  body .modal.trn001-sheet .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 0;
+    padding: 12px var(--s-pad) !important;
+    background: var(--s-navy-deep) !important;
+    border-radius: 0;
+  }
+
+  body .modal.trn001-sheet .modal-header-inner {
+    flex: 1;
+    min-width: 0;
+  }
+
+  body .modal.trn001-sheet .modal-header::after {
+    display: none;
+  }
+
+  body .modal.trn001-sheet .modal-header h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #fff;
+  }
+
+  body .modal.trn001-sheet .modal-header .close {
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    color: #fff;
+    background: rgba(255, 255, 255, .15);
+    border-radius: 2px;
+    opacity: 1;
+    text-shadow: none;
+  }
+
+  /* ─── ตัวชีต ───
+     Site.css ให้ .modal-body เป็น flex:1 + overflow-y:auto อยู่แล้ว
+     ใช้มันเป็นตัวเลื่อนตัวเดียว แล้วตรึงแถบแท็บด้วย sticky
+     (เลี่ยงการส่ง flex column ลง 4 ชั้น ซึ่งถ้าโครงเปลี่ยนจะทำให้เนื้อหาโดนตัดหาย) */
+  body .modal.trn001-sheet .modal-body {
+    padding: 0 !important;
+    overscroll-behavior: contain;
+  }
+
+  body .modal.trn001-sheet .modal-body > div > .row {
+    margin: 0;
+  }
+
+  body .modal.trn001-sheet .modal-body > div > .row > .col-md-12 {
+    padding: 0;
+  }
+
+  body .modal.trn001-sheet .modal-body > div > .row > .col-md-12 > .nav-tabs-custom {
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* ตัวเลื่อนซ้อนชั้นในของเดิม — ปลดทิ้ง ให้เลื่อนที่ .modal-body ที่เดียว
+     ระยะขอบซ้าย/ขวาต้องเป็น 0 ที่นี่ แล้วไปเอาจาก padding ของคอลัมน์แทน
+     ถ้าใส่ทั้งสองที่จะซ้อนกันเป็น 28px แล้วดันการ์ดล้นออกนอกกรอบ */
+  body .modal.trn001-sheet .modal-tab-scroll {
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    padding: 0 0 22px !important;
+  }
+
+  /* ─── แถบแท็บ 10-12 อัน : ตรึงบน + เลื่อนแนวนอน + ขีดเส้นใต้ ─── */
+  body .modal.trn001-sheet .nav-tabs.task-modal-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0;
+    padding: 0 var(--s-pad);
+    background: var(--s-paper-2);
+    border-bottom: 1px solid var(--s-rule);
+  }
+
+  body .modal.trn001-sheet .nav-tabs.task-modal-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  body .modal.trn001-sheet .nav-tabs.task-modal-tabs > li {
+    flex: none;
+    float: none;
+    margin: 0;
+    border: 0;
+  }
+
+  body .modal.trn001-sheet .nav-tabs-custom > .nav-tabs.task-modal-tabs > li > a,
+  body .modal.trn001-sheet .nav-tabs-custom > .nav-tabs.task-modal-tabs > li > a:hover,
+  body .modal.trn001-sheet .nav-tabs-custom > .nav-tabs.task-modal-tabs > li > a:focus {
+    margin: 0 !important;
+    padding: 11px 11px 9px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: var(--s-ink-3) !important;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  body .modal.trn001-sheet .nav-tabs-custom > .nav-tabs.task-modal-tabs > li.active > a,
+  body .modal.trn001-sheet .nav-tabs-custom > .nav-tabs.task-modal-tabs > li.active > a:hover,
+  body .modal.trn001-sheet .nav-tabs-custom > .nav-tabs.task-modal-tabs > li.active > a:focus {
+    color: var(--s-ink) !important;
+    font-weight: 600;
+    border-bottom-color: var(--s-navy) !important;
+  }
+
+  /* ─── เนื้อหาชีต ─── */
+
+  /* ─── ท้ายชีต ─── */
+  body .modal.trn001-sheet .modal-footer {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    max-width: 100%;
+    gap: 8px;
+    padding: 10px var(--s-pad) !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    background: var(--s-paper);
+    border-top: 1px solid var(--s-rule) !important;
+  }
+
+  /* ปุ่มท้ายชีตมีได้ถึง 8 ปุ่มตาม v-if — ต้องห่อบรรทัดได้และหดได้
+     ไม่ใช่ยืนเรียงเดียวจนล้นออกขวา (min-width เดิม 112px + flex-basis auto
+     ทำให้ปุ่มที่ข้อความยาวไม่ยอมหด) */
+  body .modal.trn001-sheet .modal-footer .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 40px;
+    margin: 0 !important;
+    white-space: normal;
+    border-radius: 2px;
+  }
+
+  /* .modal-footer ของ AdminLTE/BS3 ใช้ clearfix ซึ่งกลายเป็น flex item
+     เมื่อสั่ง display:flex — ทำให้เกิดช่องว่างและดันปุ่มตกบรรทัด */
+  body .modal.trn001-sheet .modal-footer::before,
+  body .modal.trn001-sheet .modal-footer::after {
+    display: none;
+  }
+
+  /* ปุ่มถูกห่อด้วย .row > .col-* ใน template #footer ของ job_detail.vue
+     ต้องปลดความกว้างของ grid ออกก่อน ไม่งั้น col-lg-12 คือ flex item เดียว
+     ที่กว้าง 100% แล้วปุ่มข้างในกลับไปเรียงแบบ inline ล้นออกขวา */
+  body .modal.trn001-sheet .modal-footer > .row {
+    flex: 1 1 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  body .modal.trn001-sheet .modal-footer > .row > [class*="col-"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    float: none;
+    width: 100%;
+    padding: 0;
+  }
+
+  /* ─── การ์ดพับได้ในชีต ─── */
+  body .modal.trn001-sheet .info-card.accordion-card {
+    margin-top: 14px;
+    border: 1px solid var(--s-rule);
+    border-radius: 3px;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  body .modal.trn001-sheet .info-card-header {
+    padding: 11px 13px;
+    background: var(--s-navy-deep);
+    border-radius: 0;
+    font-size: 13px;
+  }
+
+  body .modal.trn001-sheet .info-card-body {
+    padding: 14px 13px;
+  }
+
+  /* ─── ฟอร์มในชีต : ให้เหมือนฟอร์มในหน้า ─── */
+  body .modal.trn001-sheet .field-label {
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--s-ink-3);
+  }
+
+  body .modal.trn001-sheet label {
+    white-space: normal;
+  }
+
+  body .modal.trn001-sheet .form-control,
+  body .modal.trn001-sheet .form-control.input-sm {
+    height: auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 13.5px;
+    color: var(--s-ink);
+    border: 1px solid var(--s-rule);
+    border-radius: 2px;
+    box-shadow: none;
+  }
+
+  body .modal.trn001-sheet .form-control:focus {
+    border-color: var(--s-navy) !important;
+    box-shadow: 0 0 0 3px rgba(23, 72, 168, .14);
+  }
+
+  body .modal.trn001-sheet textarea.form-control {
+    min-height: 84px;
+    line-height: 1.55;
+  }
+
+  body .modal.trn001-sheet .btn {
+    border-radius: 2px;
+  }
+}
+
+/* ═══ เฟส 5b : เนื้อหาในชีต — ไม่พึ่ง :has() ═════════════════
+   ชุดกฎด้านบนเกาะด้วย body .modal.trn001-sheet ซึ่งถ้าเบราว์เซอร์
+   ไม่รองรับ :has() จะถูกทิ้งทั้งก้อน (อาการ: โมดัลไม่เปลี่ยนอะไรเลย)
+   ชุดนี้เกาะ .modal-tab-scroll ซึ่งเป็นคลาสที่มีอยู่แล้วและใช้เฉพาะ
+   โมดัลแก้ไขส่วนงานตัวเดียว จึงทำงานได้ทุกเบราว์เซอร์ */
+@media (max-width: 939px) {
+
+  body .modal-tab-scroll {
+    --s2-paper:      #ffffff;
+    --s2-paper-2:    #f4f7fc;
+    --s2-ink:        #0a1c3d;
+    --s2-ink-3:      #6f7f9c;
+    --s2-rule:       #ccd7e8;
+    --s2-navy:       #1748a8;
+    --s2-navy-deep:  #0b2a63;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    padding: 0 0 22px !important;
+  }
+
+  body.dark-mode .modal-tab-scroll {
+    --s2-paper:      #060e1e;
+    --s2-paper-2:    #0d1729;
+    --s2-ink:        #e9effb;
+    --s2-ink-3:      #6d7d9c;
+    --s2-rule:       #243350;
+    --s2-navy:       #6f9cf0;
+    --s2-navy-deep:  #16305c;
+  }
+
+  /* ─── กริด : ล้างระยะติดลบของ .row แล้วให้ทุกคอลัมน์เต็มแถว ───
+     ผลรวมความกว้างจึงเท่ากับกรอบเป๊ะ ล้นออกขวาไม่ได้ */
+  body .modal-tab-scroll .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  body .modal-tab-scroll [class*="col-xs-"],
+  body .modal-tab-scroll [class*="col-sm-"],
+  body .modal-tab-scroll [class*="col-md-"],
+  body .modal-tab-scroll [class*="col-lg-"] {
+    float: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  body .modal-tab-scroll .table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* ─── การ์ดหัวข้อ ─── */
+  body .modal-tab-scroll .info-card {
+    margin-bottom: 12px;
+    border: 1px solid var(--s2-rule);
+    border-radius: 3px;
+    box-shadow: none;
+  }
+
+  body .modal-tab-scroll .info-card-header {
+    padding: 10px 12px;
+    background: var(--s2-navy-deep);
+    border-radius: 0;
+    font-size: 13px;
+    color: #fff;
+  }
+
+  body .modal-tab-scroll .info-card-header i,
+  body .modal-tab-scroll .info-card-header span {
+    color: #fff;
+  }
+
+  body .modal-tab-scroll .info-card-body {
+    padding: 12px 6px 6px;
+  }
+
+  /* ─── ฟอร์ม ─── */
+  body .modal-tab-scroll label {
+    white-space: normal;
+  }
+
+  body .modal-tab-scroll .form-group {
+    margin-bottom: 12px;
+  }
+
+  body .modal-tab-scroll .form-control,
+  body .modal-tab-scroll .form-control.input-sm {
+    width: 100%;
+    height: auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 13.5px;
+    color: var(--s2-ink);
+    border: 1px solid var(--s2-rule);
+    border-radius: 2px;
+    box-shadow: none;
+  }
+
+  body .modal-tab-scroll .form-control:focus {
+    border-color: var(--s2-navy) !important;
+    box-shadow: 0 0 0 3px rgba(23, 72, 168, .14);
+  }
+
+  body .modal-tab-scroll textarea.form-control {
+    min-height: 84px;
+    line-height: 1.55;
+  }
+
+  body .modal-tab-scroll .btn {
+    border-radius: 2px;
+  }
+}
+
+/* ─── ชีต : tablet ตั้ง 640-939px — เว้นขอบรอบแทนเต็มจอ ─── */
+@media (min-width: 640px) and (max-width: 939px) {
+
+  body .modal.trn001-sheet {
+    --s-pad: 24px;
+  }
+
+  /* เว้นขอบรอบด้วย inset ไม่ใช่ margin — เพราะกล่องเป็น position:fixed
+     ที่ตรึงทั้งสี่ด้านแล้ว (ดูเหตุผลในบล็อก ≤939px) margin จะไม่มีผลกับ
+     ความกว้าง และจะดันกล่องให้ล้นออกไปทางขวา/ล่างแทน */
+  body .modal.trn001-sheet .modal-dialog {
+    top: 20px !important;
+    right: 20px !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    margin: 0 !important;
+  }
+
+  body .modal.trn001-sheet .modal-content {
+    border: 1px solid var(--s-rule);
+    border-radius: 4px;
+    box-shadow: 0 30px 70px -30px rgba(6, 20, 50, .5);
+  }
+
+  body .modal.trn001-sheet .modal-footer {
+    justify-content: flex-end;
+  }
+
+  body .modal.trn001-sheet .modal-footer .btn {
+    flex: 0 0 auto;
+    min-width: 132px;
+  }
+
+  body .modal.trn001-sheet .info-card-body {
+    padding: 18px 16px;
+  }
+
+  /* มีที่พอสำหรับ 2 ช่องต่อแถว — จำกัดไว้แค่ 50% กับ 100% เท่านั้น
+     ไม่ปล่อยให้กลับไปเป็น 3-4 คอลัมน์ซึ่งเป็นต้นเหตุที่ช่องกรอกโดนตัด */
+  body .modal-tab-scroll .col-xs-3,
+  body .modal-tab-scroll .col-xs-4,
+  body .modal-tab-scroll .col-xs-5,
+  body .modal-tab-scroll .col-xs-6,
+  body .modal-tab-scroll .col-sm-3,
+  body .modal-tab-scroll .col-sm-4,
+  body .modal-tab-scroll .col-sm-5,
+  body .modal-tab-scroll .col-sm-6,
+  body .modal-tab-scroll .col-md-3,
+  body .modal-tab-scroll .col-md-4,
+  body .modal-tab-scroll .col-md-5,
+  body .modal-tab-scroll .col-md-6,
+  body .modal-tab-scroll .col-lg-3,
+  body .modal-tab-scroll .col-lg-4,
+  body .modal-tab-scroll .col-lg-5,
+  body .modal-tab-scroll .col-lg-6 {
+    float: left !important;
+    width: 50% !important;
+  }
+}
+
+/* ─── ≥ 940px : คืนตัวเลื่อนแนวนอนให้ตารางส่วนงาน ────────────
+   บล็อกเดียวในไฟล์นี้ที่แตะจอ ≥940px — แก้บั๊กเดิม ไม่ใช่งานดีไซน์
+   .task-table-wrapper ตั้ง overflow:hidden ไว้ตัดมุมโค้ง 8px และ
+   bootstrap 3 ให้ .table-responsive เป็น overflow-x:auto เฉพาะ ≤767px
+   → ตั้งแต่ 768px ขึ้นไปตาราง 17 คอลัมน์จึงถูกตัดทิ้งโดยไม่มีตัวเลื่อน
+   ถ้าตารางกว้างพอดีจอจะไม่มี scrollbar โผล่ หน้าตาเหมือนเดิมทุกอย่าง */
+@media (min-width: 940px) {
+
+  body .trn001-page .task-table-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+@media (max-width: 939px) and (hover: none) {
+
+  body .trn001-page .section-card:hover,
+  body .trn001-page .status-priority-wrapper .modern-card:hover {
+    box-shadow: none;
+  }
+}

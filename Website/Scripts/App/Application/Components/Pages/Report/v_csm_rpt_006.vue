@@ -366,10 +366,10 @@ export default {
         );
 
         x.no = o++;
-        x.due_date = this.$options.filters.date(x.due_date, "DD/MM/YYYY HH:mm");
-        x.complete_date = this.$options.filters.date(x.complete_date, "DD/MM/YYYY HH:mm");
-        x.send_pretest_dt = this.$options.filters.date(x.send_pretest_dt, "DD/MM/YYYY HH:mm");
-        x.send_pretest_to_tester_dt = this.$options.filters.date(x.send_pretest_to_tester_dt, "DD/MM/YYYY HH:mm");
+        x.due_date = this.$date(x.due_date, "DD/MM/YYYY HH:mm");
+        x.complete_date = this.$date(x.complete_date, "DD/MM/YYYY HH:mm");
+        x.send_pretest_dt = this.$date(x.send_pretest_dt, "DD/MM/YYYY HH:mm");
+        x.send_pretest_to_tester_dt = this.$date(x.send_pretest_to_tester_dt, "DD/MM/YYYY HH:mm");
         
         this.$set(x, "overdueM", overdue.months <= 0 || $xt.isEmpty(overdue.months) || isNaN(overdue.months) ? "" : overdue.months + " เดือน ");
         this.$set(x, "overdueD", overdue.days <= 0 || $xt.isEmpty(overdue.days) || isNaN(overdue.days) ? "" : overdue.days + " วัน ");

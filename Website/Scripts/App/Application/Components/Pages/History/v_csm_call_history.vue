@@ -20,7 +20,7 @@
                   <td>{{x.empfullname_t}}</td>
                   <td>{{x.customer_name}}</td>
                   <td>{{x.telephone}}</td>
-                  <td align="center" class="text-bold">{{x.income_dt | date('DD/MM/YYYY HH:mm')}}</td>
+                  <td align="center" class="text-bold">{{$date(x.income_dt, 'DD/MM/YYYY HH:mm')}}</td>
                 </tr>
               </tbody>
             </table>

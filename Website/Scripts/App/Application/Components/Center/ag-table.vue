@@ -133,7 +133,7 @@
 </style>
 
 <script>
-  import { reactive, computed, onBeforeMount, onMounted, ref } from '@vue/composition-api'
+  import { reactive, computed, onBeforeMount, onMounted, ref } from 'vue'
 
   import "ag-grid-enterprise/dist/styles/ag-grid.css"
   import "ag-grid-enterprise/dist/styles/ag-theme-alpine.css"

@@ -29,7 +29,7 @@
                 <span class="info-box-icon bg-blue"><i class="fas fa-folder-open"></i></span>
                 <div class="info-box-content">
                   <span class="info-box-text">รายการ CSM ทั้งหมด</span>
-                  <span class="info-box-number">{{summaryTotal.total | number(0)}}<small class="gm-kpi-unit">รายการ</small></span>
+                  <span class="info-box-number">{{$num(summaryTotal.total, 0)}}<small class="gm-kpi-unit">รายการ</small></span>
                   <div class="gm-kpi-bar"><span class="gm-kpi-bar__fill" style="width:100%;"></span></div>
                 </div>
               </div>
@@ -40,8 +40,8 @@
                 <div class="info-box-content">
                   <span class="info-box-text">รายการที่อยู่ในสถานะ None</span>
                   <span class="info-box-number">
-                    {{summaryTotal.total_none | number(0)}}
-                    <small class="gm-kpi-unit">/ {{summaryTotal.total | number(0)}}</small>
+                    {{$num(summaryTotal.total_none, 0)}}
+                    <small class="gm-kpi-unit">/ {{$num(summaryTotal.total, 0)}}</small>
                     <span class="gm-kpi-pct">{{kpiPct(summaryTotal.total_none)}}%</span>
                   </span>
                   <div class="gm-kpi-bar"><span class="gm-kpi-bar__fill" :style="{ width: kpiPct(summaryTotal.total_none) + '%' }"></span></div>
@@ -54,8 +54,8 @@
                 <div class="info-box-content">
                   <span class="info-box-text">รายการที่อยู่ในสถานะ In Progress</span>
                   <span class="info-box-number">
-                    {{summaryTotal.total_inprogress | number(0)}}
-                    <small class="gm-kpi-unit">/ {{summaryTotal.total | number(0)}}</small>
+                    {{$num(summaryTotal.total_inprogress, 0)}}
+                    <small class="gm-kpi-unit">/ {{$num(summaryTotal.total, 0)}}</small>
                     <span class="gm-kpi-pct">{{kpiPct(summaryTotal.total_inprogress)}}%</span>
                   </span>
                   <div class="gm-kpi-bar"><span class="gm-kpi-bar__fill" :style="{ width: kpiPct(summaryTotal.total_inprogress) + '%' }"></span></div>
@@ -68,8 +68,8 @@
                 <div class="info-box-content">
                   <span class="info-box-text">รายการที่อยู่ในสถานะ Complete</span>
                   <span class="info-box-number">
-                    {{summaryTotal.total_complete | number(0)}}
-                    <small class="gm-kpi-unit">/ {{summaryTotal.total | number(0)}}</small>
+                    {{$num(summaryTotal.total_complete, 0)}}
+                    <small class="gm-kpi-unit">/ {{$num(summaryTotal.total, 0)}}</small>
                     <span class="gm-kpi-pct">{{kpiPct(summaryTotal.total_complete)}}%</span>
                   </span>
                   <div class="gm-kpi-bar"><span class="gm-kpi-bar__fill" :style="{ width: kpiPct(summaryTotal.total_complete) + '%' }"></span></div>
@@ -652,8 +652,8 @@
         $linq(this.datalist_byproject).foreach(d => {
           d.job_priority_text = this.priorityName(d.job_priority); 
           d.job_priority_code = d.job_priority; 
-          d.job_date = this.$options.filters.date(d.job_date, "DD/MM/YYYY");
-          d.assign_date = this.$options.filters.date(d.assign_date, "DD/MM/YYYY");
+          d.job_date = this.$date(d.job_date, "DD/MM/YYYY");
+          d.assign_date = this.$date(d.assign_date, "DD/MM/YYYY");
           d.project_name = !this.is_mango()
             ? ($xt.isEmpty(d.project_name) && !$xt.isEmpty(d.customer_name))
               ? 'ไม่ระบุโครงการ'

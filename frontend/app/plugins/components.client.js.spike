@@ -1,0 +1,7 @@
+import actionLink from '~/Components/Center/action-link.vue'
+
+export default defineNuxtPlugin((nuxtApp) => {
+  const app = nuxtApp.vueApp
+
+  app.component('action-link', actionLink)
+})

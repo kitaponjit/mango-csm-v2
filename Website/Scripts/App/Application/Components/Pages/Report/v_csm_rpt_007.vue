@@ -229,10 +229,10 @@
           x.no = o++;
           // Format dates if needed
           if (x.add_dt) {
-            x.add_dt = this.$options.filters.date(x.add_dt, "DD/MM/YYYY HH:mm");
+            x.add_dt = this.$date(x.add_dt, "DD/MM/YYYY HH:mm");
           }
           if (x.rec_dt) {
-            x.rec_dt = this.$options.filters.date(x.rec_dt, "DD/MM/YYYY HH:mm");
+            x.rec_dt = this.$date(x.rec_dt, "DD/MM/YYYY HH:mm");
           }
         });
 

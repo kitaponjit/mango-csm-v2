@@ -25,10 +25,10 @@
             <td>{{x.refcode}}</td>
             <td>{{x.project_name}}</td>
             <td>{{x.pm_name}}</td>
-            <td align="center">{{x.rcptdate | date('DD/MM/YYYY')}}</td>
-            <td align="center">{{x.start_date | date('DD/MM/YYYY')}}</td>
-            <td align="center">{{x.edit_date | date('DD/MM/YYYY')}}</td>
-            <td align="center">{{x.edit_status_date | date('DD/MM/YYYY')}}</td>
+            <td align="center">{{$date(x.rcptdate, 'DD/MM/YYYY')}}</td>
+            <td align="center">{{$date(x.start_date, 'DD/MM/YYYY')}}</td>
+            <td align="center">{{$date(x.edit_date, 'DD/MM/YYYY')}}</td>
+            <td align="center">{{$date(x.edit_status_date, 'DD/MM/YYYY')}}</td>
             <td>{{x.remark_status}}</td>
             <td>{{x.remark_project}}</td>
             <td>{{x.projgroup}}</td>

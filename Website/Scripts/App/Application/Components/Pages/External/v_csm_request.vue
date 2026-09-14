@@ -97,7 +97,7 @@
                         <div class="cx-bubble" v-for="x in cmtList">
                             <div class="cx-bubble__head">
                                 <span class="cx-bubble__who"><i class="fas fa-user-edit"></i> {{x.customer_name}}</span>
-                                <span class="cx-bubble__time" v-if="x.add_dt"><i class="far fa-clock"></i> {{x.add_dt|date('DD/MM/YYYY HH:mm')}}</span>
+                                <span class="cx-bubble__time" v-if="x.add_dt"><i class="far fa-clock"></i> {{$date(x.add_dt, 'DD/MM/YYYY HH:mm')}}</span>
                             </div>
                             <span class="cx-bubble__text" v-if="!x.editMode">{{x.description}}</span>
                             <textarea v-if="x.editMode" class="form-control" rows="3" v-model.trim="x.description"></textarea>

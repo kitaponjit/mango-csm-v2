@@ -197,7 +197,7 @@
                   <button class="btn btn-sm btn-success" @click="saveQC" v-bind:disabled="!xt.isEmpty(qc_user) || (formData.request_empno != auth.empno)"><i class="fa fa-save"></i> {{ ui.csm_trn_save_survey }}</button>
                 </div>
                 <div class="col-lg-6 col-md-6 col-sm-6">
-                  <span class="pull-right">{{ ui.csm_trn_evaluator }} : {{qc_user || ""}} {{ ui.csm_v2_date }} : {{qc_date | date('DD/MM/YYYY HH:mm')}}</span>
+                  <span class="pull-right">{{ ui.csm_trn_evaluator }} : {{qc_user || ""}} {{ ui.csm_v2_date }} : {{$date(qc_date, 'DD/MM/YYYY HH:mm')}}</span>
                 </div>
               </div>
             </fieldset>

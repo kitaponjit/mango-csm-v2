@@ -480,8 +480,8 @@
         let fields = [
           ['cc_select', '', 'checkbox', { width: 60, align: 'center', pinned: 'left', cellRenderer: (p) => `<input type="checkbox" class="ag-select-row" data-job-no="${p.data.job_no}" ${p.data.cc_select ? 'checked' : ''} />` }],
           ['job_no', 'CSM No.', 'text', { width: 160, align: 'center', cellRenderer: (p) => `<a href="${this.openReq(p.data)}" target="_blank" style="color:#009ef7;font-weight:600;text-decoration:none;">${p.data.job_no}</a>`, cellStyle: (p) => this.rowExtraStyle(p) }],
-          ['job_date', 'Date', 'text', { width: 150, align: 'center', cellRenderer: (p) => p.value ? this.$options.filters.date(p.value, 'DD/MM/YYYY HH:mm') : '', cellStyle: (p) => this.rowExtraStyle(p) }],
-          ['assign_date', 'Assign Date', 'text', { width: 120, align: 'center', cellRenderer: (p) => p.value ? this.$options.filters.date(p.value) : '', cellStyle: (p) => this.rowExtraStyle(p) }],
+          ['job_date', 'Date', 'text', { width: 150, align: 'center', cellRenderer: (p) => p.value ? this.$date(p.value, 'DD/MM/YYYY HH:mm') : '', cellStyle: (p) => this.rowExtraStyle(p) }],
+          ['assign_date', 'Assign Date', 'text', { width: 120, align: 'center', cellRenderer: (p) => p.value ? this.$date(p.value) : '', cellStyle: (p) => this.rowExtraStyle(p) }],
           ['subject', 'Subject', 'text', { width: 320, align: 'left', cellStyle: (p) => this.rowExtraStyle(p) }],
           ['project_name', 'Project', 'text', { width: 180, align: 'left', cellRenderer: (p) => this.projectCellHtml(p.data), cellStyle: (p) => this.rowExtraStyle(p) }],
           ['customer_name', 'Customer', 'text', { width: 180, align: 'left', cellStyle: (p) => this.rowExtraStyle(p) }],

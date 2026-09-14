@@ -208,10 +208,10 @@
                                                             </td>
                                                             <td class="text-secondary">{{ x.adduser }}</td>
                                                             <td align="center" class="text-secondary">
-                                                                {{ x.add_dt | date('DD/MM/YYYY HH:mm:ss') }}</td>
+                                                                {{ $date(x.add_dt, 'DD/MM/YYYY HH:mm:ss') }}</td>
                                                             <td class="text-secondary">{{ x.edituser }}</td>
                                                             <td align="center" class="text-secondary">
-                                                                {{ x.edit_dt | date('DD/MM/YYYY HH:mm:ss') }}</td>
+                                                                {{ $date(x.edit_dt, 'DD/MM/YYYY HH:mm:ss') }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -306,9 +306,9 @@
                                                                     :number-only="true" v-model="x.concurrent_user"
                                                                     @keyup="changeInfo(x)"></i-input></td>
                                                             <td align="center">{{ x.adduser }}</td>
-                                                            <td align="center">{{ x.add_dt | date('DD/MM/YYYY') }}</td>
+                                                            <td align="center">{{ $date(x.add_dt, 'DD/MM/YYYY') }}</td>
                                                             <td align="center">{{ x.edituser }}</td>
-                                                            <td align="center">{{ x.edit_dt | date('DD/MM/YYYY') }}</td>
+                                                            <td align="center">{{ $date(x.edit_dt, 'DD/MM/YYYY') }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

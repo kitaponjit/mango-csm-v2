@@ -1,0 +1,63 @@
+{
+  "name": "mango-csm-frontend",
+  "description": "Mango CSM Application (Nuxt)",
+  "version": "1.0.0",
+  "author": "Mango Consultant Co., Ltd.",
+  "license": "Comercial",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt generate",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "sync:vendor": "node scripts/sync-vendor.mjs"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.21",
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/interaction": "^6.1.21",
+    "@fullcalendar/list": "^6.1.21",
+    "@fullcalendar/multimonth": "^6.1.21",
+    "@fullcalendar/timegrid": "^6.1.21",
+    "@fullcalendar/vue3": "^6.1.21",
+    "@pinia/nuxt": "^0.11.2",
+    "@vuepic/vue-datepicker": "^11.0.3",
+    "ag-grid-community": "^33.3.2",
+    "ag-grid-vue3": "^33.3.2",
+    "axios": "^1.20.0",
+    "broadcast-channel": "^5.5.1",
+    "chart.js": "^2.9.4",
+    "chartjs-plugin-labels": "^1.1.0",
+    "chartjs-plugin-piechart-outlabels": "^0.1.4",
+    "cropperjs": "^1.6.3",
+    "echarts": "^5.6.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
+    "flatpickr": "^4.6.13",
+    "handsontable": "^16.2.0",
+    "jsondiffpatch": "^0.7.6",
+    "lodash.debounce": "^4.0.8",
+    "mathjs": "^14.9.1",
+    "mitt": "^3.0.1",
+    "moment": "^2.30.1",
+    "nuxt": "^4.5.2",
+    "photoswipe": "^5.4.4",
+    "pinia": "^3.0.3",
+    "splitpanes": "^3.2.0",
+    "vue": "^3.5.22",
+    "vue-echarts": "^7.0.3",
+    "vue-router": "^4.5.1",
+    "vuedraggable": "^4.1.0",
+    "vuejs-paginate-next": "^1.0.2",
+    "xlsx": "^0.16.9"
+  },
+  "devDependencies": {
+    "sass": "^1.77.4"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "vue-demi@0.13.11": true
+  }
+}

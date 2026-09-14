@@ -11,8 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Section | Contents |
 |---|---|
 | 1. Working Agreement | non-negotiable rules (no `node_modules/`, no added comments, don't run builds) |
-| 2. Project Overview | Vue 2 + ASP.NET 4.8 stack, key UI libraries |
-| 3. Build & Development | npm scripts, ports, webpack config layout |
+| 2. Project Overview | Vue 2.7 + ASP.NET 4.8 stack, key UI libraries |
+| 3. Build & Development | npm scripts, the two dev modes, `vite.config.js` layout |
 | 4. HTTP / API Layer | the four Axios instances, `$xt` helpers, response envelope |
 | 5. Routing & Permissions | route shape, `meta` flags, menu IDs, i18n |
 | 6. Vuex Store | state, actions → endpoints, getters |

@@ -119,6 +119,26 @@ describe('createApiClient', () => {
     expect(onInvalidCredential).toHaveBeenCalledOnce()
   })
 
+  it.each(['expired', 'revoked', 'malformed'])(
+    'normalizes a %s credential rejection through the same safe 401 boundary',
+    async credentialState => {
+      const onInvalidCredential = vi.fn()
+      const client = createApiClient({
+        baseUrl: '/service/',
+        fetcher: vi.fn().mockResolvedValue(jsonResponse({}, 401)),
+        credentialProvider: { getCredential: () => `${credentialState}-candidate` },
+        onMissingCredential: vi.fn(),
+        onInvalidCredential,
+      })
+
+      expect(await client.get('CSM/Manual/ManualReadList')).toEqual({
+        ok: false,
+        error: { code: 'unauthenticated', message: 'The internal session is invalid or expired.', status: 401 },
+      })
+      expect(onInvalidCredential).toHaveBeenCalledOnce()
+    },
+  )
+
   it('normalizes malformed JSON and network failures', async () => {
     const invalidJson = { ok: true, status: 200, json: vi.fn().mockRejectedValue(new Error('bad json')) }
     const fetcher = vi.fn()

@@ -66,7 +66,7 @@
                   </div>
                   <div class="parcel-card-info">
                     <span class="parcel-postid">{{ item.postid }}</span>
-                    <span class="parcel-date"><i class="far fa-clock margin-r-5"></i>{{ item.add_dt|date('DD/MM/YYYY HH:mm') }}</span>
+                    <span class="parcel-date"><i class="far fa-clock margin-r-5"></i>{{ $date(item.add_dt, 'DD/MM/YYYY HH:mm') }}</span>
                   </div>
                   <div class="parcel-card-status pending">
                     <i class="fas fa-hourglass-half"></i>
@@ -95,8 +95,8 @@
                   </div>
                   <div class="parcel-card-info">
                     <span class="parcel-postid">{{ item.postid }}</span>
-                    <span class="parcel-date"><i class="far fa-clock margin-r-5"></i>{{ item.add_dt|date('DD/MM/YYYY HH:mm') }}</span>
-                    <span class="parcel-date text-success-v2"><i class="fas fa-check margin-r-5"></i>{{ ui.csm_v2_received_at }} {{ item.rec_dt|date('DD/MM/YYYY HH:mm') }}</span>
+                    <span class="parcel-date"><i class="far fa-clock margin-r-5"></i>{{ $date(item.add_dt, 'DD/MM/YYYY HH:mm') }}</span>
+                    <span class="parcel-date text-success-v2"><i class="fas fa-check margin-r-5"></i>{{ ui.csm_v2_received_at }} {{ $date(item.rec_dt, 'DD/MM/YYYY HH:mm') }}</span>
                   </div>
                   <div class="parcel-card-actions">
                     <div class="parcel-card-status completed">

@@ -107,14 +107,14 @@
                       <tbody>
                         <tr v-for="x,idx in displayData" @click.prevent="openDetail(x)">
                           <td align="center"><span class="cx-docno" :class="statusClass('text-',x.status)">{{x.d_job_no}}</span></td>
-                          <td align="center">{{x.job_date | date()}}</td>
+                          <td align="center">{{$date(x.job_date)}}</td>
                           <td class="cx-num" align="center">{{x.itemno}}.</td>
                           <td align="center">{{x.module}}</td>
                           <td class="cx-subject">{{x.subject}}</td>
                           <td align="center"><span class="label" :class="statusLabelClass('label-', x.status)">{{statusName(x.status)}}</span></td>
-                          <td class="text-bold text-orange" align="center">{{x.response_date | date()}}</td>
-                          <td class="text-bold text-danger" align="center">{{x.due_date | date()}}</td>
-                          <td align="center">{{x.complete_date | date()}}</td>
+                          <td class="text-bold text-orange" align="center">{{$date(x.response_date)}}</td>
+                          <td class="text-bold text-danger" align="center">{{$date(x.due_date)}}</td>
+                          <td align="center">{{$date(x.complete_date)}}</td>
                           <td align="center">
                             <span class="cx-overdue" v-if="x.d_overdue > 0">{{x.d_overdue}}</span>
                             <span class="text-muted" v-else>{{x.d_overdue}}</span>

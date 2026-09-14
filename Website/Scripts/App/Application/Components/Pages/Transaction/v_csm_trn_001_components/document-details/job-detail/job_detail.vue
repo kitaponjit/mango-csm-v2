@@ -167,12 +167,12 @@
 
                 <!-- Due Date (Worker) -->
                 <td :data-label="ui.erp_due_date + ' (' + ui.csm_trn_worker + ')'" class="td-date-sm">
-                  <span class="date-text">{{x.worker_end_date | date}}</span>
+                  <span class="date-text">{{$date(x.worker_end_date)}}</span>
                 </td>
 
                 <!-- Send Pretest Date -->
                 <td :data-label="ui.csm_trn_send_pretest" class="td-date-sm">
-                  <span class="date-text">{{x.send_pretest_dt | date}}</span>
+                  <span class="date-text">{{$date(x.send_pretest_dt)}}</span>
                 </td>
 
                 <!-- Over Due -->
@@ -184,7 +184,7 @@
 
                 <!-- Complete Date -->
                 <td :data-label="ui.erp_complete_date" class="td-date-sm">
-                  <span class="date-text text-success">{{x.complete_date | date}}</span>
+                  <span class="date-text text-success">{{$date(x.complete_date)}}</span>
                 </td>
 
                 <!-- Approve Status -->

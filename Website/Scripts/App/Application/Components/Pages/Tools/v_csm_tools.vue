@@ -281,9 +281,9 @@
                             <td align="center" v-for="status in statusCodeData" :key="status.id" v-if="status.id === x.status">
                               {{ status.name || '-' }}
                             </td>
-                            <td align="center">{{ x.response_date | date('DD/MM/YYYY') }}</td>
-                            <td align="center">{{ x.due_date | date('DD/MM/YYYY') }}</td>
-                            <td align="center">{{ x.complete_date | date('DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(x.response_date, 'DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(x.due_date, 'DD/MM/YYYY') }}</td>
+                            <td align="center">{{ $date(x.complete_date, 'DD/MM/YYYY') }}</td>
                             <td align="center">{{ x.revision_is_import === 'Y' ? '✓' : '' }}</td>
                             <td align="center">{{ x.revision }}</td>
                             <td align="center">{{ x.wrong_program === 'Y' ? '✓' : '' }}</td>
@@ -313,7 +313,7 @@
                               <td colspan="2">
                                 <input type="text" class="form-control input-sm" v-model="item.description2" />
                               </td>
-                              <td align="center">{{ item.add_dt | date('DD/MM/YYYY HH:mm') }}</td>
+                              <td align="center">{{ $date(item.add_dt, 'DD/MM/YYYY HH:mm') }}</td>
                             </tr>
                           </template>
                         </template>

@@ -1,3 +1,4 @@
+import { createAuthenticationService } from '~/services/authentication/authentication-service'
 import { createFileCapability } from '~/services/files/file-capability'
 import { createApiClient } from '~/services/http/api-client'
 import { createLocalizationAdapter } from '~/services/localization/localization-adapter'
@@ -17,12 +18,18 @@ export default defineNuxtPlugin(() => {
     onMissingCredential: () => session.redirectToLogin(),
     onInvalidCredential: () => transport.handleInvalidCredential(),
   })
+  const authenticationService = createAuthenticationService({
+    baseUrl: runtime.apiBaseUrl || '',
+    fetcher: (url, options) => window.fetch(url, options),
+    session,
+  })
   const fileCapability = createFileCapability(runtime)
   const localization = createLocalizationAdapter(window.localStorage)
 
   return {
     provide: {
       sessionAdapter: session,
+      authenticationService,
       apiClient,
       fileCapability,
       localization,

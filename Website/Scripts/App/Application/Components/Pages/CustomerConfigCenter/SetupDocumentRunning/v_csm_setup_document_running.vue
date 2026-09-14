@@ -105,9 +105,9 @@
                           <td><input type="text" class="form-control table" v-model="x.remark_iso" @change="x.cc_select = 'Y'" /></td>
                           <td>{{ x.format_runno }}</td>
                           <td align="left" class="nowrap-text">{{ x.adduser }}</td>
-                          <td align="center">{{ x.add_dt | date('DD/MM/YYYY HH:mm:ss') }}</td>
+                          <td align="center">{{ $date(x.add_dt, 'DD/MM/YYYY HH:mm:ss') }}</td>
                           <td align="left" class="nowrap-text">{{ x.edituser }}</td>
-                          <td align="center">{{ x.edit_dt | date('DD/MM/YYYY HH:mm:ss') }}</td>
+                          <td align="center">{{ $date(x.edit_dt, 'DD/MM/YYYY HH:mm:ss') }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -134,7 +134,7 @@
           </div>
           <div class="col-md-6">
             <div class="form-group">
-              <h5 class="text-navy pull-right">Format Width : {{ widthRunno | number(0) }} Digit</h5>
+              <h5 class="text-navy pull-right">Format Width : {{ $num(widthRunno, 0) }} Digit</h5>
             </div>
           </div>
         </div>
@@ -202,13 +202,13 @@
                       <input type="text" class="form-control table text-center" v-model.number="x.format_len" v-bind:disabled="['U'].includes(x.format_ty)" />
                     </td>
                     <td align="center">{{ x.adduser }}&nbsp;</td>
-                    <td align="center">{{ x.add_dt | date('DD/MM/YYYY HH:mm:ss') }}&nbsp;</td>
+                    <td align="center">{{ $date(x.add_dt, 'DD/MM/YYYY HH:mm:ss') }}&nbsp;</td>
                     <td align="center">{{ x.edituser }}&nbsp;</td>
-                    <td align="center">{{ x.edit_dt | date('DD/MM/YYYY HH:mm:ss') }}&nbsp;</td>
+                    <td align="center">{{ $date(x.edit_dt, 'DD/MM/YYYY HH:mm:ss') }}&nbsp;</td>
                   </tr>
                   <tr class="text-bold" v-if="formatRunno.length > 0">
                     <td colspan="4" align="right">Total</td>
-                    <td align="center">{{ xt.sumTotal(formatRunno, 'format_len') | number(0) }}</td>
+                    <td align="center">{{ $num(xt.sumTotal(formatRunno, 'format_len'), 0) }}</td>
                     <td colspan="4"></td>
                   </tr>
                 </tbody>

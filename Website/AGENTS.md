@@ -22,8 +22,8 @@ Enterprise Customer Service Management web app.
 
 | Layer | Technology |
 |---|---|
-| Frontend | Vue.js **2.6.14**, Vuex 3, Vue Router 3 (history mode) |
-| Bundler | Webpack 5 + `webpack-merge`, Babel 7, vue-loader 15 |
+| Frontend | Vue.js **2.7.16**, Vuex 3, Vue Router 3 (history mode) |
+| Bundler | **Vite 5** + `@vitejs/plugin-vue2`, esbuild |
 | Host page | ASP.NET Framework **4.8** (IIS) — `Page/Default.aspx` |
 | API backend | `MangoWebPoolService-DEV` — .NET Framework **4.7.2**, separate solution |
 | Database | SQL Server (accessed server-side only) |
@@ -43,23 +43,28 @@ The Vue app is compiled to a bundle and mounted into `#app` inside `Page/Default
 ## 3. Build & Development
 
 ```bash
-npm run dev         # Webpack watch + browser-sync; writes Scripts/Bundle, IIS serves it
+npm run dev         # Vite watch build; writes Scripts/Bundle, IIS serves it
+npm run dev:hmr     # Vite dev server on 4062 with HMR (needs the ViteDevServer app setting)
 npm start           # alias for npm run dev
 npm run build       # production build (minify + source maps)
 npm run build:prod  # same as build (npm run pub is another alias)
 ```
 
-- **browser-sync:** `http://localhost:4060`, proxying the IIS site at `http://localhost:4061`
-- **Entry point:** `Scripts/App/Application/main.js` → **output:** `Scripts/Bundle/Application.js` plus route-level split chunks in the same folder. **Deploy the whole `Scripts/Bundle` folder.**
-- Entries are auto-discovered: `webpack.common.js` scans `Scripts/App/*/main.js`, so each folder under `Scripts/App/` containing a `main.js` becomes a bundle named after the folder.
+- **Entry point:** `Scripts/App/Application/main.js` → **output:** `Scripts/Bundle/Application.js` plus `Application.css` and route-level split chunks in the same folder. **Deploy the whole `Scripts/Bundle` folder.**
+- Entries are auto-discovered: `vite.config.js` scans `Scripts/App/*/main.js`, so each folder under `Scripts/App/` containing a `main.js` becomes a bundle named after the folder.
+- The bundle is an **ES module** (`<script type="module">`) and chunks are referenced relatively, so it works under any IIS virtual path.
 
-### Webpack config layout
+### Two dev modes
 
-| File | Role |
-|---|---|
-| `webpack.common.js` | shared: entry discovery, loaders, `vue$ → vue/dist/vue.esm.js` alias, asset rules |
-| `webpack.dev.config.js` | merged dev: filesystem cache, no minify, no splitChunks, `BrowserSyncPlugin`, eval source maps |
-| `webpack.prod.config.js` | merged prod: Terser (keeps `console`), filesystem cache in `.webpack-cache-prod`, `LimitChunkCountPlugin` max 100 |
+`npm run dev` rebuilds to `Scripts/Bundle` on save — same workflow as before, no config needed, reload the browser by hand.
+
+`npm run dev:hmr` is the fast path. Set `ViteDevServer` in `Web.config` to the dev-server origin and `Page/Default.aspx` loads modules from Vite instead of the built bundle, giving hot module replacement:
+
+```xml
+<add key="ViteDevServer" value="http://localhost:4062"/>
+```
+
+Leave the value **empty** for normal/production use — empty means "serve the built bundle". Never deploy with it set.
 
 **There are no automated tests in this project.** Verify changes by exercising the running dev build in the browser.
 
@@ -442,7 +447,7 @@ This is the dominant pattern (~170 files). Module-scoped `let` variables hold re
 
 ### V2 / Composition API
 
-`@vue/composition-api` is installed and `setup()` is used in ~18 components (notably `ag-table.vue` and the `V2/` tree). **When a `V2/` equivalent exists, follow the V2 pattern for new work.**
+Vue 2.7 ships the Composition API in core — import `ref`/`computed`/`watch` and the lifecycle hooks **from `vue`**, never from `@vue/composition-api` (removed). `setup()` is used in ~20 components (notably `ag-table.vue` and the `V2/` tree). **When a `V2/` equivalent exists, follow the V2 pattern for new work.**
 
 ---
 
@@ -507,7 +512,9 @@ Cell actions are commonly rendered as raw HTML in `cellRenderer` and wired with 
 - sets `window.baseUrl`, `basePath`, `baseRoute`, `dataServer`, `baseCompany`, `viewVersion`, `hostServer`, `mangoSocketUrl`, `printServer`, plus empty `auth`, `ui`, `menu`, `menuRight`, `signalR`
 - loads all legacy globals via `<script>` tags **before** the bundle: jQuery, jQuery UI, Bootstrap 3, select2, slimscroll, fastclick, AdminLTE, jquery-confirm, toastr, lodash.core, jslinq, moment, `axios.js`, `xtools.js`, decimal.js, Pagination, `alert-service.js`, tinymce, signalR + hubs, `iwc-*`, `MangoSignalR.js`, `data-center.js`
 - cache-busts with `BuildVersion.txt` and a `DateTime.UtcNow.Ticks` query string
-- finally loads `Scripts/bundle/Application.js` and mounts `<router-view>` into `#app`
+- links `Scripts/Bundle/Application.css` (the bundle's extracted styles) as the **last** stylesheet in `<head>`
+- finally loads `Scripts/Bundle/Application.js` as `<script type="module">` and mounts `<router-view>` into `#app`
+- when the `ViteDevServer` app setting is non-empty it skips both of those and loads `@vite/client` + `main.js` from the Vite dev server instead (see §3)
 
 Root `Default.aspx` simply redirects to `~/page/`.
 
@@ -567,7 +574,7 @@ Backend code is organized by ASP.NET MVC areas under `MangoWebPoolService/Areas/
 7. **Register new global components in `main.js`.**
 8. **Never `import` the legacy globals** (`$xt`, `$msg`, `$linq`, `$notify`, `moment`, `Decimal`, `$`) — they come from `Default.aspx` script tags.
 9. **Vue 2 reactivity:** use `this.$set(obj, key, val)` when adding new keys to an existing object.
-10. Vue filters (`date`, `number`) are defined in `Scripts/App/Application/vue-filters.js`.
+10. **No Vue filters.** Format with the global helpers `$date(d, fmt)` and `$num(x, decimals)` (registered on `Vue.prototype` in `main.js` from `Scripts/App/Application/vue-filters.js`) — in templates `{{ $date(x.add_dt, 'DD/MM/YYYY') }}`, in script `this.$date(...)`. The `|` filter syntax and `this.$options.filters` are removed in Vue 3; do not reintroduce them.
 11. Dark mode lives in `Content/CSS/DarkTheme.css` (imported by `main.js` as `../../../Content/DarkTheme.css`).
 12. **No automated tests.** Verify in the browser against the running dev build.
 13. **Name new files by the table in §7 "File naming"** — `kebab-case` for shared controls, `v_csm_*` for pages, `vs_csm_*` for a page's sub-components. Folders describe content, never screen position (`document-details/`, not `Tab1/`). No spaces in names.
@@ -579,9 +586,9 @@ Backend code is organized by ASP.NET MVC areas under `MangoWebPoolService/Areas/
 ## 13. Quick Reference
 
 ```
-Dev URL     : http://localhost:4060   (browser-sync → IIS http://localhost:4061)
+Dev build   : npm run dev  (watch → Scripts/Bundle)   |  npm run dev:hmr (Vite HMR on 4062)
 Entry       : Scripts/App/Application/main.js
-Output      : Scripts/Bundle/Application.js (+ split chunks) — deploy whole folder
+Output      : Scripts/Bundle/Application.js + Application.css (+ split chunks) — deploy whole folder
 Mount point : Page/Default.aspx  ->  <div id="app"><router-view/></div>
 Backend     : per-machine path — see confirmed table in §11  (Areas/CSM first)
 ```
@@ -604,4 +611,4 @@ Backend     : per-machine path — see confirmed table in §11  (Areas/CSM first
 
 ### Further reading
 
-- `.claude/skills/csm-customer-service/SKILL.md` — project skill that auto-triggers on `v_csm_cus_*`, `v_csm_trn_*`, `customer-layout`, `getServer` / `getCustomerServer`, and `ag-table` work. *(Known gap: its header references `docs/CSM-Customer-Service-Manual.md`, which is not present in this checkout — treat that reference as unresolved, but keep using the skill's API/table/component/route patterns; they remain valid.)*
+- `.claude/skills/csm-customer-service/SKILL.md` — project skill that auto-triggers on `v_csm_cus_*`, `v_csm_trn_*`, `customer-layout`, `getServer` / `getCustomerServer`, and `ag-table` work.

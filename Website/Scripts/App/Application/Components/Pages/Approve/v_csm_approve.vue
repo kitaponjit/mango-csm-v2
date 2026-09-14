@@ -108,18 +108,18 @@
                                   <td align="center">
                                     <a href="#" @click.prevent="pushpage(x)">{{x.prno}}</a>
                                   </td>
-                                  <td align="right">{{(x.paidamt || 0) | currency}}</td>
-                                  <td align="right">{{(x.tamt || 0) | currency}}</td>
+                                  <td align="right">{{$num((x.paidamt || 0), 2)}}</td>
+                                  <td align="right">{{$num((x.tamt || 0), 2)}}</td>
                                   <td align="center">
                                     <span v-if="x.vattype == 'E'">Exclude Vat</span>
                                     <span v-if="x.vattype == 'I'">Include Vat</span>
                                     <span v-if="x.vattype == 'N'">Not Vat<</span>
                                   </td>
-                                  <td align="right">{{(x.vatamt || 0) | currency}}</td>
-                                  <td align="right">{{(x.totamt || 0) | currency}}</td>
+                                  <td align="right">{{$num((x.vatamt || 0), 2)}}</td>
+                                  <td align="right">{{$num((x.totamt || 0), 2)}}</td>
                                   <td align="center">{{x.curren}}</td>
-                                  <td align="center">{{x.docdate | date('DD/MM/YYYY')}}</td>
-                                  <td align="center">{{x.apdate | date('DD/MM/YYYY')}}</td>
+                                  <td align="center">{{$date(x.docdate, 'DD/MM/YYYY')}}</td>
+                                  <td align="center">{{$date(x.apdate, 'DD/MM/YYYY')}}</td>
                                   <!--<td align="center">{{x.pre_event2}}</td>-->
                                   <td v-if="x.pre_des">{{x.pre_des}}({{x.refcode}})</td>
                                   <td v-if="!x.pre_des"></td>
@@ -234,18 +234,18 @@
                                         <!--<a href="#" @click.prevent="modalStatus(x.prno,x.doctype)">{{x.prno}}</a>-->
                                         <a href="#" @click.prevent="pushpage(x)">{{x.prno}}</a>
                                       </td>
-                                      <td align="right">{{(x.paidamt || 0) | number(2)}}</td>
-                                      <td align="right">{{(x.tamt || 0) | number(2)}}</td>
+                                      <td align="right">{{$num((x.paidamt || 0), 2)}}</td>
+                                      <td align="right">{{$num((x.tamt || 0), 2)}}</td>
                                       <td align="center">
                                         <span v-if="x.vattype == 'E'">Exclude Vat</span>
                                         <span v-if="x.vattype == 'I'">Include Vat</span>
                                         <span v-if="x.vattype == 'N'">Not Vat<</span>
                                       </td>
-                                      <td align="right">{{(x.vatamt || 0) | number(2)}}</td>
-                                      <td align="right">{{(x.totamt || 0) | number(2)}}</td>
+                                      <td align="right">{{$num((x.vatamt || 0), 2)}}</td>
+                                      <td align="right">{{$num((x.totamt || 0), 2)}}</td>
                                       <td class="text-center">{{x.curren}}</td>
-                                      <td class="text-center">{{x.docdate | date('DD/MM/YYYY')}}</td>
-                                      <td class="text-center">{{x.apdate | date('DD/MM/YYYY')}}</td>
+                                      <td class="text-center">{{$date(x.docdate, 'DD/MM/YYYY')}}</td>
+                                      <td class="text-center">{{$date(x.apdate, 'DD/MM/YYYY')}}</td>
                                       <!--<td class="text-left">{{x.pre_event2}}</td>-->
                                       <td v-if="x.pre_des">{{x.pre_des}}({{x.refcode}})</td>
                                       <td v-if="!x.pre_des"></td>
@@ -392,18 +392,18 @@
                                             <!--<a href="#" @click.prevent="modalStatus(x.prno,x.doctype)">{{x.prno}}</a>-->
                                             <a href="#" @click.prevent="pushpage(x)">{{x.prno}}</a>
                                           </td>
-                                          <td align="right">{{(x.paidamt || 0) | number(2)}}</td>
-                                          <td align="right">{{(x.tamt || 0) | number(2)}}</td>
+                                          <td align="right">{{$num((x.paidamt || 0), 2)}}</td>
+                                          <td align="right">{{$num((x.tamt || 0), 2)}}</td>
                                           <td align="center">
                                             <span v-if="x.vattype == 'E'">Exclude Vat</span>
                                             <span v-if="x.vattype == 'I'">Include Vat</span>
                                             <span v-if="x.vattype == 'N'">Not Vat<</span>
                                           </td>
-                                          <td align="right">{{(x.vatamt || 0) | number(2)}}</td>
-                                          <td align="right">{{(x.totamt || 0) | number(2)}}</td>
+                                          <td align="right">{{$num((x.vatamt || 0), 2)}}</td>
+                                          <td align="right">{{$num((x.totamt || 0), 2)}}</td>
                                           <td class="text-center">{{x.curren}}</td>
-                                          <td class="text-center">{{x.docdate|date('DD/MM/YYYY')}}</td>
-                                          <td class="text-center">{{x.apdate|date('DD/MM/YYYY')}}</td>
+                                          <td class="text-center">{{$date(x.docdate, 'DD/MM/YYYY')}}</td>
+                                          <td class="text-center">{{$date(x.apdate, 'DD/MM/YYYY')}}</td>
                                           <td class="text-left"><!--{{x.pre_event2}}--></td>
                                           <td v-if="x.pre_des">{{x.pre_des}}({{x.refcode}})</td>
                                           <td v-if="!x.pre_des"></td>
@@ -543,18 +543,18 @@
                                             <!--<a href="#" @click.prevent="modalStatus(x.prno,x.doctype)">{{x.prno}}</a>-->
                                             <a href="#" @click.prevent="pushpage(x)">{{x.prno}}</a>
                                           </td>
-                                          <td align="right">{{(x.paidamt || 0) | number(2)}}</td>
-                                          <td align="right">{{(x.tamt || 0) | number(2)}}</td>
+                                          <td align="right">{{$num((x.paidamt || 0), 2)}}</td>
+                                          <td align="right">{{$num((x.tamt || 0), 2)}}</td>
                                           <td align="center">
                                             <span v-if="x.vattype == 'E'">Exclude Vat</span>
                                             <span v-if="x.vattype == 'I'">Include Vat</span>
                                             <span v-if="x.vattype == 'N'">Not Vat<</span>
                                           </td>
-                                          <td align="right">{{(x.vatamt || 0) | number(2)}}</td>
-                                          <td align="right">{{(x.totamt || 0) | number(2)}}</td>
+                                          <td align="right">{{$num((x.vatamt || 0), 2)}}</td>
+                                          <td align="right">{{$num((x.totamt || 0), 2)}}</td>
                                           <td class="text-center">{{x.curren}}</td>
-                                          <td class="text-center">{{x.docdate|date('DD/MM/YYYY')}}</td>
-                                          <td class="text-center">{{x.apdate|date('DD/MM/YYYY')}}</td>
+                                          <td class="text-center">{{$date(x.docdate, 'DD/MM/YYYY')}}</td>
+                                          <td class="text-center">{{$date(x.apdate, 'DD/MM/YYYY')}}</td>
                                           <!--<td class="text-left">{{x.pre_event2}}</td>-->
                                           <td v-if="x.pre_des">{{x.pre_des}}({{x.refcode}})</td>
                                           <td v-if="!x.pre_des"></td>

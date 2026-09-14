@@ -11,7 +11,7 @@
             </div>
           </div>
           <div class="mla-head__right">
-            <span class="mla-chip"><i class="fas fa-layer-group"></i> {{ total | number(0) }} รายการ</span>
+            <span class="mla-chip"><i class="fas fa-layer-group"></i> {{ $num(total, 0) }} รายการ</span>
             <span class="mla-chip mla-chip--on" v-if="selectedCount"><i class="fas fa-check-circle"></i> เลือกแล้ว {{ selectedCount }}</span>
           </div>
         </div>
