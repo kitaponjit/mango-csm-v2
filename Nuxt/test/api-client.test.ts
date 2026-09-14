@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createApiClient } from '../app/services/http/api-client'
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(body: unknown, status = 200, responseHeaders: Record<string, string> = {}) {
+  const values = new Map(Object.entries(responseHeaders).map(([name, value]) => [name.toLowerCase(), value]))
+
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: { get: (name: string) => values.get(name.toLowerCase()) ?? null },
     json: vi.fn().mockResolvedValue(body),
   }
 }
@@ -160,6 +163,23 @@ describe('createApiClient', () => {
     expect(await client.get('second')).toEqual({
       ok: false,
       error: { code: 'forbidden', message: 'The request is not permitted.', status: 403 },
+    })
+    expect(onInvalidCredential).toHaveBeenCalledOnce()
+  })
+
+  it('invalidates a 403 response when the backend marks it as an authentication failure', async () => {
+    const onInvalidCredential = vi.fn()
+    const client = createApiClient({
+      baseUrl: '/service/',
+      fetcher: vi.fn().mockResolvedValue(jsonResponse({}, 403, { 'X-MG-Auth-Error': 'MG_TIME' })),
+      credentialProvider: { getCredential: () => 'expired' },
+      onMissingCredential: vi.fn(),
+      onInvalidCredential,
+    })
+
+    expect(await client.get('protected')).toEqual({
+      ok: false,
+      error: { code: 'unauthenticated', message: 'The internal session is invalid or expired.', status: 403 },
     })
     expect(onInvalidCredential).toHaveBeenCalledOnce()
   })

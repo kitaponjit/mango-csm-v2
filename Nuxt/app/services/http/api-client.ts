@@ -29,6 +29,9 @@ interface CredentialProvider {
 interface FetchResponse {
   ok: boolean
   status: number
+  headers?: {
+    get(name: string): string | null
+  }
   json(): Promise<unknown>
 }
 
@@ -117,6 +120,15 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     }
 
     if (response.status === 401) {
+      options.onInvalidCredential()
+      return apiFailure(
+        'unauthenticated',
+        'The internal session is invalid or expired.',
+        response.status,
+      )
+    }
+
+    if (response.status === 403 && response.headers?.get('X-MG-Auth-Error')?.trim()) {
       options.onInvalidCredential()
       return apiFailure(
         'unauthenticated',

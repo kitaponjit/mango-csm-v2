@@ -40,7 +40,9 @@ const translations: Record<string, string> = {
   'qcItem.fileTypeError': 'Please choose an .xlsx file only.',
   'qcItem.empty': 'No QC Items found',
   'qcItem.error': 'Unable to load QC Items',
+  'qcItem.invalidResponse': 'The server returned an invalid QC Item list.',
   'qcItem.retry': 'Try again',
+  'qcItem.deleteItem': 'Delete item',
 }
 
 beforeEach(() => {
@@ -124,6 +126,19 @@ describe('QCItem page access and read state', () => {
     expect(errorWrapper.find('.target-state--error').exists()).toBe(true)
     expect(errorWrapper.text()).toContain('Offline')
     expect(errorWrapper.get('[data-testid="qcitem-retry"]').exists()).toBe(true)
+  })
+
+  it('does not treat a malformed successful read as empty or allow a destructive save', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    apiGet.mockResolvedValue({ ok: true, status: 200, data: {} })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+
+    expect(wrapper.find('.target-state--error').exists()).toBe(true)
+    expect(wrapper.text()).toContain('The server returned an invalid QC Item list.')
+    expect(wrapper.get('[data-testid="qcitem-save"]').attributes('disabled')).toBeDefined()
+    await wrapper.get('[data-testid="qcitem-save"]').trigger('click')
+    expect(apiPost).not.toHaveBeenCalled()
   })
 
   it('adds a blank row, edits it inline, and moves to the last page', async () => {
@@ -253,11 +268,14 @@ describe('QCItem page access and read state', () => {
     const wrapper = mount(QCItemPage)
     await flushPromises()
 
-    expect(wrapper.get('[data-testid="qcitem-delete-1"]').attributes('aria-label')).toBe('Action: 1')
+    expect(wrapper.get('[data-testid="qcitem-delete-1"]').attributes('aria-label')).toBe('Delete item 1')
     void wrapper.get('[data-testid="qcitem-save"]').trigger('click')
     await nextTick()
 
     expect(wrapper.get('[data-testid="qcitem-save"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-testid="qcitem-add"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-testid="qcitem-delete-1"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-testid="qcitem-description-1"]').attributes('disabled')).toBeDefined()
     expect(wrapper.get('[data-testid="qcitem-save"]').text()).toBe('Saving…')
     resolvePost({ ok: true, status: 200, data: {} })
     await flushPromises()
@@ -293,6 +311,7 @@ describe('QCItem page access and read state', () => {
     await nextTick()
 
     expect(wrapper.get('[data-testid="qcitem-upload"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-testid="qcitem-add"]').attributes('disabled')).toBeDefined()
     resolveImport({ ok: true, status: 200, data: true })
     await flushPromises()
   })

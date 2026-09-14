@@ -46,6 +46,11 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const pageCount = computed(() => getPageCount(items.value, PAGE_SIZE))
 const pageItems = computed(() => getPageItems(items.value, currentPage.value, PAGE_SIZE))
 const total = computed(() => items.value.length)
+const isDataBusy = computed(() => (
+  listStatus.value === 'loading'
+  || saveStatus.value === 'loading'
+  || importStatus.value === 'loading'
+))
 
 async function loadItems() {
   listStatus.value = 'loading'
@@ -55,6 +60,12 @@ async function loadItems() {
   if (!result.ok) {
     listStatus.value = 'error'
     listError.value = result.error.message
+    return
+  }
+
+  if (!Array.isArray(result.data)) {
+    listStatus.value = 'error'
+    listError.value = t('qcItem.invalidResponse')
     return
   }
 
@@ -75,6 +86,10 @@ async function initializePage() {
 }
 
 function addItem() {
+  if (isDataBusy.value || listStatus.value !== 'ready') {
+    return
+  }
+
   items.value.push(createNewQCItem(items.value))
   currentPage.value = pageCount.value
   saveError.value = ''
@@ -82,6 +97,10 @@ function addItem() {
 }
 
 function deleteItem(item: EditableQCItem) {
+  if (isDataBusy.value || listStatus.value !== 'ready') {
+    return
+  }
+
   if (item.itemname && !confirm(t('qcItem.deleteConfirm'))) {
     return
   }
@@ -93,6 +112,10 @@ function deleteItem(item: EditableQCItem) {
 }
 
 async function saveItems() {
+  if (isDataBusy.value || listStatus.value !== 'ready') {
+    return
+  }
+
   const validation = validateQCItems(items.value)
   if (!validation.valid) {
     const messageKey = validation.field === 'description'
@@ -143,6 +166,10 @@ function closeImportDialog() {
 }
 
 function onFileChange(event: Event) {
+  if (isDataBusy.value) {
+    return
+  }
+
   const input = event.target as HTMLInputElement
   const file = input.files?.[0] || null
   importError.value = ''
@@ -165,7 +192,7 @@ function onFileChange(event: Event) {
 }
 
 async function uploadFile() {
-  if (!selectedFile.value) {
+  if (!selectedFile.value || isDataBusy.value) {
     return
   }
 
@@ -238,10 +265,10 @@ onMounted(() => {
           <p class="qc-item-count">{{ t('qcItem.count') }}: {{ total }}</p>
         </div>
         <div class="qc-item-actions" :aria-label="t('qcItem.actions')">
-          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-add" @click="addItem">
+          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-add" :disabled="isDataBusy || listStatus !== 'ready'" @click="addItem">
             {{ t('qcItem.add') }}
           </button>
-          <button type="button" class="target-button" data-testid="qcitem-save" :disabled="saveStatus === 'loading'" @click="saveItems">
+          <button type="button" class="target-button" data-testid="qcitem-save" :disabled="isDataBusy || listStatus !== 'ready'" @click="saveItems">
             {{ saveStatus === 'loading' ? t('qcItem.saving') : t('qcItem.save') }}
           </button>
           <button type="button" class="target-button target-button--secondary" data-testid="qcitem-export" :disabled="exportStatus === 'loading'" @click="exportFile">
@@ -285,10 +312,11 @@ onMounted(() => {
                     type="button"
                     class="target-button target-button--danger qc-item-delete"
                     :data-testid="`qcitem-delete-${item.itemno}`"
-                    :aria-label="`${t('qcItem.action')}: ${item.itemno}`"
+                    :aria-label="`${t('qcItem.deleteItem')} ${item.itemno}`"
+                    :disabled="isDataBusy"
                     @click="deleteItem(item)"
                   >
-                    ×
+                    <span aria-hidden="true">×</span>
                   </button>
                 </td>
                 <td>
@@ -297,6 +325,7 @@ onMounted(() => {
                     class="target-control qc-item-input"
                     :data-testid="`qcitem-description-${item.itemno}`"
                     :aria-label="`${t('qcItem.descriptionColumn')} ${item.itemno}`"
+                    :disabled="isDataBusy"
                     type="text"
                   >
                 </td>
@@ -306,6 +335,7 @@ onMounted(() => {
                     class="target-control qc-item-input"
                     :data-testid="`qcitem-remark-${item.itemno}`"
                     :aria-label="`${t('qcItem.remark')} ${item.itemno}`"
+                    :disabled="isDataBusy"
                     type="text"
                   >
                 </td>
@@ -322,6 +352,7 @@ onMounted(() => {
               class="target-button target-button--secondary"
               :data-testid="`qcitem-page-${page}`"
               :aria-current="currentPage === page ? 'page' : undefined"
+              :disabled="isDataBusy"
               @click="currentPage = page"
             >
               {{ page }}
@@ -337,6 +368,7 @@ onMounted(() => {
       data-testid="qcitem-file-input"
       type="file"
       accept=".xlsx"
+      :disabled="isDataBusy"
       @change="onFileChange"
     >
 
