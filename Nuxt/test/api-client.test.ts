@@ -29,6 +29,51 @@ describe('createApiClient', () => {
     expect(result).toEqual({ ok: true, data: { id: 7 }, status: 200 })
   })
 
+  it('sends an authenticated JSON POST body', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({ success: true }))
+    const client = createApiClient({
+      baseUrl: '/service/',
+      fetcher,
+      credentialProvider: { getCredential: () => 'token' },
+      onMissingCredential: vi.fn(),
+      onInvalidCredential: vi.fn(),
+    })
+
+    await client.post('CSM/Master/QCItem_Create', { item: [{ itemno: 1 }] })
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/service/CSM/Master/QCItem_Create',
+      {
+        method: 'POST',
+        headers: {
+          'X-Mango-Auth': 'token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ item: [{ itemno: 1 }] }),
+      },
+    )
+  })
+
+  it('sends FormData without overriding its multipart boundary header', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({ success: true, data: true }))
+    const client = createApiClient({
+      baseUrl: '/service/',
+      fetcher,
+      credentialProvider: { getCredential: () => 'token' },
+      onMissingCredential: vi.fn(),
+      onInvalidCredential: vi.fn(),
+    })
+    const form = new FormData()
+    form.append('file', new File(['itemno,itemname,remark'], 'QCItem.xlsx'))
+
+    await client.postForm('CSM/Master/QCItem_Import', form)
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/service/CSM/Master/QCItem_Import',
+      { method: 'POST', headers: { 'X-Mango-Auth': 'token' }, body: form },
+    )
+  })
+
   it('returns an unauthenticated result without making a request when the credential is missing', async () => {
     const fetcher = vi.fn()
     const onMissingCredential = vi.fn()

@@ -18,6 +18,8 @@ export type ApiResult<T> =
 
 export interface ApiClient {
   get<T>(path: string): Promise<ApiResult<T>>
+  post<T>(path: string, body: unknown): Promise<ApiResult<T>>
+  postForm<T>(path: string, body: FormData): Promise<ApiResult<T>>
 }
 
 interface CredentialProvider {
@@ -30,9 +32,15 @@ interface FetchResponse {
   json(): Promise<unknown>
 }
 
+interface FetchRequestOptions {
+  method: 'GET' | 'POST'
+  headers: Record<string, string>
+  body?: string | FormData
+}
+
 type FetchPort = (
   url: string,
-  options: { method: 'GET', headers: Record<string, string> },
+  options: FetchRequestOptions,
 ) => Promise<FetchResponse>
 
 interface ApiClientOptions {
@@ -87,59 +95,76 @@ function normalizePayload<T>(payload: unknown, status: number): ApiResult<T> {
 }
 
 export function createApiClient(options: ApiClientOptions): ApiClient {
+  async function request<T>(path: string, requestOptions: FetchRequestOptions): Promise<ApiResult<T>> {
+    const credential = options.credentialProvider.getCredential()
+    if (!credential) {
+      options.onMissingCredential()
+      return apiFailure('unauthenticated', 'Internal authentication is required.')
+    }
+
+    let response: FetchResponse
+    try {
+      response = await options.fetcher(joinUrl(options.baseUrl, path), {
+        ...requestOptions,
+        headers: {
+          'X-Mango-Auth': credential,
+          ...requestOptions.headers,
+        },
+      })
+    }
+    catch {
+      return apiFailure('network', 'The request could not reach the server.')
+    }
+
+    if (response.status === 401) {
+      options.onInvalidCredential()
+      return apiFailure(
+        'unauthenticated',
+        'The internal session is invalid or expired.',
+        response.status,
+      )
+    }
+
+    if (response.status === 403) {
+      return apiFailure('forbidden', 'The request is not permitted.', response.status)
+    }
+
+    let payload: unknown
+    try {
+      payload = await response.json()
+    }
+    catch {
+      return apiFailure(
+        'invalid-response',
+        'The server returned an unreadable response.',
+        response.status,
+      )
+    }
+
+    if (!response.ok) {
+      const envelope = payload as Record<string, unknown> | null
+      const message = envelope && typeof envelope.error === 'string' && envelope.error
+        ? envelope.error
+        : `The server returned HTTP ${response.status}.`
+      return apiFailure('http', message, response.status)
+    }
+
+    return normalizePayload<T>(payload, response.status)
+  }
+
   return {
-    async get<T>(path: string): Promise<ApiResult<T>> {
-      const credential = options.credentialProvider.getCredential()
-      if (!credential) {
-        options.onMissingCredential()
-        return apiFailure('unauthenticated', 'Internal authentication is required.')
-      }
-
-      let response: FetchResponse
-      try {
-        response = await options.fetcher(joinUrl(options.baseUrl, path), {
-          method: 'GET',
-          headers: { 'X-Mango-Auth': credential },
-        })
-      }
-      catch {
-        return apiFailure('network', 'The request could not reach the server.')
-      }
-
-      if (response.status === 401) {
-        options.onInvalidCredential()
-        return apiFailure(
-          'unauthenticated',
-          'The internal session is invalid or expired.',
-          response.status,
-        )
-      }
-
-      if (response.status === 403) {
-        return apiFailure('forbidden', 'The request is not permitted.', response.status)
-      }
-
-      let payload: unknown
-      try {
-        payload = await response.json()
-      }
-      catch {
-        return apiFailure(
-          'invalid-response',
-          'The server returned an unreadable response.',
-          response.status,
-        )
-      }
-
-      if (!response.ok) {
-        const envelope = payload as Record<string, unknown> | null
-        const message = envelope && typeof envelope.error === 'string' && envelope.error
-          ? envelope.error
-          : `The server returned HTTP ${response.status}.`
-        return apiFailure('http', message, response.status)
-      }
-
-      return normalizePayload<T>(payload, response.status)
+    get<T>(path: string) {
+      return request<T>(path, { method: 'GET', headers: {} })
+    },
+    post<T>(path: string, body: unknown) {
+      return request<T>(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    },
+    postForm<T>(path: string, body: FormData) {
+      return request<T>(path, { method: 'POST', headers: {}, body })
     },
   }
 }
