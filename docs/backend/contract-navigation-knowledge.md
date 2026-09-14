@@ -6,6 +6,7 @@
 | **Backend** | `MangoWebPoolService-DEV` (.NET Framework 4.8, MVC5 + WebAPI + OWIN + EF6, TFVC) |
 | **Backend governance** | `MangoWebPoolService/AGENTS.md` §§4–7 + `CLAUDE.md` (authoritative; read before endpoint work) |
 | **Backend path** | Per-machine — ask the dev, verify `Test-Path` for `MangoWebPoolService.sln`, never hardcode |
+| **New backend** | `MangoServiceNetCore` (.NET 8, ASP.NET Core + Kestrel :5075) — all frontend-facing contracts ported with parity tests (repo scout, dev-confirmed 2026-09-12) |
 | **Method** | READ-ONLY recon (partial-targeted coverage, marginal-gain stop); this file is a refactor only — no re-scout, no new backend facts |
 
 ## How to read this file
@@ -300,6 +301,10 @@ Config keys             confuse mg_csr_config vs sm_config                 R6: d
   config keys, file-token mechanics.
 - **Revalidation trigger:** any contract mismatch → revalidate that action first (§8).
   Backend moves independently in TFVC — never assume this file tracks it in real time.
+- **In flight:** backend transition to `MangoServiceNetCore` (.NET 8, dev-confirmed 2026-09-12) —
+  all frontend-facing contracts (X-Mango-Auth, portal/post-back tokens, envelope, rate limits,
+  SignalR, language, file/print) are ported with parity tests. Legacy .NET Fx backend remains
+  the reference for this file's evidence entries until cutover.
 
 ---
 

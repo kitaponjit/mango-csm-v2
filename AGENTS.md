@@ -10,7 +10,7 @@ The required migration direction is:
 | --- | --- | --- |
 | Frontend | Vue 2 | Nuxt.js |
 | Bundler | Webpack 5 | Vite |
-| Backend / host | ASP.NET Framework 4.8 + IIS | .NET 7 + IIS + Docker |
+| Backend / host | ASP.NET Framework 4.8 + IIS | .NET 8 + IIS + Docker (`MangoServiceNetCore`) |
 | Relational persistence | SQL Server | SQLite |
 | Document persistence | No established implementation | MongoDB |
 
@@ -53,7 +53,7 @@ Current checkout evidence:
 | --- | --- | --- |
 | Vue 2 → Nuxt.js | `TRANSITIONAL` | `Website/` retains the Vue 2 runtime while `Nuxt/` establishes the Nuxt 4 SPA boundary under `/csm-next/**`. |
 | Webpack 5 → Vite | `TRANSITIONAL` | Legacy Website scripts still use Webpack; the independent `Nuxt/` target uses Nuxt's Vite build and separate output ownership. |
-| ASP.NET Framework 4.8 → .NET 7 | `LEGACY` | The checkout contains Framework/IIS host evidence but no .NET 7 project; do not rewrite Framework code incidentally. |
+| ASP.NET Framework 4.8 → .NET 8 | `TRANSITIONAL` | Legacy backend remains on Framework/IIS; the dev-confirmed target backend repo `MangoServiceNetCore` (.NET 8, `C:\Users\COM\Projects\MANGOdotNETMigration Proj\MangoServiceNetCore`) now exists outside this checkout with all frontend-facing contracts ported and parity-tested (repo scout 2026-09-12). Cutover/topology not yet decided; do not rewrite Framework code incidentally. |
 | IIS-only → IIS + Docker | `LEGACY` | IIS configuration exists and Docker topology is not established; do not assume Docker replaces or embeds IIS. |
 | SQL Server → SQLite | `UNKNOWN` | Backend/data-access code is not in this checkout; determine ownership and relational semantics before selecting SQLite. A read-only survey of the separate backend found EF6 data access alongside extensive interpolated raw SQL in CSM scope (e.g. `SqlFetch2` in `Areas/CSM/Controllers/CenterController.cs`, `APIController.cs:221`); the ownership decision is still required. |
 | MongoDB introduction | `UNKNOWN` | No MongoDB implementation is evidenced; do not assign data to MongoDB without an explicit ownership decision. Append-only logs/chat are the only fit candidate identified; still requires an explicit decision. |
@@ -109,8 +109,8 @@ Current checkout evidence:
 
 ## Backend and Hosting Migration
 
-- The stated backend target is .NET 7 with both IIS and Docker in the deployment direction.
-- In an established .NET 7 boundary, use its hosting model, dependency injection, middleware, configuration providers, and environment configuration.
+- The stated backend target is .NET 8 (dev-confirmed `MangoServiceNetCore`) with both IIS and Docker in the deployment direction.
+- In an established .NET 8 boundary, use its hosting model, dependency injection, middleware, configuration providers, and environment configuration.
 - Do not introduce new `System.Web`, `HttpApplication`, `Global.asax`, Framework-only packages, Web Forms/MVC host assumptions, or machine-local state into migrated code.
 - Do not rewrite unrelated Framework code solely because it is legacy.
 - Do not assume whether IIS runs inside Docker, beside Docker, or as a separate deployment stage. Do not add images, compose files, ports, health checks, reverse proxies, or secret mechanisms by guesswork.
@@ -159,7 +159,7 @@ The current checkout leaves these decisions unresolved:
 
 - Target state ownership and shared-context policy for routes beyond the first slice. Recommended direction: one slice per route, Master-first; shared primitives centrally gated.
 - Vite/target artifact deployment automation and the retirement criteria for Webpack. Recommended direction: per-route strangler; the dead `Website/webpack.config.js` has been removed.
-- Owning .NET 7 backend project, API boundary, and IIS/Docker topology. Recommended direction: IIS-only .NET 7 unless proven otherwise; requires a topology sheet from the backend/platform owner.
+- Owning .NET 8 backend project: located and dev-confirmed — `MangoServiceNetCore` (`C:\Users\COM\Projects\MANGOdotNETMigration Proj\MangoServiceNetCore`, .NET 8, Docker default per compose). Remaining question: cutover plan and final IIS/Docker topology; requires a topology sheet from the backend/platform owner.
 - SQLite/MongoDB ownership, SQL Server feature mapping, cross-store consistency, migration, and rollback. Recommended direction: SQLite-first (configs, then tickets, then reproduced sessions); MongoDB only for append-only logs/chat with explicit sign-off.
 - Legacy endpoint/host retirement criteria after behavioral parity is demonstrated. Recommended direction: per-route checklist plus approvals; retireable today: nothing.
 
@@ -186,5 +186,5 @@ Target frontend           : Nuxt/ (Nuxt 4 SPA, Vite, /csm-next/**)
 Backend                   : separate repository; locate and verify before editing
 Backend contracts         : docs/backend/contract-navigation-knowledge.md
 UI consistency evidence   : docs/migrations/future-ui-consistency.md + docs/ui-consistency/layout-inventory.md
-Target direction          : Nuxt + Vite + .NET 7 + IIS/Docker + SQLite/MongoDB
+Target direction          : Nuxt + Vite + .NET 8 (MangoServiceNetCore) + IIS/Docker + SQLite/MongoDB
 ```

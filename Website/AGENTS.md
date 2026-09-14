@@ -529,6 +529,7 @@ The REST/business-logic backend behind `$xt.getServer` / `$xt.getCustomerServer`
 - **Path varies per dev machine** — the solution file is `MangoWebPoolService.sln` inside a `MangoWebPoolService-DEV` folder. Never assume a listed path is correct here; follow the RULE below and reuse the confirmed-paths table.
 - **Projects:** `MangoWebPoolService` (main web/API), `MangoMobileService`, `MangoReportService`, `SFC-DC-Service`, `MangoWebPoolService.Tests`
 - **Reusable knowledge:** `docs/backend/contract-navigation-knowledge.md` — verified auth/response/list contracts, ownership map, and navigation recipes. Read it before traversing the backend.
+- **New backend (target):** `MangoServiceNetCore` — .NET 8 (ASP.NET Core), dev-confirmed 2026-09-12; ports all frontend-facing contracts with parity tests (`TokenCrypto.cs` replaces the sourceless `MangoWebToken.dll`). Confirmed path: `C:\Users\COM\Projects\MANGOdotNETMigration Proj\MangoServiceNetCore` — the per-machine path RULE above still applies before editing it.
 
 ### RULE — ask the dev for their backend path before any backend change
 

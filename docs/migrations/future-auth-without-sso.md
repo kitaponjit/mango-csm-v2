@@ -51,6 +51,8 @@ The analysis reviewed:
 
 The backend service is a separate repository and is not present in this checkout. Endpoint names and frontend call sites are therefore observable; server-side token issuance, validation, cookie behavior, and any hidden provider integration are not yet proven.
 
+Update (2026-09-12): the dev-confirmed new backend `MangoServiceNetCore` (.NET 8) ports the token contracts with parity tests — `X-Mango-Auth` is re-implemented in-repo as `TokenCrypto.cs` (AES-256-CBC + SHA1, replacing the sourceless `MangoWebToken.dll`). Server-side validation semantics still require live-environment and security-owner confirmation before cutover.
+
 ### Observable models
 
 | Model | Entry point | Session or credential source | Frontend context | API credential | Logout or expiry |
