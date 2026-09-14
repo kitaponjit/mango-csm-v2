@@ -77,10 +77,14 @@ yarn-error.log*
 
 # Build output
 Website/Scripts/Bundle/
+frontend/dist/
+frontend/public/vendor/
 .nuxt/
 .output/
 .data/
 coverage/
+playwright-report/
+test-results/
 
 # Local environment and secrets
 .env
@@ -92,9 +96,13 @@ coverage/
 
 # Cache
 .cache/
+.vite/
+.vitest/
 .parcel-cache/
 .eslintcache
 .stylelintcache
+*.tsbuildinfo
+vite.config.*.timestamp-*
 
 # ===========================
 # OS
