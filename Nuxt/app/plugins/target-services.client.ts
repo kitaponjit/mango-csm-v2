@@ -1,3 +1,4 @@
+import { createAccessControlService } from '~/services/access/access-control-service'
 import { createAuthenticationService } from '~/services/authentication/authentication-service'
 import { createFileCapability } from '~/services/files/file-capability'
 import { createApiClient } from '~/services/http/api-client'
@@ -18,6 +19,7 @@ export default defineNuxtPlugin(() => {
     onMissingCredential: () => session.redirectToLogin(),
     onInvalidCredential: () => transport.handleInvalidCredential(),
   })
+  const accessControlService = createAccessControlService(apiClient)
   const authenticationService = createAuthenticationService({
     baseUrl: runtime.apiBaseUrl || '',
     fetcher: (url, options) => window.fetch(url, options),
@@ -31,6 +33,7 @@ export default defineNuxtPlugin(() => {
       sessionAdapter: session,
       authenticationService,
       apiClient,
+      accessControlService,
       fileCapability,
       localization,
     },
