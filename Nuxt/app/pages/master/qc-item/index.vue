@@ -231,7 +231,7 @@ function onFileChange(event: Event) {
     return
   }
 
-  if (!/\.xlsx$/i.test(file.name)) {
+  if (!/\.(xlsx|xls)$/i.test(file.name)) {
     clearFileSelection()
     importError.value = t('qcItem.fileTypeError')
     importDialogOpen.value = true
@@ -454,7 +454,7 @@ onMounted(() => {
       class="qc-item-file-input"
       data-testid="qcitem-file-input"
       type="file"
-      accept=".xlsx"
+      accept=".xlsx,.xls"
       :disabled="!canEdit"
       @change="onFileChange"
     >

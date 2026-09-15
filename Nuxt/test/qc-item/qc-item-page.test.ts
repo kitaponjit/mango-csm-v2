@@ -83,11 +83,11 @@ const translations: Record<string, string> = {
   'qcItem.import': 'Import Excel',
   'qcItem.importTitle': 'Import QC Items',
   'qcItem.selectedFile': 'Selected file',
-  'qcItem.chooseFile': 'Choose an .xlsx file',
+  'qcItem.chooseFile': 'Choose an .xlsx or .xls file',
   'qcItem.cancel': 'Cancel',
   'qcItem.upload': 'Upload',
   'qcItem.uploading': 'Uploading…',
-  'qcItem.fileTypeError': 'Please choose an .xlsx file only.',
+  'qcItem.fileTypeError': 'Please choose an .xlsx or .xls file only.',
   'qcItem.empty': 'No QC Items found',
   'qcItem.error': 'Unable to load QC Items',
   'qcItem.invalidResponse': 'The server returned an invalid QC Item list.',
@@ -295,17 +295,21 @@ describe('QCItem page access and read state', () => {
     },
   )
 
-  it('rejects .xls selection and blocks programmatic upload without a backend request', async () => {
+  it('accepts .xls selection and uploads it through the backend-required file field', async () => {
     getContext.mockReturnValue({ isAuthenticated: true })
+    apiPostForm.mockResolvedValue({ ok: true, status: 200, data: true })
     const wrapper = mount(QCItemPage)
     await flushPromises()
     const input = selectFile(wrapper, 'QCItem.xls')
     pageSetup(wrapper).onFileChange({ target: input } as unknown as Event)
     await nextTick()
-    expect(wrapper.text()).toContain('Please choose an .xlsx file only.')
-    expect(wrapper.get('[data-testid="qcitem-upload"]').attributes('disabled')).toBeDefined()
-    await pageSetup(wrapper).uploadFile()
-    expect(apiPostForm).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('QCItem.xls')
+    expect(wrapper.get('[data-testid="qcitem-upload"]').attributes('disabled')).toBeUndefined()
+    await wrapper.get('[data-testid="qcitem-upload"]').trigger('click')
+    await flushPromises()
+    expect(apiPostForm).toHaveBeenCalledOnce()
+    const form = apiPostForm.mock.calls[0][1] as FormData
+    expect(form.get('file')).toMatchObject({ name: 'QCItem.xls' })
   })
   it.each(['anonymous', 'denied'] as const)(
     'does not read QCItem data when access resolves to %s',
@@ -633,6 +637,41 @@ describe('QCItem page access and read state', () => {
 
     expect(apiPost).toHaveBeenCalledWith('CSM/Master/QCItem_Create', {
       item: [{ itemno: 1, itemname: 'Updated', remark: 'Remark' }],
+    })
+    expect(apiGet).toHaveBeenCalledTimes(2)
+  })
+
+  it('saves the complete intended dataset after editing, adding, and deleting on page three', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    const initialItems = Array.from({ length: 25 }, (_, index) => ({
+      itemno: index + 1,
+      itemname: `Description ${index + 1}`,
+      remark: `Remark ${index + 1}`,
+    }))
+    apiGet
+      .mockResolvedValueOnce({ ok: true, status: 200, data: initialItems })
+      .mockResolvedValueOnce({ ok: true, status: 200, data: [] })
+    apiPost.mockResolvedValue({ ok: true, status: 200, data: {} })
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(true))
+
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    await wrapper.get('[data-testid="qcitem-page-3"]').trigger('click')
+    await wrapper.get('[data-testid="qcitem-description-21"]').setValue('Updated 21')
+    await wrapper.get('[data-testid="qcitem-delete-22"]').trigger('click')
+    await wrapper.get('[data-testid="qcitem-add"]').trigger('click')
+    await wrapper.get('[data-testid="qcitem-description-26"]').setValue('New 26')
+    await wrapper.get('[data-testid="qcitem-remark-26"]').setValue('New remark 26')
+    await wrapper.get('[data-testid="qcitem-save"]').trigger('click')
+    await flushPromises()
+
+    expect(apiPost).toHaveBeenCalledWith('CSM/Master/QCItem_Create', {
+      item: [
+        ...initialItems
+          .filter(item => item.itemno !== 22)
+          .map(item => item.itemno === 21 ? { ...item, itemname: 'Updated 21' } : item),
+        { itemno: 26, itemname: 'New 26', remark: 'New remark 26' },
+      ],
     })
     expect(apiGet).toHaveBeenCalledTimes(2)
   })
