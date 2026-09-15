@@ -9,11 +9,33 @@ const apiPostForm = vi.fn()
 const apiOpenUrl = vi.fn()
 const redirectToLogin = vi.fn()
 const getContext = vi.fn()
+const checkMenuAccess = vi.fn()
+
+type QCItemSetup = {
+  initializePage(): Promise<void>
+  loadItems(generation?: number): Promise<void>
+  addItem(): void
+  deleteItem(item: { itemno: number, itemname: string, remark: string }): void
+  saveItems(): Promise<void>
+  openFilePicker(): void
+  onFileChange(event: Event): void
+  uploadFile(): Promise<void>
+  exportFile(): Promise<void>
+}
+
+function pageSetup(wrapper: ReturnType<typeof mount>) {
+  return (wrapper.vm as unknown as { $: { setupState: QCItemSetup } }).$.setupState
+}
 
 const translations: Record<string, string> = {
   'qcItem.authChecking': 'Checking your session',
   'qcItem.authRequired': 'Sign-in required',
   'qcItem.authUnavailable': 'The sign-in page is currently unavailable.',
+  'qcItem.accessDeniedTitle': 'Access denied',
+  'qcItem.accessDeniedMessage': 'You do not have access to QC Items.',
+  'qcItem.accessErrorTitle': 'Unable to check QC Item access',
+  'qcItem.accessRetry': 'Check access again',
+  'qcItem.readOnly': 'Read only',
   'qcItem.title': 'QC Item list',
   'qcItem.description': 'Configure evaluation question items.',
   'qcItem.number': 'No.',
@@ -47,11 +69,14 @@ const translations: Record<string, string> = {
 
 beforeEach(() => {
   apiGet.mockReset()
+  apiGet.mockResolvedValue({ ok: true, status: 200, data: [] })
   apiPost.mockReset()
   apiPostForm.mockReset()
   apiOpenUrl.mockReset()
   redirectToLogin.mockReset()
   getContext.mockReset()
+  checkMenuAccess.mockReset()
+  checkMenuAccess.mockResolvedValue({ status: 'editable' })
 
   vi.stubGlobal('useApiClient', () => ({ get: apiGet, post: apiPost, postForm: apiPostForm }))
   vi.stubGlobal('useFileCapability', () => ({ openUrl: apiOpenUrl }))
@@ -60,6 +85,7 @@ beforeEach(() => {
     t: (key: string) => translations[key] ?? key,
   }))
   vi.stubGlobal('useSessionAdapter', () => ({ getContext, redirectToLogin }))
+  vi.stubGlobal('useAccessControlService', () => ({ checkMenuAccess }))
   vi.stubGlobal('useHead', vi.fn())
 })
 
@@ -69,6 +95,199 @@ afterEach(() => {
 })
 
 describe('QCItem page access and read state', () => {
+  it.each(['anonymous', 'denied'] as const)(
+    'does not read QCItem data when access resolves to %s',
+    async status => {
+      getContext.mockReturnValue({ isAuthenticated: true })
+      checkMenuAccess.mockResolvedValue({ status })
+
+      const wrapper = mount(QCItemPage)
+      await flushPromises()
+
+      expect(checkMenuAccess).toHaveBeenCalledWith('CSM_WEB', '21010')
+      expect(apiGet).not.toHaveBeenCalled()
+      expect(wrapper.find('[data-testid="qcitem-table"]').exists()).toBe(false)
+      expect(redirectToLogin).toHaveBeenCalledTimes(status === 'anonymous' ? 1 : 0)
+      expect(wrapper.text()).toContain(status === 'anonymous' ? 'Sign-in required' : 'Access denied')
+    },
+  )
+
+  it('keeps access errors separate and does not read QCItem data', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockResolvedValue({
+      status: 'error',
+      error: { code: 'invalid-response', message: 'Invalid access response' },
+    })
+
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="qcitem-access-error"]').text()).toContain('Invalid access response')
+    expect(wrapper.find('[data-testid="qcitem-retry"]').exists()).toBe(false)
+    expect(apiGet).not.toHaveBeenCalled()
+  })
+
+  it('resolves editable access before starting ReadList', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    apiGet.mockResolvedValue({ ok: true, status: 200, data: [] })
+
+    mount(QCItemPage)
+    await flushPromises()
+
+    expect(checkMenuAccess.mock.invocationCallOrder[0]).toBeLessThan(apiGet.mock.invocationCallOrder[0]!)
+  })
+
+  it('keeps checking access before permitting any ReadList request', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockReturnValue(new Promise(() => {}))
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    await pageSetup(wrapper).loadItems()
+
+    expect(wrapper.text()).toContain('Checking your session')
+    expect(wrapper.find('.target-panel').exists()).toBe(false)
+    expect(apiGet).not.toHaveBeenCalled()
+  })
+
+  it('permits readonly reads and displays the localized badge', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockResolvedValue({ status: 'readonly' })
+    apiGet.mockResolvedValue({ ok: true, status: 200, data: [{ itemno: 1, itemname: 'Read item', remark: 'View' }] })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+
+    expect(apiGet).toHaveBeenCalledWith('CSM/Master/QCItem_ReadList')
+    expect(wrapper.text()).toContain('Read only')
+    expect(wrapper.find('[data-testid="qcitem-table"]').exists()).toBe(true)
+  })
+
+  it('rechecks access on access-error retry before reading data', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockResolvedValueOnce({ status: 'error', error: { code: 'network', message: 'Offline' } })
+    apiGet.mockResolvedValue({ ok: true, status: 200, data: [] })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    expect(apiGet).not.toHaveBeenCalled()
+
+    await wrapper.get('[data-testid="qcitem-access-retry"]').trigger('click')
+    await flushPromises()
+
+    expect(checkMenuAccess).toHaveBeenCalledTimes(2)
+    expect(apiGet).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('[data-testid="qcitem-access-error"]').exists()).toBe(false)
+  })
+
+  it('ignores older access decisions after a newer denied decision', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    let resolveAccess!: (result: unknown) => void
+    checkMenuAccess
+      .mockReturnValueOnce(new Promise(resolve => { resolveAccess = resolve }))
+      .mockResolvedValueOnce({ status: 'denied' })
+    apiGet.mockResolvedValue({ ok: true, status: 200, data: [] })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    await pageSetup(wrapper).initializePage()
+
+    resolveAccess({ status: 'editable' })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Access denied')
+    expect(wrapper.find('.target-panel').exists()).toBe(false)
+    expect(apiGet).not.toHaveBeenCalled()
+  })
+
+  it('does not restore stale ReadList data after a newer denied decision', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockResolvedValueOnce({ status: 'editable' }).mockResolvedValueOnce({ status: 'denied' })
+    let resolveRead!: (value: unknown) => void
+    apiGet.mockReturnValue(new Promise(resolve => { resolveRead = resolve }))
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    void pageSetup(wrapper).initializePage()
+    await flushPromises()
+
+    resolveRead({ ok: true, status: 200, data: [{ itemno: 1, itemname: 'Stale', remark: 'Must not render' }] })
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Stale')
+    expect(wrapper.find('[data-testid="qcitem-table"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Access denied')
+  })
+
+  it('does not redirect for an old anonymous response after newer editable access', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    let resolveAccess!: (result: unknown) => void
+    checkMenuAccess.mockReturnValueOnce(new Promise(resolve => { resolveAccess = resolve }))
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    await pageSetup(wrapper).initializePage()
+
+    resolveAccess({ status: 'anonymous' })
+    await flushPromises()
+
+    expect(wrapper.find('.target-panel').exists()).toBe(true)
+    expect(redirectToLogin).not.toHaveBeenCalled()
+    expect(apiGet).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps newer readonly data when an old ReadList completes', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockResolvedValueOnce({ status: 'editable' }).mockResolvedValueOnce({ status: 'readonly' })
+    let resolveRead!: (value: unknown) => void
+    apiGet
+      .mockReturnValueOnce(new Promise(resolve => { resolveRead = resolve }))
+      .mockResolvedValueOnce({ ok: true, status: 200, data: [{ itemno: 2, itemname: 'Latest', remark: 'Current' }] })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    await pageSetup(wrapper).initializePage()
+
+    resolveRead({ ok: true, status: 200, data: [{ itemno: 1, itemname: 'Stale', remark: 'Old' }] })
+    await flushPromises()
+
+    expect(wrapper.get<HTMLInputElement>('[data-testid="qcitem-description-2"]').element.value).toBe('Latest')
+    expect(wrapper.find('[data-testid="qcitem-description-1"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Read only')
+  })
+
+  it('retries a data error without rechecking the successful access decision', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    apiGet.mockResolvedValueOnce({ ok: false, error: { code: 'network', message: 'Offline' } })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+
+    await wrapper.get('[data-testid="qcitem-retry"]').trigger('click')
+    await flushPromises()
+
+    expect(apiGet).toHaveBeenCalledTimes(2)
+    expect(checkMenuAccess).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('.target-state--empty').exists()).toBe(true)
+  })
+
+  it('clears the list and pending file selection while rechecking access', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    apiGet.mockResolvedValue({ ok: true, status: 200, data: [{ itemno: 1, itemname: 'Existing', remark: 'Existing' }] })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    const input = wrapper.get('[data-testid="qcitem-file-input"]').element as HTMLInputElement
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File(['xlsx'], 'QCItem.xlsx')] })
+    await wrapper.get('[data-testid="qcitem-file-input"]').trigger('change')
+    expect((wrapper.get('[data-testid="qcitem-import-dialog"]').element as HTMLDialogElement).open).toBe(true)
+    let resolveAccess!: (value: unknown) => void
+    checkMenuAccess.mockReturnValueOnce(new Promise(resolve => { resolveAccess = resolve }))
+    void pageSetup(wrapper).initializePage()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="qcitem-table"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="qcitem-import-dialog"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Checking your session')
+
+    resolveAccess({ status: 'editable' })
+    await flushPromises()
+    expect((wrapper.get('[data-testid="qcitem-import-dialog"]').element as HTMLDialogElement).open).toBe(false)
+    expect(wrapper.get('[data-testid="qcitem-upload"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).not.toContain('QCItem.xlsx')
+  })
+
   it('sends anonymous users to the configured login route without calling the protected API', async () => {
     getContext.mockReturnValue({
       scope: 'internal',
@@ -83,6 +302,7 @@ describe('QCItem page access and read state', () => {
     expect(wrapper.text()).toContain('The sign-in page is currently unavailable.')
     expect(wrapper.find('.target-state--error').exists()).toBe(true)
     expect(redirectToLogin).toHaveBeenCalledOnce()
+    expect(checkMenuAccess).not.toHaveBeenCalled()
     expect(apiGet).not.toHaveBeenCalled()
   })
 

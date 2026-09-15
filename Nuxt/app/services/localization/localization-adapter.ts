@@ -92,6 +92,11 @@ const thai: Record<string, string> = {
   'qcItem.exportError': 'ไม่สามารถส่งออกไฟล์ได้',
   'qcItem.fileTypeError': 'กรุณาเลือกไฟล์ .xlsx เท่านั้น',
   'qcItem.authChecking': 'กำลังตรวจสอบสถานะการเข้าสู่ระบบ',
+  'qcItem.accessDeniedTitle': 'ไม่มีสิทธิ์เข้าถึง',
+  'qcItem.accessDeniedMessage': 'คุณไม่มีสิทธิ์เข้าถึงรายการ QC Item',
+  'qcItem.accessErrorTitle': 'ไม่สามารถตรวจสอบสิทธิ์เข้าถึง QC Item ได้',
+  'qcItem.accessRetry': 'ตรวจสอบสิทธิ์อีกครั้ง',
+  'qcItem.readOnly': 'ดูข้อมูลได้อย่างเดียว',
   'qcItem.authRequired': 'ต้องเข้าสู่ระบบ',
   'qcItem.authUnavailable': 'ไม่สามารถเปิดหน้าลงชื่อเข้าใช้ได้ในขณะนี้ กรุณาติดต่อผู้ดูแลระบบแล้วลองอีกครั้ง',
 }
@@ -184,6 +189,11 @@ const english: Record<string, string> = {
   'qcItem.exportError': 'Unable to export the file.',
   'qcItem.fileTypeError': 'Please choose an .xlsx file only.',
   'qcItem.authChecking': 'Checking your session',
+  'qcItem.accessDeniedTitle': 'Access denied',
+  'qcItem.accessDeniedMessage': 'You do not have access to QC Items.',
+  'qcItem.accessErrorTitle': 'Unable to check QC Item access',
+  'qcItem.accessRetry': 'Check access again',
+  'qcItem.readOnly': 'Read only',
   'qcItem.authRequired': 'Sign-in required',
   'qcItem.authUnavailable': 'The sign-in page is currently unavailable. Contact your administrator, then try again.',
 }

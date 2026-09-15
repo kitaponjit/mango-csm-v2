@@ -13,14 +13,17 @@ import {
   type EditableQCItem,
 } from '~/features/qc-item/qc-item-model'
 import { createQCItemService } from '~/features/qc-item/qc-item-service'
+import { QC_ITEM_MENU_ID, QC_ITEM_MENU_NAME } from '~/features/qc-item/qc-item-access'
+import type { AccessControlResult } from '~/services/access/access-control-service'
 
 type ViewStatus = 'idle' | 'loading' | 'ready' | 'success' | 'error'
-type AccessStatus = 'checking' | 'authenticated' | 'anonymous'
+type AccessViewState = { status: 'checking' } | AccessControlResult
 
 const api = useApiClient()
 const files = useFileCapability()
 const localization = useLocalizationAdapter()
 const session = useSessionAdapter()
+const access = useAccessControlService()
 const service = createQCItemService(api)
 const t = localization.t
 
@@ -30,7 +33,8 @@ const items = ref<EditableQCItem[]>([])
 const currentPage = ref(1)
 const listStatus = ref<ViewStatus>('idle')
 const listError = ref('')
-const accessStatus = ref<AccessStatus>('checking')
+const accessResult = ref<AccessViewState>({ status: 'checking' })
+let accessGeneration = 0
 const saveStatus = ref<ViewStatus>('idle')
 const saveError = ref('')
 const saveMessage = ref('')
@@ -43,6 +47,13 @@ const importMessage = ref('')
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
+const hasReadAccess = computed(() => (
+  accessResult.value.status === 'readonly'
+  || accessResult.value.status === 'editable'
+))
+const canEdit = computed(() => accessResult.value.status === 'editable')
+const canExport = computed(() => hasReadAccess.value && exportStatus.value !== 'loading')
+
 const pageCount = computed(() => getPageCount(items.value, PAGE_SIZE))
 const pageItems = computed(() => getPageItems(items.value, currentPage.value, PAGE_SIZE))
 const total = computed(() => items.value.length)
@@ -52,11 +63,25 @@ const isDataBusy = computed(() => (
   || importStatus.value === 'loading'
 ))
 
-async function loadItems() {
+function clearAccessOwnedState() {
+  items.value = []
+  currentPage.value = 1
+  listStatus.value = 'idle'
+  listError.value = ''
+  importDialogOpen.value = false
+  importStatus.value = 'idle'
+  importError.value = ''
+  importMessage.value = ''
+  clearFileSelection()
+}
+
+async function loadItems(generation = accessGeneration) {
+  if (generation !== accessGeneration || !hasReadAccess.value) return
   listStatus.value = 'loading'
   listError.value = ''
 
   const result = await service.readList()
+  if (generation !== accessGeneration || !hasReadAccess.value) return
   if (!result.ok) {
     listStatus.value = 'error'
     listError.value = result.error.message
@@ -75,14 +100,27 @@ async function loadItems() {
 }
 
 async function initializePage() {
+  const generation = ++accessGeneration
+  clearAccessOwnedState()
+  accessResult.value = { status: 'checking' }
+
   if (!session.getContext().isAuthenticated) {
-    accessStatus.value = 'anonymous'
+    accessResult.value = { status: 'anonymous' }
     session.redirectToLogin()
     return
   }
 
-  accessStatus.value = 'authenticated'
-  await loadItems()
+  const result = await access.checkMenuAccess(QC_ITEM_MENU_NAME, QC_ITEM_MENU_ID)
+  if (generation !== accessGeneration) return
+  accessResult.value = result
+
+  if (result.status === 'anonymous') {
+    session.redirectToLogin()
+    return
+  }
+  if (result.status === 'readonly' || result.status === 'editable') {
+    await loadItems(generation)
+  }
 }
 
 function addItem() {
@@ -254,21 +292,40 @@ onMounted(() => {
     </header>
 
     <TargetState
-      v-if="accessStatus === 'checking'"
+      v-if="accessResult.status === 'checking'"
       kind="loading"
       :title="t('qcItem.authChecking')"
     />
     <TargetState
-      v-else-if="accessStatus === 'anonymous'"
+      v-else-if="accessResult.status === 'anonymous'"
       kind="error"
       :title="t('qcItem.authRequired')"
       :message="t('qcItem.authUnavailable')"
     />
 
-    <section v-else class="target-panel" aria-labelledby="qc-item-list-title">
+    <TargetState
+      v-else-if="accessResult.status === 'denied'"
+      kind="error"
+      :title="t('qcItem.accessDeniedTitle')"
+      :message="t('qcItem.accessDeniedMessage')"
+    />
+    <TargetState
+      v-else-if="accessResult.status === 'error'"
+      kind="error"
+      :title="t('qcItem.accessErrorTitle')"
+      :message="accessResult.error.message"
+      data-testid="qcitem-access-error"
+    >
+      <button type="button" class="target-button target-button--secondary" data-testid="qcitem-access-retry" @click="initializePage">
+        {{ t('qcItem.accessRetry') }}
+      </button>
+    </TargetState>
+
+    <section v-else-if="hasReadAccess" class="target-panel" aria-labelledby="qc-item-list-title">
       <div class="target-panel__section qc-item-toolbar">
         <div>
           <h2 id="qc-item-list-title" class="target-section-title">{{ t('qcItem.title') }}</h2>
+          <p v-if="accessResult.status === 'readonly'" class="target-eyebrow">{{ t('qcItem.readOnly') }}</p>
           <p class="qc-item-count">{{ t('qcItem.count') }}: {{ total }}</p>
         </div>
         <div class="qc-item-actions" :aria-label="t('qcItem.actions')">
@@ -294,7 +351,7 @@ onMounted(() => {
         <p v-else-if="saveMessage" class="qc-item-feedback qc-item-feedback--success" role="status">{{ saveMessage }}</p>
         <TargetState v-if="listStatus === 'idle' || listStatus === 'loading'" kind="loading" :title="t('qcItem.loading')" />
         <TargetState v-else-if="listStatus === 'error'" kind="error" :title="t('qcItem.error')" :message="listError">
-          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-retry" @click="loadItems">
+          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-retry" @click="loadItems(accessGeneration)">
             {{ t('qcItem.retry') }}
           </button>
         </TargetState>
@@ -380,7 +437,7 @@ onMounted(() => {
     >
 
     <TargetDialog
-      v-if="accessStatus === 'authenticated'"
+      v-if="hasReadAccess"
       :open="importDialogOpen"
       :title="t('qcItem.importTitle')"
       :close-label="t('qcItem.cancel')"

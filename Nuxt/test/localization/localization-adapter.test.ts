@@ -58,6 +58,11 @@ describe('createLocalizationAdapter', () => {
       'authChecking',
       'authRequired',
       'authUnavailable',
+      'accessDeniedTitle',
+      'accessDeniedMessage',
+      'accessErrorTitle',
+      'accessRetry',
+      'readOnly',
     ]
     const thai = createLocalizationAdapter({ getItem: () => null })
     const english = createLocalizationAdapter({ getItem: () => 'EN' })
