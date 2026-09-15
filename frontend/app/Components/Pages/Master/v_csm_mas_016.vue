@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="box-body">
             <div class="nav-tabs-custom">
@@ -75,7 +75,7 @@
 
                 <div class="tab-pane" :class="{active:tab1Active===1}">
                   <app-form ref="appForm">
-                    <template slot="form-field">
+                    <template #form-field>
                       <div class="row">
                         <div class="col-md-2">
                           <div class="form-group">
@@ -118,7 +118,8 @@
 <script>
   import XLSX from 'xlsx';
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let appForm = {};
   let paging = {};
   let process = false;

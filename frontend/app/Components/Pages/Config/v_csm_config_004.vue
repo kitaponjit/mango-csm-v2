@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="hc-layout">
 
           <!-- ── Sidebar ── -->
@@ -60,7 +60,7 @@
             <div class="hc-card">
               <div class="hc-card__toolbar">
                 <app-form-2 ref="appForm">
-                  <template slot="extraBtn">
+                  <template #extraBtn>
                     <button class="btn btn-sm hc-btn-import" @click="openImportModal()">
                       <i class="fas fa-cloud-download-alt margin-r-5"></i>นำเข้าข้อมูล วันหยุด
                     </button>
@@ -196,7 +196,8 @@ import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import loadingBox from '../../../Components/Center/loading-box.vue';
 
-let page = {};
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } };
 let appForm = {};
 
 const DAY_NAMES = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];

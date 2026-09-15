@@ -3,7 +3,7 @@
     <ul class="sidebar-menu tree" data-widget="tree">
       <li>
         <a :href="`${baseUrl}page/`">
-          <img :src="`${baseUrl}Content/Images/Icon SVG/home.svg`" width="20" />&nbsp;
+          <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/home.svg`" width="20" />&nbsp;
           <span>{{ ui.csm_menu_home }}</span>
         </a>
       </li>
@@ -15,7 +15,7 @@
            :class="{ link_disabled: item.disabled }"
            @click="canGo($event, item.disabled)"
            target="_blank">
-          <img :src="`${baseUrl}Content/Images/Icon SVG/${item.icon}.svg`" width="20" />&nbsp;
+          <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/${item.icon}.svg`" width="20" />&nbsp;
           <span>{{ item.display_text }}</span>
           <span v-if="item.children.length > 0" class="pull-right">
             <i class="fa fa-angle-left pull-right"></i>

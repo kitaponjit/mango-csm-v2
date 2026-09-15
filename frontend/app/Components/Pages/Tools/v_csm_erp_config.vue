@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="ec">
           <!-- Toolbar -->
           <div class="ec-bar">
@@ -40,7 +40,7 @@
 
     <!-- Modal : Add ERP Config -->
     <modal ref="addModal">
-      <template slot="header">
+      <template #header>
         <div class="ec-mh">
           <span class="ec-mh__icon"><i class="fas" :class="editMode ? 'fa-pen' : 'fa-plus'"></i></span>
           <div class="ec-mh__text">
@@ -50,7 +50,7 @@
           </div>
         </div>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="ec-form">
 
           <!-- Basic Information Card -->
@@ -141,7 +141,7 @@
 
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="ec-mf">
           <button type="button" class="ec-abtn ec-abtn--danger" v-if="editMode" v-on:click="onDel()"><i class="fas fa-trash"></i> ลบข้อมูล</button>
           <span class="ec-mf__gap"></span>
@@ -153,7 +153,7 @@
 
     <!-- Modal : Find Config -->
     <modal ref="find_config">
-      <template slot="header">
+      <template #header>
         <div class="ec-mh">
           <span class="ec-mh__icon"><i class="fas fa-search-plus"></i></span>
           <div class="ec-mh__text">
@@ -162,7 +162,7 @@
           </div>
         </div>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="ec ec--modal">
           <div class="ec-bar ec-bar--flat">
             <div class="ec-bar__row">
@@ -183,7 +183,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="ec-mf">
           <span class="ec-mf__gap"></span>
           <button type="button" class="ec-abtn ec-abtn--ghost" v-on:click="$refs.find_config.closeModal()"><i class="fas fa-times"></i> ปิด</button>
@@ -196,7 +196,8 @@
 <script>
   import XLSX from 'xlsx';
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let cpn = {
     data() {

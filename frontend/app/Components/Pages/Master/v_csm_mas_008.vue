@@ -1,17 +1,17 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <app-form-2 ref="appForm"
         exportSelect="B"
         :exportUrl= exportUrl
         >
-        <template slot="extraBtn">
+        <template #extraBtn>
           <button class="btn btn-sm btn-instagram" v-if="btnShow" @click="exportValidate">
             <i class="fas fa-cloud-download-alt"></i> <span v-text="ui.export_excel || 'Export Document (Excel)'"></span>
           </button>
         </template>
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="box box-widget"style="border-radius: 2px !important;" >
               <div class="box-body" >
                 <!-- Project Contract & Unit/Phase -->
@@ -512,7 +512,8 @@
   </div>
 </template>
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let appForm = {};
   let itemWarPaging = {};
   let paging = {};

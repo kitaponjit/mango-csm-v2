@@ -6,7 +6,7 @@
                     exportName=""
                     exportSelect="B"
                     exportUrl="csm/master/CustomerServiceExport">
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="box box-widget">
               <div class="box-body">
               
@@ -22,7 +22,8 @@
 
 <script type="text/javascript">
   import { mapState } from '~/stores/helpers'
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   export default {
     data() {
       return {

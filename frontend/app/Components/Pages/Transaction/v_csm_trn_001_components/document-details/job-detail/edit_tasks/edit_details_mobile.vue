@@ -393,7 +393,7 @@
                                  @add-worker="openAddWork('new')"
                                  @read-worker="openAddWork('read')"
                                  :refWorkerText="refWorkerCount">
-                <template slot="lead" v-if="false">
+                <template #lead v-if="false">
                   <div class="form-group wa-faq-code-cell" v-if="false">
                     <label class="text-bold">{{ ui.csm_trn_related_faq }}</label>
                     <div class="input-group">
@@ -409,7 +409,7 @@
                     <input type="text" class="form-control input-sm" :placeholder="ui.csm_trn_no_faq_match" v-model.trim="editDetailData['faqname']" readonly />
                   </div>
                 </template>
-                <template slot="trail">
+                <template #trail>
                   <button type="button" class="btn wa-ai-btn"
                           v-if=" editDetailData.status !='W'&& (formData.assign_empno == auth.empno || editDetailData.assign_empno == auth.empno || editDetailData.tester_empno == auth.empno ||isMyWorker)"
                           @click.prevent="openAiAnalysisModal()"

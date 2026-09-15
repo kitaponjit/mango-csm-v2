@@ -35,10 +35,10 @@
 
     <!-- Modal Custom -->
      <modal ref="approveLoop">
-       <template slot="header">
+       <template #header>
          <h4>ข้อมูลผู้อนุมัติ</h4>
        </template>
-       <template slot="body">
+       <template #body>
         <div class="col-md-12">
           <ag-table ref="agr_detail" :footer="false" @ready="initTableDetail()"></ag-table>
         </div>

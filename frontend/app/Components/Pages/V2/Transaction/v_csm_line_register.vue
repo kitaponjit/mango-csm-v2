@@ -4,8 +4,8 @@
       <div class="container h-100p main-content">
         <div class="row">
           <div class="col-md-12 padding-t-20">
-            <!-- <img :src="`${baseUrl}Content/Images/Logo/logo_mango_dark.png`" class="profile-img" alt="Mango Consultant"> -->
-            <img :src="baseUrl + 'Content/Images/Logo/logo_mango_dark_default.png'" class="max-height w-100 profile-img" alt="Your Logo">
+            <!-- <img :src="`${baseUrl}vendor/Content/Images/Logo/logo_mango_dark.png`" class="profile-img" alt="Mango Consultant"> -->
+            <img :src="baseUrl + 'vendor/Content/Images/Logo/logo_mango_dark_default.png'" class="max-height w-100 profile-img" alt="Your Logo">
             
           </div>
           <div class="col-md-12 margin-b-20">
@@ -92,7 +92,7 @@
 
     <div v-show="!show" class="container-fluid success" style="width : 100%;"
     :style="{
-      'background': 'url(' + baseUrl + 'Content/Images/PNG/success-submit3.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)',
+      'background': 'url(' + baseUrl + 'vendor/Content/Images/PNG/success-submit3.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)',
       'background-size': 'auto, auto',
       'background-repeat': 'no-repeat',
       'background-position': '50% 50%'
@@ -237,7 +237,7 @@ export default {
     await this.LineOA_CheckHouse()
     // this.$nextTick(() => {
     //   $('.success').css({'width': '100%',
-    //   'background' : 'url('+this.baseUrl+'Content/Images/PNG/success-submit2.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)',
+    //   'background' : 'url('+this.baseUrl+'vendor/Content/Images/PNG/success-submit2.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)',
     //   'background-size': 'auto, auto',
     //   'background-repeat' : 'no-repeat',
     //   'background-position' : '50% 50%'})

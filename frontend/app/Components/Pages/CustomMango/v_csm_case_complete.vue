@@ -363,7 +363,8 @@
 <script type="text/javascript">
   import loadingBox from "../../Center/loading-box.vue"
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let loading = {};
   let paging = {};
 

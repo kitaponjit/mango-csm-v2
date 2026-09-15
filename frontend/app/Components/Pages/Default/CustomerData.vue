@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="cd-layout">
 
         <!-- Hero -->
@@ -162,7 +162,9 @@
 <script>
   import XLSX from 'xlsx'
 
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
 
   let cpn = {

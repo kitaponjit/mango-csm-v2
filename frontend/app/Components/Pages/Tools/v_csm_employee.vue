@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="ed">
           <header class="ed-hero">
             <span class="ed-hero__deco">
@@ -198,7 +198,9 @@
   import * as echarts from 'echarts'
   import VChart from 'vue-echarts'
 
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+  let page = { loadingBox: { show() {}, hide() {} } }
   const TINTS = ['#31628F', '#2F8072', '#6B5B9E', '#8C6239', '#3B6EA5', '#7E8B36', '#96566A', '#347F84', '#5C6BA8', '#8A5340']
 
   let cpn = {

@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-solid">
           <div class="box-body">
             <div class="col-lg-6">
@@ -148,20 +148,20 @@
     </div>
 
     <!--<modal ref="modalsm">
-        <template slot="header">
+        <template #header>
             <div class="row" style="margin-top:10px;margin-bottom:10px;">
                 <div class="col-md-12 col-sm-12 col-xs-12">
                     <h4 class="extension-left"><span>Signature By </span></h4>
                 </div>
             </div>
         </template>
-        <template slot="body">
+        <template #body>
             <div class="col-lg-12">
                 <input class="form-control" placeholder="Signature By Customer" style="text-align:center" />&nbsp;
 
             </div>
         </template>
-        <template slot="footer">
+        <template #footer>
             <div class="col-lg-12" align="center">
                 <button class="btn-primary btn-xs signature" @click="Signature()">Confirm</button>
             </div>
@@ -171,7 +171,8 @@
 </template>
 
 <script type="text/javascript">
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       return {

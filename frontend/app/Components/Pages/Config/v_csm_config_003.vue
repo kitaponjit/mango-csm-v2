@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="config-container">
           <!-- Modern Header -->
           <div class="config-header">
@@ -392,7 +392,8 @@
   </div>
 </template>
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
 
   let initial = [];
   initial.push(

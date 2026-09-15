@@ -7,7 +7,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --host localhost --port 3000",
     "build": "nuxt generate",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -22,6 +22,8 @@
     "@fullcalendar/multimonth": "^6.1.21",
     "@fullcalendar/timegrid": "^6.1.21",
     "@fullcalendar/vue3": "^6.1.21",
+    "@mdi/font": "^7.4.47",
+    "@microsoft/signalr": "^8.0.29",
     "@pinia/nuxt": "^0.11.2",
     "@vuepic/vue-datepicker": "^11.0.3",
     "ag-grid-community": "^33.3.2",

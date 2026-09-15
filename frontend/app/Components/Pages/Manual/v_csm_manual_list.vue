@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-solid">
           <div class="box-body">
             <div class="row">
@@ -107,10 +107,10 @@
     </re-page>
     <!-- Modal : Attachment -->
     <modal ref="showFileModal">
-      <template slot="header">
+      <template #header>
         <h4 class="modal-title">{{subject}}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-md-12">
             <div class="table-responsive">
@@ -140,7 +140,8 @@
   </div>
 </template>
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       return {

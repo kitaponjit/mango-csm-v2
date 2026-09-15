@@ -24,6 +24,7 @@ Treat these targets as project requirements. Do not silently replace them or inv
 - `Website/CLAUDE.md` directs agents to `Website/AGENTS.md`; it is not a second implementation manual.
 - `Website/.claude/skills/` contains narrow workflow/domain guidance. Apply it when its trigger scope matches the task.
 - Verified backend contracts, ownership, and navigation recipes live in `docs/backend/contract-navigation-knowledge.md`. Read it before traversing the backend.
+- How to wire `frontend/` to the .NET 8 backend — path base, CORS, the header-token auth model, SignalR, the `vendor/` asset rule, and a failure-mode table — lives in `docs/integration/frontend-backend-connection.md`. Read it before changing anything that crosses the frontend/backend boundary.
 - UI/style consistency evidence lives in `docs/migrations/future-ui-consistency.md` (baseline + UI-1..UI-5) and `docs/ui-consistency/layout-inventory.md` (exhaustive page inventory).
 - Legacy rules preserve compatibility where needed, but do not authorize expanding legacy architecture or overriding the migration target.
 - Use the narrowest useful governance scope. Do not duplicate Website implementation detail in this file.
@@ -51,9 +52,9 @@ Current checkout evidence:
 
 | Domain | State | Evidence / rule |
 | --- | --- | --- |
-| Vue 2 → Nuxt.js | `TRANSITIONAL` | `Website/` retains the Vue 2 runtime while `Nuxt/` establishes the Nuxt 4 SPA boundary under `/csm-next/**`. |
-| Webpack 5 → Vite | `TRANSITIONAL` | Legacy Website scripts still use Webpack; the independent `Nuxt/` target uses Nuxt's Vite build and separate output ownership. |
-| ASP.NET Framework 4.8 → .NET 8 | `TRANSITIONAL` | Legacy backend remains on Framework/IIS; the dev-confirmed target backend repo `MangoServiceNetCore` (.NET 8, `C:\Users\COM\Projects\MANGOdotNETMigration Proj\MangoServiceNetCore`) now exists outside this checkout with all frontend-facing contracts ported and parity-tested (repo scout 2026-09-12). Cutover/topology not yet decided; do not rewrite Framework code incidentally. |
+| Vue 2 → Nuxt.js | `TRANSITIONAL` | `Website/` retains the Vue 2 runtime. `frontend/` is the target Nuxt 4 SPA: a full port of all 218 components and 111 routes, builds clean, and runs against the .NET 8 backend (dev decision 2026-09-15). `Nuxt/` is the superseded first-slice scaffold. |
+| Webpack 5 → Vite | `TRANSITIONAL` | Legacy Website scripts still use Webpack; the `frontend/` target uses Nuxt's Vite build and separate output ownership. |
+| ASP.NET Framework 4.8 → .NET 8 | `TRANSITIONAL` | Legacy backend remains on Framework/IIS; the dev-confirmed target backend repo `MangoServiceNetCore` (.NET 8; local path is per-machine — `D:\Migrate\MangoServiceNetCore` on the 2026-09-15 dev machine) now exists outside this checkout with all frontend-facing contracts ported and parity-tested (repo scout 2026-09-12). Cutover/topology not yet decided; do not rewrite Framework code incidentally. |
 | IIS-only → IIS + Docker | `LEGACY` | IIS configuration exists and Docker topology is not established; do not assume Docker replaces or embeds IIS. |
 | SQL Server → SQLite | `UNKNOWN` | Backend/data-access code is not in this checkout; determine ownership and relational semantics before selecting SQLite. A read-only survey of the separate backend found EF6 data access alongside extensive interpolated raw SQL in CSM scope (e.g. `SqlFetch2` in `Areas/CSM/Controllers/CenterController.cs`, `APIController.cs:221`); the ownership decision is still required. |
 | MongoDB introduction | `UNKNOWN` | No MongoDB implementation is evidenced; do not assign data to MongoDB without an explicit ownership decision. Append-only logs/chat are the only fit candidate identified; still requires an explicit decision. |
@@ -61,7 +62,8 @@ Current checkout evidence:
 ## Repository Boundaries
 
 - `Website/` is the current legacy frontend and ASP.NET host.
-- `Nuxt/` is the target Nuxt 4 SPA boundary. It owns `/csm-next/**` and emits target artifacts under `Nuxt/.output/public/**`.
+- `frontend/` is the target Nuxt 4 SPA boundary (dev decision 2026-09-15). It is a full port of the Website application — all 218 components, 111 routes — served at the site root and emitting artifacts under `frontend/.output/public/**`.
+- `Nuxt/` is the superseded first-slice scaffold (6 components, 2 routes, `/csm-next/**`). Do not build new UI there; it is retained only as history until explicitly removed.
 - Detailed Website implementation rules, including legacy API/auth, routing, Vuex, naming, responsive twins, grids, and Webpack operation, belong in `Website/AGENTS.md`.
 - The legacy host injects runtime configuration and globals consumed by the Vue application. Preserve that host contract until its boundary is explicitly migrated.
 - The backend/API service is maintained separately from this checkout. Locate the actual repository and read its governance before making backend changes; historical paths in Website documentation are not portable facts. The backend folder path differs per dev machine — ask the dev for their local path and verify it per `Website/AGENTS.md` §11; never assume a documented path.
@@ -98,7 +100,9 @@ Current checkout evidence:
 
 ## Frontend Migration: Nuxt 4 + Vite
 
-- The established first-slice target is the independent `Nuxt/` Nuxt 4 SPA with `ssr: false`, `/csm-next/` as its base URL, and static generation through Vite.
+- The established target is the `frontend/` Nuxt 4 SPA with `ssr: false`, a configurable base URL (`NUXT_APP_BASE_URL`, default `/`), and static generation through Vite.
+- It reaches the backend through `frontend/public/config.js` (`window.dataServer`), a per-deployment file that is never bundled. That value must include the backend path base (`/service/` by default; see `MANGO_PATH_BASE`) and must match `Website/Web.config`'s `dataServer` key.
+- Vendor assets in `frontend/public/` must be referenced from the app base URL, never relatively — a relative URL resolves against the current route and 404s on any nested route.
 - Do not introduce a different Nuxt application, router model, state library, or coexistence mechanism without a new architecture decision.
 - New migrated UI must use the established Nuxt structure and lifecycle, not Vue 2 bootstrap or host-page mounting patterns.
 - Do not create an ad hoc second Nuxt application inside `Website/` without an explicit boundary and ownership decision.
@@ -182,9 +186,11 @@ A change is complete only when:
 Legacy Website governance : Website/AGENTS.md
 Legacy frontend           : Website/
 Legacy host               : Website/Page/Default.aspx
-Target frontend           : Nuxt/ (Nuxt 4 SPA, Vite, /csm-next/**)
-Backend                   : separate repository; locate and verify before editing
+Target frontend           : frontend/ (Nuxt 4 SPA, Vite, full port, dev on :3000)
+Superseded scaffold       : Nuxt/ (first-slice only, /csm-next/**)
+Backend                   : MangoServiceNetCore (.NET 8), separate repo; dev on http://localhost:5075/service/
 Backend contracts         : docs/backend/contract-navigation-knowledge.md
+Frontend<->backend wiring : docs/integration/frontend-backend-connection.md
 UI consistency evidence   : docs/migrations/future-ui-consistency.md + docs/ui-consistency/layout-inventory.md
 Target direction          : Nuxt + Vite + .NET 8 (MangoServiceNetCore) + IIS/Docker + SQLite/MongoDB
 ```

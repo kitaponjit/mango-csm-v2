@@ -1,7 +1,7 @@
 <template>
   <div>
     <customer-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-solid" v-show="showPrint">
           <div class="box-body">
             <button class="cx-btn cx-btn--ghost" @click="excel"><i class="fas fa-file-excel"></i> ดาวน์โหลดข้อมูลเป็น Excel</button>
@@ -37,10 +37,10 @@
 
     <!-- Modal : conditions -->
     <modal ref="condModal">
-      <template slot="header">
+      <template #header>
         <h4 class="modal-title"><i class="fas fa-sliders-h"></i> เงื่อนไขการเรียกข้อมูล</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="cx-modal">
           <div class="cx-cond-head">
             <span v-text="ui.re_data_name ||'ชื่อข้อมูล'"></span>
@@ -110,7 +110,7 @@
           </button>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="cx-modal cx-modal-foot">
           <button class="cx-btn cx-btn--ghost" v-on:click="$refs.condModal.closeModal()"><i class="fas fa-times"></i> ปิดหน้าต่าง</button>
           <button class="cx-btn cx-btn--primary" v-on:click="callData()"><i class="fas fa-download"></i> <span v-text="ui.re_retri_dataa ||'เรียกข้อมูล'"></span></button>
@@ -120,7 +120,8 @@
   </div>
 </template>
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let printWindow = {};
   let vue = {
     data() {

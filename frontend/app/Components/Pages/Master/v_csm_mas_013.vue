@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="box-body">
                   <div class="row">
@@ -68,10 +68,10 @@
       </template>
     </re-page>
     <modal ref="modal">
-      <template slot="header">
+      <template #header>
         <h4><i class="fa fa-edit"> {{ msg }}</i> </h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-lg-3 col-md-6">
             <div class="form-group">
@@ -88,7 +88,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div>
           <button class="btn btn-sm bg-olive" @click.prevent="save()"><i class="fa fa-save"></i> บันทึกข้อมูล</button>
           <button class="btn btn-sm bg-danger" @click="$refs.modal.closeModal()"><i class="fas fa-times"></i> ปิด</button>
@@ -98,7 +98,8 @@
   </div>
 </template>
 <script>
-let page = {};
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } };
 let paging = {};
 let process = false;
 let cpn = {

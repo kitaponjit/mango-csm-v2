@@ -1,7 +1,7 @@
 <template>
   <div class="v-csm-remain">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content rc-wrap">
           <!-- Filter / search bar -->
           <div class="rc-bar">
@@ -380,7 +380,8 @@
 
 <script type="text/javascript">
     import { mapState, mapGetters } from '~/stores/helpers'
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       let _now = new Date();

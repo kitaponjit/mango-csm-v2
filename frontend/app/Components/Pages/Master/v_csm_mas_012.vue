@@ -1,11 +1,11 @@
 <template>
   <div class="v_csm_mas_012">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <app-form-2 ref="appForm" :exportData_header="onSetup_beforeExport('header')"
           :exportData="onSetup_beforeExport('detail')" exportName="QC" exportSelect="B"
           exportUrl="csm/master/QC_ExportExcel">
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="box box-widget">
               <div class="box-body">
                 <div class="row">
@@ -64,7 +64,7 @@
           <template #header>
             <h4><i class="fa fa-edit margin-r-5"></i>{{ isEdit ? 'แก้ไขชุดคำถาม' : 'สร้างชุดคำถามใหม่' }}</h4>
           </template>
-          <template slot="body">
+          <template #body>
             <div class="me-container">
               <!-- Form Fields -->
               <div class="me-form-grid">
@@ -117,7 +117,7 @@
               </div>
             </div>
           </template>
-          <template slot="footer">
+          <template #footer>
             <div class="me-footer">
               <button class="me-btn me-btn--save" @click="doSave(); $refs.modal.closeModal()">
                 <i class="fa fa-save"></i> บันทึกข้อมูล
@@ -128,10 +128,10 @@
 
         <!-- Modal Form Items -->
         <modal-2 ref="modal_item" class="margin-t-50">
-          <template slot="header">
+          <template #header>
             <h4><i class="fas fa-list-ul margin-r-10"></i>เลือกรายการคำถาม</h4>
           </template>
-          <template slot="body">
+          <template #body>
             <div class="mi-container">
               <!-- Search Bar -->
               <div class="mi-search-bar">
@@ -182,7 +182,7 @@
               </div>
             </div>
           </template>
-          <template slot="footer">
+          <template #footer>
             <div class="mi-footer">
               <pagination class="pull-left" ref="paging_item" @page-change="pageChange_item($event.page)"></pagination>
               <div class="mi-footer-actions">
@@ -202,7 +202,8 @@
 </template>
 <script>
 import XLSX from 'xlsx';
-let page = {};
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } };
 let appForm = {};
 let process = false;
 let paging = {};

@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="box-body">
             <div class="row">
@@ -70,10 +70,10 @@
         
         <!-- Modal Create / Edit -->
         <modal ref="addModal">
-          <template slot="header">
+          <template #header>
             <h4>{{editMode ? 'Edit' : 'Create'}}</h4>
           </template>
-          <template slot="body">
+          <template #body>
             <div class="row">
               <div class="col-lg-2 col-md-2 col-sm-2">
                 <div class="form-group">
@@ -118,7 +118,7 @@
               </div>
             </div>
           </template>
-          <template slot="footer">
+          <template #footer>
             <!-- <button type="button" class="btn btn-sm  btn-info pull-left" @click="FormModal()"><i class="fa fa-plus"></i>&nbsp;&nbsp;{{ui.new == null ? "New" : ui.new }}</button> -->
             <!-- <button type="button" class="btn btn-sm  btn-danger pull-left"  @click="deleteData()"><i class="fa fa-trash"></i>&nbsp;&nbsp;{{ui.delete == null ? "Delete" : ui.delete}}</button> -->
             <button type="button" class="btn btn-sm btn-success" @click="saveData()"><i class="fa fa-save"></i>&nbsp;&nbsp;{{ui.save == null ? "Save" : ui.save}}</button>
@@ -136,7 +136,8 @@
 <script>
   import XLSX from 'xlsx';
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let process = false;
   let cpn = {

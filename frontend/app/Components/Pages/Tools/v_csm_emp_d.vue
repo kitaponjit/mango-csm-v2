@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="ed">
           <header class="ed-hero">
             <span class="ed-hero__mesh"></span>
@@ -160,7 +160,8 @@
 </template>
 
 <script>
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
   const FAMILY = {
     W: 'wait',

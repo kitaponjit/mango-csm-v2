@@ -1,17 +1,17 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <app-form-2 ref="appForm"
           exportName=""
           exportSelect="B"
           exportUrl="csm/master/WarrantyItemExport_Master"
         >
-          <template slot="extraBtn">
+          <template #extraBtn>
             <button class="btn btn-sm bg-navy" v-if="maincomp.iccost == '3'" @click="openModalRefIC"><i class="fas fa-file"></i>Reference IC</button>
             <button class="btn btn-sm bg-olive text-white" @click="openImportAllModal()"><i class="fas fa-cloud-upload-alt"></i>Import All Warranty (Excel)</button>
           </template>
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="box box-widget">
               <div class="box-body">
                 <div class="row d-flex">
@@ -71,10 +71,10 @@
       </template>
     </re-page>
     <modal-2 ref="modal">
-      <template slot="header">
+      <template #header>
         <h4><i class="fa fa-edit margin-r-5"></i>{{ !editMode ? 'เพิ่มรายการประกัน' : 'แก้ไขรายการประกัน' }}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="wm-container">
           <!-- Section 1: ข้อมูลหลัก -->
           <div class="wm-section">
@@ -190,7 +190,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="wm-footer">
           <button class="wm-btn-save" @click.prevent="save()"><i class="fa fa-save"></i> บันทึกข้อมูล</button>
         </div>
@@ -521,7 +521,8 @@
 import XLSX from 'xlsx';
 import { mapState, mapGetters } from '~/stores/helpers'
 
-let page = {};
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } };
 let paging = {};
 let pagingRefIC = {};
 let appForm = {};

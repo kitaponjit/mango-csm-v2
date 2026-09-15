@@ -4,7 +4,7 @@
       <a href="#" v-on:click.prevent="" class="logo hidden-xs">
         <!-- mini logo for sidebar mini 50x50 pixels -->
         <span class="logo-mini font-extra">
-          <img :src="`${baseUrl}Content/Images/PNG/LogoSmall.png`" width="50" height="50"
+          <img :src="`${baseUrl}vendor/Content/Images/PNG/LogoSmall.png`" width="50" height="50"
                style="padding-right:10px;" />
         </span>
         <!-- logo for regular state and mobile devices -->
@@ -192,7 +192,7 @@
             </li>
             <li>
               <a href="#" data-toggle="control-sidebar">
-                <img :src="`${baseUrl}Content/Images/Icon SVG/man.svg`" width="20" style="margin-bottom:3px" /> <span class="hidden-md hidden-sm hidden-xs">{{ (auth.userid || '').toUpperCase() }}</span>
+                <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/man.svg`" width="20" style="margin-bottom:3px" /> <span class="hidden-md hidden-sm hidden-xs">{{ (auth.userid || '').toUpperCase() }}</span>
               </a>
             </li>
           </ul>
@@ -203,7 +203,7 @@
       <section class="sidebar">
         <div class="user-panel">
           <div class="pull-left image">
-            <img :src="`${baseUrl}Content/Images/Icon PNG/man.png`" width="160" class="img-circle" />
+            <img :src="`${baseUrl}vendor/Content/Images/Icon PNG/man.png`" width="160" class="img-circle" />
           </div>
           <div class="pull-left info">
             <p>{{ auth.empname }}</p>
@@ -251,7 +251,7 @@
           <!-- User card -->
           <div class="cs-user-card">
             <div class="cs-avatar">
-              <img :src="`${baseUrl}Content/Images/Icon PNG/man.png`" />
+              <img :src="`${baseUrl}vendor/Content/Images/Icon PNG/man.png`" />
             </div>
             <div class="cs-user-info">
               <div class="cs-user-name">{{ auth.empname }}</div>
@@ -391,10 +391,10 @@
 
     <!-- Modal : Pop-up Call Center -->
     <modal ref="phoneModal">
-      <template slot="header">
+      <template #header>
         <h3 class="text-center"><i class="fa fa-bell shake text-danger"></i> {{ ui.csm_layout_incoming_call }}</h3>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="text-center">
@@ -409,7 +409,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="pull-left">
           <button class="btn btn-sm bg-olive" v-if="xt.isEmpty(viewData.customer) && !is_mango()"
                   @click="newCusByRing()">
@@ -422,10 +422,10 @@
     </modal>
     <!-- Modal Customer -->
     <modal ref="addCustomerModal">
-      <template slot="header">
+      <template #header>
         <h4><i class="fa fa-edit"></i> {{ ui.erp_new_cust }}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <!-- Callout -->
         <div class="row">
           <div class="col-lg-12 col-md-12 col-sm-12">
@@ -484,7 +484,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <button class="btn btn-sm btn-success" @click="createCustomer()"><i class="fa fa-save"></i> {{ ui.csm_v2_save }}</button>
       </template>
     </modal>
@@ -622,11 +622,24 @@ const activityHandler = () => {
   document.addEventListener('keydown', activityHandler);
 
 
-      this.initSignalR()
-      this.loadCompanyByUserID()
+      // Wire the template refs the rest of the app depends on *before* any
+      // optional subsystem, so a failure there cannot leave them unassigned.
       this.loadingBox = this.$refs.myLB
       this.$refs.phoneModal.setSize('modal-lg')
       this.$refs.addCustomerModal.setSize('modal-lg')
+
+      /* Realtime is optional: a hub that is unreachable (backend down, network
+         blocked) must not abort mounted() and leave `loadingBox` unassigned,
+         which used to surface as "Cannot read properties of undefined
+         (reading 'show')". The layer itself now speaks ASP.NET Core SignalR
+         via plugins/signalr.client.js. */
+      try {
+        this.initSignalR()
+      } catch (err) {
+        console.warn('[SignalR] realtime unavailable — continuing without it.', err)
+      }
+
+      this.loadCompanyByUserID()
 
       // คืนค่า viewStatus จาก localStorage
       this.viewStatus = localStorage.getItem('viewStatus') || ''

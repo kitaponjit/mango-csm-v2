@@ -419,7 +419,7 @@
     <description-modal ref="descriptionModal" @send-data="sendComponent($event, currentForm )"></description-modal>
     <div class="dd-actionbar" style="flex-shrink: 0; background: #fff; box-shadow: 0 -2px 6px rgba(0,0,0,0.08); padding-top: 3px;">
       <app-form ref="appForm">
-        <template slot="extraBtn">
+        <template #extraBtn>
           <button class="btn btn-sm btn-warning" v-if="(isEdit && formData.request_empno == auth.empno && !['I','H','N','Y'].includes(formData.job_status) && tabActive===0)|| isAdmin" @click="confirmNewApprove()"><i class="fas fa-refresh"></i> {{ ui.csm_trn_resend_approve }}</button>
           <button class="btn btn-sm btn-danger" v-if="isEdit && formData.request_empno == auth.empno && !['I','Y','N','H','D'].includes(formData['job_status']) && tabActive===0" data-toggle="modal" data-target="#cancelModal"><i class="fas fa-times-circle"></i> {{ ui.erp_cancel_document }}</button>
           <!-- <button class="btn btn-sm bg-orange" v-if="formData['request_empno'] == auth.empno && !['W','I','Y','N'].includes(formData['job_status']) && tabActive===0" @click="saveTemplate()"><i class="fas fa-save"></i> บันทึกฉบับร่าง</button> -->
@@ -438,7 +438,9 @@
 
   import { mapState, mapGetters } from '~/stores/helpers'
 
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+  let page = { loadingBox: { show() {}, hide() {} } }
   let appForm = {}
 
   export default {
@@ -595,7 +597,7 @@
         qc_form_code: '',
         answerData: [],
         questionData: [],
-        showPDf: baseUrl + "Content/Images/PDF/MangoFORMCopyDB.pdf"
+        showPDf: baseUrl + "vendor/Content/Images/PDF/MangoFORMCopyDB.pdf"
       }
     },
     methods: {

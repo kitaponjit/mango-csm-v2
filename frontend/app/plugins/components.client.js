@@ -1,4 +1,12 @@
 import actionLink from '~/Components/Center/action-link.vue'
+// Local replacements for the Vue-2-only packages that had no Vue 3 build.
+// See each file's header for what it reproduces and why.
+import vueSelect2 from '~/Components/Center/vue-select-2.vue'
+import vueElementLoading from '~/Components/Center/vue-element-loading.vue'
+import pCheck from '~/Components/Center/p-check.vue'
+import vuePdfApp from '~/Components/Center/vue-pdf-app.vue'
+import vueEventCalendar from '~/Components/Center/vue-event-calendar.vue'
+import docPreview from '~/Components/Center/doc-preview.vue'
 import datepicker from '~/Components/Center/datepicker.vue'
 import timepicker from '~/Components/Center/timepicker.vue'
 import inumber from '~/Components/Center/number.vue'
@@ -108,4 +116,12 @@ export default defineNuxtPlugin((nuxtApp) => {
   app.component('vue-addspec-rpt', ModalAddspecrpt)
   app.component('vue-job', ModalJobs)
   app.component('vue-company-list', Company)
+
+  // Replacements for the previously unregistered Vue-2-only components.
+  app.component('vue-select-2', vueSelect2)
+  app.component('vue-element-loading', vueElementLoading)
+  app.component('p-check', pCheck)
+  app.component('vue-pdf-app', vuePdfApp)
+  app.component('vue-event-calendar', vueEventCalendar)
+  app.component('VueDocPreview', docPreview)
 })

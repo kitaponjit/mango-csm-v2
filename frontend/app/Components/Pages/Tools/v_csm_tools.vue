@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="ed">
           <div class="ed-bar">
             <div class="ed-bar__row">
@@ -63,7 +63,7 @@
 
     <!-- Modal : Tools -->
     <modal ref="toolModal">
-      <template slot="header">
+      <template #header>
         <div class="ed-mh">
           <span class="ed-mh__icon"><i class="fas fa-file-alt"></i></span>
           <div class="ed-mh__id">
@@ -72,7 +72,7 @@
           </div>
         </div>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="modal-section-title"><i class="fas fa-file-alt"></i> Document : Header</div>
         <div class="row">
           <div class="col-md-2 col-sm-6 col-xs-6">
@@ -326,7 +326,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="ed-mf">
           <button class="ed-abtn ed-abtn--warn" @click="confirmResetApprove(formData['job_no'], 'reset')">
             <i class="fa fa-undo"></i> ล้างสถานะอนุมัติ
@@ -357,7 +357,8 @@
 </template>
 
 <script>
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
   let cpn = {
     data() {

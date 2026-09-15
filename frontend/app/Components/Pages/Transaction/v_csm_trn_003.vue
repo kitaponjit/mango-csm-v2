@@ -265,10 +265,10 @@
 
         <!-- MODAL -->
         <modal ref="modal" class="modal-xl">
-          <template slot="header">
+          <template #header>
             <h4>ADD</h4>
           </template>
-          <template slot="body">
+          <template #body>
             <div class="row">
               <div class="col-md-12">
                 <div class="padding-detail">
@@ -278,7 +278,7 @@
               </div>
             </div>
           </template>
-          <template slot="footer">
+          <template #footer>
             <div>
               <button type="button" class="btn btn-sm btn-success" @click="setAttachFile()">บันทึกข้อมูล</button>
               <button class="btn btn-sm bg-danger" @click="$refs.modal.closeModal()">
@@ -294,7 +294,8 @@
 </template>
 
 <script>
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   import { mapState, mapGetters } from '~/stores/helpers'
 
   import PhotoSwipe from 'photoswipe';

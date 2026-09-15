@@ -1,7 +1,7 @@
 <template>
   <div>
     <report ref="rpt">
-      <template slot="display">
+      <template #display>
         <div>
           <table-stick height="500px"> 
             <table class="table table-bordered table-hover">

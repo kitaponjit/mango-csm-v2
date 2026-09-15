@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="nav-tabs-custom">
           <ul class="nav nav-tabs">
             <li :class="{active: x.id===tabActive}" v-for="x in tabField" v-if="x.show">
@@ -131,7 +131,8 @@
 </template>
 
 <script type="text/javascript">
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let retrieve_paging = {}
   let paging = {}
   let process = false

@@ -19,10 +19,10 @@
 
     <!-- Modal Custom -->
     <modal ref="listModal">
-       <template slot="header">
+       <template #header>
          <h4>รายการเอกสารคงค้างทั้งหมด</h4>
        </template>
-       <template slot="body">
+       <template #body>
         <div class="col-md-12">
           <ag-table ref="agr_detail" :footer="false" @ready="initTableDetail()"></ag-table>
         </div>

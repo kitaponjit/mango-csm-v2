@@ -1,41 +1,70 @@
 <template>
-  <date-picker :type="setProps('type')"
-               :format="setProps('format')"
-               :value="setProps('value')"
-               :input-class="inputClass"
-               @input="evtInput"
-               @change="evtChange"
+  <date-picker :model-value="innerValue"
+               :format="displayFormat"
+               :input-class-name="inputClass"
                :clearable="clearableDate()"
                :disabled="disabledDate()"
-               :default-value="new Date()"
-               :disabled-date="disabledBefore"
-               placeholder="__/__/____"
+               :disabled-dates="disabledBefore"
+               :enable-time-picker="isDateTime"
+               :year-picker="isYear"
+               :month-picker="isMonth"
+               :placeholder="placeholder || '__/__/____'"
+               :teleport="true"
+               :auto-apply="!isDateTime"
+               :action-row="{ showNow: true, showSelect: isDateTime, showCancel: isDateTime }"
+               :now-button-label="`Today (${cvDate()})`"
+               text-input
+               @update:model-value="evtInput"
                style="width:100%">
-
-    <template v-slot:footer="{ emit }">
-      <div class="text-center font-default">
-        <button class="mx-btn mx-btn-text" @click="emit(new Date)">Today ({{cvDate()}})</button>
-      </div>
-    </template>
-
   </date-picker>
 </template>
 
 <script type="text/javascript">
-  import DatePicker from 'vue2-datepicker'
-  import 'vue2-datepicker/index.css'
+  import DatePicker from '@vuepic/vue-datepicker'
+  import '@vuepic/vue-datepicker/dist/main.css'
   export default {
-    props: ['inputClass', 'value', 'type', 'format', 'disabled', 'dateBefore', 'dateAfter', 'clearable'],
+    props: ['inputClass', 'value', 'modelValue', 'type', 'format', 'disabled', 'dateBefore', 'dateAfter', 'clearable', 'placeholder'],
+    emits: ['input', 'change', 'update:modelValue'],
     components: {
       'date-picker': DatePicker
     },
-    data: function () {
-      return {
-        date: this.value,
-        lang: {
-          placeholder: {
-            date: "__/__/____"
-          }
+    computed: {
+      // `v-model` in Vue 3 binds `modelValue`; the legacy call sites that pass
+      // `:value` keep working because we fall back to it.
+      boundValue() {
+        return this.modelValue !== undefined ? this.modelValue : this.value
+      },
+      isDateTime() {
+        return this.type === 'datetime'
+      },
+      isYear() {
+        return this.type === 'year'
+      },
+      isMonth() {
+        return this.type === 'month'
+      },
+      // @vuepic wants a Date (or a plain year number in year-picker mode); the
+      // legacy contract passed strings in `moment.defaultFormat`.
+      innerValue() {
+        let v = this.boundValue
+        if ($xt.isEmpty(v)) return null
+        if (this.isYear) {
+          let y = moment.isDate(v) ? moment(v) : moment(v, moment.defaultFormat)
+          return y.isValid() ? y.year() : Number(v) || null
+        }
+        if (moment.isDate(v)) return v
+        let m = moment(v, moment.defaultFormat)
+        return m.isValid() ? m.toDate() : null
+      },
+      // vue2-datepicker took moment tokens; @vuepic takes date-fns tokens or a
+      // function. Formatting through moment keeps the legacy output identical.
+      displayFormat() {
+        let fmt = this.format || 'DD/MM/YYYY'
+        return (date) => {
+          if ($xt.isEmpty(date)) return ''
+          let d = Array.isArray(date) ? date[0] : date
+          if (typeof d === 'number') return String(d)
+          return moment(d).format(fmt)
         }
       }
     },
@@ -43,20 +72,29 @@
       cvDate() {
         return moment().format('DD/MM/YYYY')
       },
+      // @vuepic emits one `update:model-value`; the legacy wrapper emitted both
+      // `input` and `change`, and 9 + 14 call sites still listen for them.
       evtInput(date) {
-        this.$emit('input', date)
-      },
-      evtChange(date) {
-        this.$emit('change', date)
+        let out = date
+        if (this.isYear && typeof date === 'number') {
+          out = moment({ year: date, month: 0, day: 1 }).toDate()
+        } else if (this.isMonth && date && typeof date === 'object' && !moment.isDate(date)) {
+          out = moment({ year: date.year, month: date.month, day: 1 }).toDate()
+        }
+        this.$emit('update:modelValue', out)
+        this.$emit('input', out)
+        this.$emit('change', out)
       },
       disabledDate() {
         return this.disabled ? true : false
       },
+      // NOTE: preserved verbatim from the Vue 2 wrapper, including its existing
+      // `dateBefore`-instead-of-`dateAfter` checks — see MIGRATION.md.
       disabledBefore(date) {
         let today = new Date()
         today.setHours(0, 0, 0, 0)
         if ($xt.isEmpty(this.dateBefore) && $xt.isEmpty(this.dateAfter)) {
-          return null
+          return false
         }
         if (!$xt.isEmpty(this.dateBefore) && $xt.isEmpty(this.dateBefore)) {
           return date < moment(new Date).add(-(this.dateBefore + 1), 'days')
@@ -67,66 +105,61 @@
         if (!$xt.isEmpty(this.dateBefore) && !$xt.isEmpty(this.dateBefore)) {
           return date < moment(new Date).add(-(this.dateBefore + 1), 'days') || date > moment(new Date).add(this.dateAfter, 'days')
         }
-      },
-      setProps(key) {
-        switch (key) {
-          case 'type':
-            return this.type || 'date'
-            break
-          case 'format':
-            return this.format || 'DD/MM/YYYY'
-            break
-          case 'value':
-            return moment(this.value, moment.defaultFormat).toDate()
-            break
-        }
+        return false
       },
       clearableDate() {
          return this.clearable === undefined ? true : this.clearable;
       },
-    },
-    watch: {
-      value(newValue, oldValue) {
-        this.date = moment(newValue, moment.defaultFormat).toDate()
-      }
     }
   }
 </script>
 
 <style>
-/* ── vue2-datepicker modern override ── */
+/* ── @vuepic/vue-datepicker override — reproduces the previous .mx-* design ── */
+.dp__theme_light {
+  --dp-background-color: #ffffff;
+  --dp-text-color: #1e293b;
+  --dp-primary-color: #3b82f6;
+  --dp-primary-text-color: #ffffff;
+  --dp-border-color: #e5e7eb;
+  --dp-border-color-hover: #3b82f6;
+  --dp-hover-color: #eff6ff;
+  --dp-hover-text-color: #1d4ed8;
+  --dp-secondary-color: #cbd5e1;
+  --dp-icon-color: #94a3b8;
+  --dp-danger-color: #ef4444;
+  --dp-border-radius: 8px;
+  --dp-font-size: 13.5px;
+  --dp-input-padding: 3px 10px;
+  --dp-menu-min-width: 260px;
+}
 
 /* Input */
-.mx-input {
+.dp__input {
   border: 1.5px solid #e5e7eb !important;
   border-radius: 8px !important;
   height: 30px !important;
+  min-height: 30px !important;
   font-size: 13.5px !important;
   color: #1e293b !important;
   box-shadow: none !important;
   transition: border-color 0.15s, box-shadow 0.15s !important;
   padding-left: 10px !important;
 }
-.mx-input:focus {
+.dp__input:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13) !important;
   outline: none !important;
 }
-.mx-input:disabled,
-.mx-input[readonly] {
+.dp__input_readonly,
+.dp__disabled {
   background-color: #eeeeee !important;
   color: #555 !important;
   cursor: not-allowed !important;
 }
 
-/* Calendar icon */
-.mx-icon-calendar,
-.mx-icon-clear {
-  color: #94a3b8 !important;
-}
-
 /* Popup panel */
-.mx-datepicker-popup {
+.dp__menu {
   border: none !important;
   border-radius: 14px !important;
   box-shadow: 0 8px 32px rgba(2, 35, 78, 0.14), 0 2px 8px rgba(0,0,0,0.08) !important;
@@ -135,87 +168,79 @@
 }
 
 /* Header (month/year nav) */
-.mx-calendar-header {
+.dp__month_year_row {
   background: #ffffff !important;
-  padding: 10px 12px 14px !important;
+  padding: 4px 6px !important;
 }
-.mx-calendar-header button,
-.mx-btn-text {
+.dp__month_year_select {
   color: #1e293b !important;
   font-weight: 600 !important;
   font-size: 13px !important;
   transition: color 0.15s !important;
 }
-.mx-calendar-header button:hover {
+.dp__month_year_select:hover {
   color: #3b82f6 !important;
   background: #eff6ff !important;
   border-radius: 6px !important;
 }
-.mx-icon-left::before,
-.mx-icon-right::before,
-.mx-icon-double-left::before,
-.mx-icon-double-right::before {
-  border-color: #64748b !important;
-}
 
 /* Day-of-week header row */
-.mx-calendar-content .mx-table-date th {
+.dp__calendar_header_item {
   color: #64748b !important;
   font-size: 11px !important;
   font-weight: 700 !important;
   letter-spacing: 0.5px !important;
-  padding: 6px 0 !important;
   text-transform: uppercase !important;
 }
 
 /* Date cells */
-.mx-calendar-content .cell {
+.dp__cell_inner {
   border-radius: 8px !important;
   font-size: 13px !important;
   color: #1e293b !important;
   transition: background 0.12s, color 0.12s !important;
-  height: 32px !important;
-  line-height: 32px !important;
 }
-.mx-calendar-content .cell:hover {
+.dp__cell_inner:hover {
   background: #eff6ff !important;
   color: #1d4ed8 !important;
 }
-.mx-calendar-content .cell.active {
+.dp__active_date {
   background: #3b82f6 !important;
   color: #fff !important;
   font-weight: 700 !important;
   border-radius: 8px !important;
 }
-.mx-calendar-content .cell.today {
+.dp__today {
+  border: 1px solid #ef4444 !important;
   color: #ef4444 !important;
   font-weight: 700 !important;
 }
-.mx-calendar-content .cell.today.active {
+.dp__active_date.dp__today {
   color: #fff !important;
 }
-.mx-calendar-content .cell.disabled {
+.dp__cell_disabled {
   color: #cbd5e1 !important;
   background: transparent !important;
   cursor: not-allowed !important;
 }
-.mx-calendar-content .cell.not-current-month {
+.dp__cell_offset {
   color: #c0c9d6 !important;
 }
 
-/* Footer (Today button) */
-.mx-datepicker-footer {
+/* Footer (action row / Today button) */
+.dp__action_row {
   background: #f8fafc !important;
   border-top: 1px solid #f0f2f7 !important;
   padding: 8px 12px !important;
 }
-.mx-datepicker-footer .mx-btn-text {
+.dp__action_button {
   color: #3b82f6 !important;
   font-weight: 600 !important;
   font-size: 12.5px !important;
   background: transparent !important;
+  border: none !important;
 }
-.mx-datepicker-footer .mx-btn-text:hover {
+.dp__action_button:hover {
   color: #1d4ed8 !important;
   background: #eff6ff !important;
   border-radius: 6px !important;

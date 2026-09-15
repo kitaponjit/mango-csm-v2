@@ -1,7 +1,7 @@
 <template>
     <div class="cx-page">
         <customer-page ref="page">
-            <template slot="body">
+            <template #body>
                 <!-- Header -->
                 <div class="cx-toolbar">
                     <div class="cx-toolbar__title">
@@ -65,10 +65,10 @@
 
         <!-- Modal : comment -->
         <modal ref="cmtModal">
-            <template slot="header">
+            <template #header>
                 <h4 class="modal-title"><i class="far fa-comments"></i> ความคิดเห็นต่อเมนู</h4>
             </template>
-            <template slot="body">
+            <template #body>
                 <div class="cx-modal">
                     <div class="cx-cmt-head">
                         <span class="cx-cmt-head__code">{{cmtRow.menu_id}}</span>
@@ -111,7 +111,7 @@
                     </div>
                 </div>
             </template>
-            <template slot="footer">
+            <template #footer>
                 <div class="cx-modal cx-modal-foot">
                     <button class="cx-btn cx-btn--ghost" @click.prevent="$refs.cmtModal.closeModal()"><i class="fas fa-times"></i> ปิดหน้าต่าง</button>
                 </div>
@@ -121,7 +121,8 @@
 </template>
 <script type="text/javascript">
 
-    let page = {};
+    // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+    let page = { loadingBox: { show() {}, hide() {} } };
     let paging = {};
     let cpn = {
         data() {

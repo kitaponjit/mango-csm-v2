@@ -77,30 +77,237 @@ Straightforward bumps: `vuedraggable` 2→4, `v-tooltip`→`floating-vue`, `spli
 
 Droppable: `vue-property-decorator` (0 uses), `vue-currency-filter` (removed with the filters).
 
-## Not yet done
+## Status as of 2026-09-15
 
-- **Never installed or built.** `npm install` + `npm run generate` have not been run against
-  `frontend/`, so nothing here is compile-verified.
-- **5 global components** still point at Vue-2-only npm packages: `<vue-select-2>`,
-  `<vue-element-loading>`, `<vue-picture-swipe>`, `<VueDocPreview>`, `<vue-pdf-app>`.
-- **`datepicker.vue` / `timepicker.vue`** keep the old `value`/`input` contract — they wrap
-  `vue2-datepicker`, so renaming the prop now would be redone when that library is swapped.
-- **11 `Vue.use()` plugin registrations** from `main.js` are not ported (mostly blocked libraries).
-- Template-level Vue 3 changes not yet audited: `v-if`/`v-for` precedence, `key` on `<template v-for>`,
+`frontend/` is the target frontend (see root `AGENTS.md`). It **installs, builds clean
+(`npm run build` → exit 0) and runs against the .NET 8 backend**, superseding the
+"never installed or built" note this file previously carried.
+
+### Done since
+
+- Dead Vue-2-only packages resolved — the build no longer has an unresolvable import:
+  - `vue2-datepicker` → `@vuepic/vue-datepicker` in `datepicker.vue`, `timepicker.vue`
+    and `v_csm_most_defect.vue`. The wrappers keep their external contract, so all
+    116 `<datepicker>` / 16 `<timepicker>` call sites are unchanged.
+  - `vue2-dropzone` → local `Components/Center/file-dropzone.vue`. It was only ever a
+    file picker — its `options.url` pointed at `httpbin.org` and the real upload goes
+    through `$xt.postServerForm` — so no dependency was needed to replace it.
+  - `vue-doc-preview` → local `Components/Center/doc-preview.vue` (Office Online iframe).
+  - `@mdi/font` installed; it is a dependency of the legacy `Website` that the port missed,
+    and 5 `mdi-check` icons render from it.
+- **v-model contract fixed on `datepicker` / `timepicker`.** They still declared the Vue 2
+  `value`/`input` contract while 53 call sites use `v-model`, which silently binds
+  `modelValue` in Vue 3. They now accept both and emit `update:modelValue` alongside the
+  legacy `input` / `change`.
+- **Vendor asset URLs fixed.** `nuxt.config.ts` referenced `vendor/...` and `config.js`
+  relatively, so they resolved against the current route and 404'd on every nested route —
+  the app only ever worked at `/`. They now resolve from the app base URL.
+- **Backend wired.** `public/config.js` points `window.dataServer` at
+  `http://localhost:5075/service/` (MangoServiceNetCore, .NET 8). Auth travels as the
+  `X-Mango-Auth` header from localStorage, so plain CORS is enough; the backend already
+  allowlists `http://localhost:3000`, and `npm run dev` is pinned to that port to match.
+- **Global auth middleware enabled.** `middleware/auth.global.js` was parked as
+  `.stage2` and was the only code that hides `#firstLoading` — so the boot overlay never
+  cleared and no route guard ran. Its `lang_bundle.json` path was also missing the
+  `vendor/` prefix. Verified: language + UI dictionary (10,880 keys) load from the backend,
+  and a protected route redirects to login when unauthenticated.
+
+- **Expired sessions no longer 500.** An expired `mango_auth` makes the backend answer
+  401 "Session expired or invalid" on *every* call, including the otherwise-public
+  `LanguageSelector`. The guard had no error handling, and an uncaught throw in Nuxt
+  middleware renders the 500 error page (Vue Router 3 merely aborted the navigation, which
+  is why the legacy app never showed this). The guard now treats 401 as "not authenticated":
+  it clears the dead credentials and redirects to login. Clearing localStorage alone is not
+  enough — `xtools.js` copies the token into the axios defaults once at script load, so the
+  dead token is also cleared there, otherwise it keeps being sent for the rest of the session.
+
+- **Root path had no route.** The legacy SPA was only ever served under `/page/**`
+  (`Website/Page/Web.config` rewrote everything there to Default.aspx), so the site root
+  never needed one. Nuxt serves this app from the root, so `/` fell through to the wildcard
+  "content not found" route. `routes/index.js` now redirects `/` to `/page/`.
+- **Vuex→Pinia compat only shimmed the wrong name.** Components read the bare global
+  `store.state.X` (56 sites) and call `store.dispatch(...)` (2 sites) — there are zero
+  `this.$store` uses. The plugin shimmed `$store` but assigned the *raw Pinia instance* to
+  `window.store`, and Pinia has no `.state` (it exposes state directly, plus `$state`).
+  So every `store.state.X` read as undefined. Both names now get the same Vuex-shaped facade.
+- **Vendor globals were never promoted onto `window`.** The vendor scripts declare
+  `$xt`, `$msg`, `Pagination`, `signalR`, `statusCode`, `platformCodeData`,
+  `moduleCodeData`, `statusCodeData` with `const`/`let`, which land in the global *lexical*
+  environment — reachable bare, but never as `window.X`. Default.aspx promoted them
+  explicitly after loading the scripts (lines 188-201); the port copied the placeholder
+  assignments in config.js but not the promotion, so `window.$xt` and friends were
+  undefined and `window.signalR` stayed the `{}` placeholder instead of the MangoSignalR
+  function. `public/globals-bridge.js` now replicates that step.
+- **An optional subsystem could abort the layout.** `re-layout.vue`'s `mounted()` called
+  `initSignalR()` *before* wiring its template refs. Since realtime cannot work here, that
+  throw aborted `mounted()` and left `this.loadingBox` unassigned, surfacing later as
+  "Cannot read properties of undefined (reading 'show')". The ref wiring now runs first and
+  the realtime init is contained.
+- **`page` placeholder made safe (84 files).** Components keep a module-scoped
+  `let page = {}` assigned from `this.$refs.page` in `mounted()`, then call
+  `page.loadingBox.show()/hide()` (453 sites across 67 files). Child callbacks —
+  FullCalendar's `datesSet`, for one — fire before the parent's `mounted()`, so `page` was
+  still the bare placeholder and threw. The placeholder now carries a no-op `loadingBox`.
+
+### Route walk (2026-09-15)
+
+All 98 staff routes driven through the SPA router with an error collector attached.
+Six customer-session routes (`meta.customer*`) were excluded — they correctly bounce to the
+customer login, which a staff session cannot satisfy. Two systemic faults were found:
+
+- **177 uses of the removed Vue 2 `<template slot="x">` syntax, in 84 files.** `re-layout.vue`
+  declares `<slot name="body">`, and Vue 3 does not route `slot="body"` to it — so the body
+  slot received nothing and **those screens rendered completely blank** (verified: `.content-body`
+  text length 0, no tables, no pagination). They looked healthy: the route resolved, the title
+  was set and no error was thrown, which is why this survived until an explicit empty-body check.
+  The port had converted some files by hand (`home2.vue` uses `#body`) but left the rest.
+  Converted all 184 occurrences to `#name`.
+  Knock-on: 88 `setCurrentPage` errors across 76 routes disappeared — they were `$refs` into
+  the slot content that never rendered, not a pagination bug.
+- **ag-Grid v33 modules were never registered.** v33 is modular and renders nothing until
+  `ModuleRegistry.registerModules([AllCommunityModule])` runs; the legacy app was on v27, which
+  had no such step. Without it the grid throws "No AG Grid modules are registered!" and leaves
+  `gridOptions.api` undefined, which surfaced as `setRowData` of undefined. Added
+  `plugins/ag-grid.client.js`. Registering the modules also restored `gridOptions.api`, so the
+  58 `setRowData` call sites needed no change after all.
+- **One invalid slot nesting.** `v_service_detail_poch.vue` wrapped its slot in a bare
+  `<template>`; Vue 3 requires a slot template to be a direct child of the component, and the
+  file failed to compile ("Codegen node is missing for element/if/for node"), taking the main
+  transaction screen `v_csm_trn_001` down with it. Wrapper removed; that screen now renders
+  (58 grids).
+
+Final state of the walk: **0 blank, 0 server errors, 0 not-found**; 94 render, 1 is the
+access-denied page itself, 1 is the `/` → `/page/` redirect.
+
+Still open from the walk: `p-check` (pretty-checkbox), `vue-event-calendar`, `vue-select-2`,
+`vue-element-loading`, `vue-picture-swipe`, `VueDocPreview` and `vue-pdf-app` remain
+unregistered components, so the handful of screens using them render those widgets as nothing.
+`v_csm_trn_001_old.vue` also still carries the one `slot-scope` usage, which is moot until
+`vue-event-calendar` has a replacement.
+
+### Unregistered components resolved (2026-09-15)
+
+The Vue-2-only packages with no Vue 3 build are replaced by local components in
+`Components/Center/`, registered in `plugins/components.client.js`. Every call site keeps its
+original props, events and slots, so no screen markup changed except the leftover Vue 2 slot
+attributes noted below.
+
+| Tag | Uses | Replacement |
+| --- | --- | --- |
+| `vue-select-2` | 40 tags, 11 files | Wrapper over the **jQuery Select2 plugin already loaded as a vendor script** — that is all `v-select2-component` ever did, so the widget and its bootstrap theme are unchanged. Keeps `options` / `settings` / `v-model` / `change` / `disabled`. |
+| `vue-element-loading` | 7 tags, 5 files | Hand-rolled overlay spinner (`active` / `spinner` / `color` / `text`). No dependency needed. |
+| `p-check` | 5 tags, 3 files | Reproduces pretty-checkbox's `.pretty > input + .state` markup, honouring `true-value` / `false-value`. |
+| `vue-pdf-app` | 2 tags, 2 files | Embeds the PDF directly; every modern browser ships a viewer with the same essentials, so no PDF.js dependency was added. `config` is accepted and ignored. |
+| `vue-event-calendar` | 1 tag, 1 file | Rebuilt on FullCalendar (already a dependency), preserving the default scoped slot that exposes `showEvents`. |
+| `VueDocPreview` | 2 tags | Now also registered globally; the two file-attach screens already imported it locally. |
+
+`vue-picture-swipe` was listed as outstanding but has **zero** call sites — nothing to replace.
+
+Also converted the last Vue 2 slot syntax these components carried: 5 `<i slot="extra">` became
+`<template #extra>`, the 2 empty `<label slot="off-label">` were dropped, and the one
+`slot-scope="props"` became `#default="props"`. **No `slot=` or `slot-scope=` remains in the tree.**
+
+Verified by mounting all six on a temporary unauthenticated route: Select2 initialises and
+round-trips `v-model` both ways, `p-check` flips `N`→`Y` on click, the calendar's scoped slot
+receives the right day's events, and the spinner/PDF/doc-preview render. The probe route was
+removed afterwards.
+
+**Known gap:** only a subset of pretty-checkbox's CSS ships in `Content/Site.css`, so `p-check`
+renders as a standard browser checkbox rather than the decorated control. It is functionally
+correct and correctly bound; restoring the full look needs the upstream stylesheet.
+
+### SignalR realtime ported to ASP.NET Core SignalR (2026-09-15)
+
+The bundled `jquery.signalR-2.3.0.js` client could never work against this backend: it needs
+the generated `/SignalR/Hubs` proxy that only ASP.NET SignalR 2.x served, and it speaks an
+incompatible wire protocol. MangoServiceNetCore maps a single Core hub at
+`<dataServer>signalr` (`app.MapHub<SocketHub>`).
+
+`plugins/signalr.client.js` replaces the whole vendor stack with the `@microsoft/signalr`
+client. **The public contract is unchanged, so no call site was edited** - `window.signalR`,
+`reHub.server.<camelCaseMethod>()` and `hubProxy` all behave as before. Server methods are
+reached through a `Proxy` that upper-cases the first letter, so every hub method works without
+enumerating them.
+
+Removed from the vendor script list (all dead against a Core hub): `jquery.signalR-2.3.0.js`,
+`signalr-patch.js`, `iwc-all.js`, `iwc-signalr.js`, `MangoSignalR.js`, plus `public/signalr-hubs.js`
+which only existed to fetch the 2.x proxy. Nothing outside that stack referenced `SJ.*`.
+`globals-bridge.js` no longer promotes `window.signalR`, and the `{}` placeholder is gone from
+`config.js` - the plugin owns the name now.
+
+Verified against the running backend: the hub negotiates with correct CORS
+(WebSockets/SSE/LongPolling offered); the C# hub's `welcomeMessage` push arrives on connect;
+`sendNewComment` / `sendNewComment001` round-trip back as `ReceiveNewComment` /
+`ReceiveNewComment001` with the exact payload; handlers registered by separate
+`window.signalR()` calls accumulate instead of clobbering each other; and a server call made
+while disconnected is queued, redials, and flushes on reconnect. **A cold page load now has a
+completely clean console** - the `signalr-patch` throw and the `/SignalR/Hubs` 404 are both gone.
+
+Two deliberate differences from the 2.x stack:
+
+- The old IWC layer shared **one** connection across browser tabs and elected an owner. Core
+  SignalR connections are cheap, so each tab holds its own and `isConnectionOwner()` is true
+  everywhere; the only consequence is that the 60-second `userOnlineCheck` runs per tab.
+- `userid` is now sent on the connection query string when the session provides it. The hub
+  reads it for presence (`UserOnline`/`UserOffline`), but the 2.x frontend never sent it, so
+  that tracking had never actually worked.
+
+Still unverified: the realtime **features** themselves (live comments, case-status pushes) need
+a logged-in session on the screens that use them - group-scoped broadcasts such as
+`SendNewCase` go to the `CSM_PC` group, which nothing currently joins. `JoinGroup` exists on
+the hub but has no caller in the frontend.
+
+### Broken images and AdminLTE layout (2026-09-15)
+
+Two more consequences of the `public/vendor/` layout that `sync-vendor.mjs` introduced.
+
+**Images silently resolved to HTML.** Components build asset URLs the way the legacy IIS app
+did - `${baseUrl}Content/Images/...`, where `Content/` sat directly under the app root. The port
+copies those trees to `public/vendor/`, so every such URL missed. Worse, it did not 404: Nuxt's
+SPA fallback answers unknown paths with **`index.html`, status 200, `text/html`**, so `<img>`
+received a page instead of an image and rendered the broken-image glyph - which is exactly what
+the sidebar icons and avatar were showing. **80 references across 12 files** now point at
+`${baseUrl}vendor/Content/...`, matching what `nuxt.config.ts` already does for scripts and
+styles. Four spellings were in use and all are fixed:
+
+    `${baseUrl}Content/...`     baseUrl + 'Content/...'
+    baseUrl + "/Content/..."    baseUrl + `Content/...`
+
+The leading-slash form was doubly wrong - `baseUrl` already ends in `/`, so it produced `//Content/`.
+
+**AdminLTE lost its body classes.** `Page/Default.aspx` rendered
+`<body class="hold-transition skin-black fixed sidebar-mini sidebar-collapse">`, and AdminLTE
+keys its entire layout off them - `.main-sidebar` / `.content-wrapper` positioning, the
+mini/collapsible sidebar and the skin. The port never set them, so the sidebar rendered
+full-width in normal flow and the content area lost its offset. They are now set once via
+`app.head.bodyAttrs` in `nuxt.config.ts`; `login.vue` still adds `login-page` on top, exactly as
+it did on the legacy host page.
+
+Verified: the login background image and all previously-broken asset URLs now return real
+`image/*` responses, and `<body>` carries the AdminLTE classes plus `login-page`. The
+**authenticated sidebar layout itself is unverified** - it needs a logged-in session.
+
+### Verified working end-to-end
+
+Login page renders with the company list from SQL Server via the .NET 8 backend;
+`api/public/LoginCompanies`, `api/public/LanguageSelector` → `LangDisplay`,
+`api/public/ViewUserAuthentication`, `api/public/Extension_ForCallCenter` and
+`CSM/API/CSM_Read_img_csm` all return 200 with correct CORS headers.
+
+## Still outstanding
+
+- ~~SignalR / realtime~~ **ported 2026-09-15** - see below.
+- **Only the login and guard paths have been exercised.** The other ~109 routes have not
+  been walked against their `menu_id` permission checks.
+- `datepicker` call sites pass `:beforedate` / `:overdate` (26 sites), which match no
+  declared prop and are silently ignored — a **pre-existing** Vue 2 bug, preserved
+  deliberately rather than "fixed" into newly-enforced date limits. Decide the intent
+  before changing it.
+- `slot="extra"` (Vue 2 slot syntax, removed in Vue 3) still appears in the
+  CustomerConfigCenter screens; harmless at build time, but inert.
+- Template audit still pending: `v-if`/`v-for` precedence, `key` on `<template v-for>`,
   transition class renames.
-
-## Remaining work, in order
-
-1. **Install and build** `frontend/` — nothing is compile-verified yet. Expect the blocked
-   libraries below to be the first failures.
-2. **Resolve ag-Grid** (see above) — gates `ag-table.vue`, which backs 100 call sites and most pages.
-3. **Replace the dead-end libraries** in the table above, wrapper-first: a shared wrapper for
-   `<vue-select-2>` (40 unwrapped call sites) is the largest single item.
-4. **Finish `datepicker.vue` / `timepicker.vue`** v-model contract once `vue2-datepicker` is swapped.
-5. **Port the 11 `Vue.use()` registrations** from `main.js` as Nuxt plugins.
-6. **Audit templates** for Vue 3 semantics: `v-if`/`v-for` precedence, `key` placement on
-   `<template v-for>`, transition class renames.
-7. **Walk the 111 routes** in the browser against their `menu_id` permission checks.
+- `chart.js` is still pinned to v2 with two v2-only plugins.
 
 ## Ordering note
 

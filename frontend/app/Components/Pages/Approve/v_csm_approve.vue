@@ -2,7 +2,7 @@
   <div>
     <re-page ref="page">
 
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="row">
             <div class="col-md-12 col-sm-12 col-xs-12">
@@ -856,7 +856,8 @@
 </template>
 
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let pagingW = {};
   let pagingD = {};
   let pagingU = {};

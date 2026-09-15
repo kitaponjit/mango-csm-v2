@@ -1,12 +1,12 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <app-form-2 ref="appForm"
         exportSelect="B"
         exportUrl="csm/master/PriorityExport"
         >
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="box box-widget">
               <div class="box-body">
                 <div class="row d-flex">
@@ -236,7 +236,8 @@
 <script>
   import { mapState, mapGetters } from '~/stores/helpers'
   
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let appForm = {};
   let cpn = {

@@ -491,7 +491,9 @@
     import document_detail_assignment from './v_csm_trn_001_components/document-details/assignment/document_detail_assignment.vue'
     import status_priority_document from './v_csm_trn_001_components/document-details/status_priority_document.vue'
 
-    let page = {}
+    // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+    let page = { loadingBox: { show() {}, hide() {} } }
     let appForm = {}
     let supplierPaging = {}
     let historyPaging = {}

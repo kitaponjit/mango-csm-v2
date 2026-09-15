@@ -10,8 +10,7 @@
           </div>
           <div class="modal-body" style="overflow-y: hidden !important; min-height: 85vh;" ref="modalBody">
             <app-form-2 ref="appForm" exportSelect="B" :exportUrl= "exportUrl">
-              <template>
-                <template slot="form-detail">
+                <template #form-detail>
                   <!-- <slot name="body"></slot> -->
                   <!-- <div class="box box-widget">
                     <div class="box-body"> -->
@@ -62,7 +61,6 @@
                     <!-- </div>
                   </div> -->
                 </template>
-              </template>
             </app-form-2>
           </div>
         </div>
@@ -89,7 +87,10 @@
 <script>
 
 
-let page = {}
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+
+let page = { loadingBox: { show() {}, hide() {} } }
 let appForm = {};
 
 export default {

@@ -74,10 +74,10 @@
 
     <!-- Modal : Attachment -->
     <modal ref="showFileModal">
-      <template slot="header">
+      <template #header>
         <h4 class="modal-title"><i class="far fa-images"></i> {{subject}}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="cx-modal">
           <table-stick-2 ref="attach_stick" :scale="310">
             <div class="cx-shots" v-if="dataAttachment.length">

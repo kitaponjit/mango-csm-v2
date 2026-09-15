@@ -2,7 +2,7 @@
   <div>
     <!-- <page ref="page"> -->
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content">
           <!-- Control Button : Company -->
           <div class="row">
@@ -872,7 +872,7 @@
                                 <div class="form-group">
                                   <label class="text-blue" v-text="ui.erp_email || 'Default Send Email'"></label>&nbsp;
                                   <p-check class="p-icon p-curve p-smooth" color="primary" true-value="Y" false-value="N" v-model="mainCompany.auto_email">
-                                    <i class="icon mdi mdi-check" slot="extra"></i>
+                                    <template #extra><i class="icon mdi mdi-check"></i></template>
                                     Auto Email
                                   </p-check>
                                 </div>
@@ -898,11 +898,11 @@
                               <div class="col-md-12">
                                 <div class="form-group">
                                   <p-check class="p-icon p-curve p-smooth" color="primary" true-value="Y" false-value="N" v-model="mainCompany.email_smtp_user">
-                                    <i class="icon mdi mdi-check" slot="extra"></i>
+                                    <template #extra><i class="icon mdi mdi-check"></i></template>
                                     Requires User ID/Password
                                   </p-check>
                                   <p-check class="p-icon p-curve p-smooth" color="primary" true-value="Y" false-value="N" v-model="mainCompany.email_smtp_tls">
-                                    <i class="icon mdi mdi-check" slot="extra"></i>
+                                    <template #extra><i class="icon mdi mdi-check"></i></template>
                                     Requires TLS Encryption
                                   </p-check>
                                 </div>
@@ -1147,7 +1147,7 @@
                               <div class="col-md-12">
                                 <div class="form-group">
                                   <label v-text="ui.erp_regulations || 'Regulations (Billing)'"></label>
-                                  <span v-if="!xt.isEmpty(mainCompany.regulations_billing_attach)"> <a href="#" @click.prevent="downloadFile('bill')"><img :src="`${baseUrl}Content/Images/Icon SVG/pdf.svg`" width="20" height="20" /></a></span>
+                                  <span v-if="!xt.isEmpty(mainCompany.regulations_billing_attach)"> <a href="#" @click.prevent="downloadFile('bill')"><img :src="`${baseUrl}vendor/Content/Images/Icon SVG/pdf.svg`" width="20" height="20" /></a></span>
                                   <textarea class="form-control input-sm" v-model="mainCompany.regulations_billing" rows="6"></textarea>
                                 </div>
                               </div>
@@ -1157,7 +1157,7 @@
                               <div class="col-md-12">
                                 <div class="form-group">
                                   <label v-text="ui.erp_regulations_ch || 'Regulations (Cheque)'"></label>
-                                  <span v-if="!xt.isEmpty(mainCompany.regulations_cheque_attach)"> <a href="#" @click.prevent="downloadFile('chq')"><img :src="`${baseUrl}Content/Images/Icon SVG/pdf.svg`" width="20" height="20" /></a></span>
+                                  <span v-if="!xt.isEmpty(mainCompany.regulations_cheque_attach)"> <a href="#" @click.prevent="downloadFile('chq')"><img :src="`${baseUrl}vendor/Content/Images/Icon SVG/pdf.svg`" width="20" height="20" /></a></span>
                                   <textarea class="form-control input-sm" v-model="mainCompany.regulations_cheque" rows="6"></textarea>
                                 </div>
                               </div>
@@ -1313,7 +1313,9 @@
   import 'splitpanes/dist/splitpanes.css'
   import { forEach } from 'mathjs'
 
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+  let page = { loadingBox: { show() {}, hide() {} } }
   export default {
     components: {
       Splitpanes,

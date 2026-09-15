@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
 
         <div class="mdl-sticky-header">
         <div class="mdl-page-header">
@@ -92,7 +92,8 @@
 </template>
 
 <script type="text/javascript">
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let cpn = {
     data() {
       return {

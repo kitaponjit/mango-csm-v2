@@ -1,7 +1,7 @@
 <template>
   <div class="mla-page">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="mla-head">
           <div class="mla-head__title">
             <i class="fas fa-clipboard-check"></i>
@@ -80,7 +80,8 @@
 </template>
 
 <script type="text/javascript">
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
   export default {
     data() {

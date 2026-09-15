@@ -1,7 +1,7 @@
 <template>
   <div class="cx-page">
     <report ref="rpt">
-      <template slot="display">
+      <template #display>
         <div class="nav-tabs-custom cx-modtabs">
           <ul class="nav nav-tabs">
             <li v-for="x in tabModuleData" :class="{active:x.id===tabModuleSelected}" v-show="x.show">
@@ -53,10 +53,10 @@
     </report>
     <!-- Modal : Attachment -->
     <modal ref="showFileModal">
-      <template slot="header">
+      <template #header>
         <h4 class="modal-title"><i class="far fa-images"></i> {{subject}}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="cx-modal">
         <div class="cx-shots" v-if="dataAttachment.length">
           <div class="cx-shot" v-for="(y, idx) in dataAttachment">
