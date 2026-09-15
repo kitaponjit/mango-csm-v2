@@ -112,16 +112,32 @@ export function formatQCItemDate(value: unknown) {
   }
 
   const text = String(value)
-  const isoDate = /^(\d{4})-(\d{2})-(\d{2})/.exec(text)
-  if (isoDate) {
-    return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`
+  if (/^\d{4}-/.test(text)) {
+    const wallClock = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):?(\d{2}))?)?$/.exec(text)
+    if (!wallClock) return ''
+
+    const [, year, month, day, hour = '00', minute = '00', second = '00', offsetHour = '00', offsetMinute = '00'] = wallClock
+    const yearNumber = Number(year)
+    const monthNumber = Number(month)
+    const dayNumber = Number(day)
+    const leapYear = yearNumber % 4 === 0 && (yearNumber % 100 !== 0 || yearNumber % 400 === 0)
+    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if (monthNumber < 1 || monthNumber > 12
+      || dayNumber < 1 || dayNumber > daysInMonth[monthNumber - 1]!
+      || Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59
+      || Number(offsetHour) > 23 || Number(offsetMinute) > 59) return ''
+
+    return `${day}/${month}/${year} ${hour}:${minute}:${second}`
   }
 
   const dotNetDate = /^\/Date\((-?\d+)/.exec(text)
-  const date = dotNetDate ? new Date(Number(dotNetDate[1])) : new Date(text)
+  const date = value instanceof Date
+    ? value
+    : dotNetDate ? new Date(Number(dotNetDate[1])) : new Date(text)
   if (Number.isNaN(date.getTime())) {
     return ''
   }
 
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`
+    + ` ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }

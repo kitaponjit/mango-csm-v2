@@ -51,8 +51,16 @@ const hasReadAccess = computed(() => (
   accessResult.value.status === 'readonly'
   || accessResult.value.status === 'editable'
 ))
-const canEdit = computed(() => accessResult.value.status === 'editable')
-const canExport = computed(() => hasReadAccess.value && exportStatus.value !== 'loading')
+const canEdit = computed(() => (
+  accessResult.value.status === 'editable'
+  && listStatus.value === 'ready'
+  && !isDataBusy.value
+))
+const canExport = computed(() => (
+  hasReadAccess.value
+  && listStatus.value === 'ready'
+  && exportStatus.value !== 'loading'
+))
 
 const pageCount = computed(() => getPageCount(items.value, PAGE_SIZE))
 const pageItems = computed(() => getPageItems(items.value, currentPage.value, PAGE_SIZE))
@@ -68,6 +76,11 @@ function clearAccessOwnedState() {
   currentPage.value = 1
   listStatus.value = 'idle'
   listError.value = ''
+  saveStatus.value = 'idle'
+  saveError.value = ''
+  saveMessage.value = ''
+  exportStatus.value = 'idle'
+  exportError.value = ''
   importDialogOpen.value = false
   importStatus.value = 'idle'
   importError.value = ''
@@ -124,9 +137,7 @@ async function initializePage() {
 }
 
 function addItem() {
-  if (isDataBusy.value || listStatus.value !== 'ready') {
-    return
-  }
+  if (!canEdit.value) return
 
   items.value.push(createNewQCItem(items.value))
   currentPage.value = pageCount.value
@@ -135,9 +146,7 @@ function addItem() {
 }
 
 function deleteItem(item: EditableQCItem) {
-  if (isDataBusy.value || listStatus.value !== 'ready') {
-    return
-  }
+  if (!canEdit.value) return
 
   if (item.itemname && !confirm(t('qcItem.deleteConfirm'))) {
     return
@@ -150,9 +159,8 @@ function deleteItem(item: EditableQCItem) {
 }
 
 async function saveItems() {
-  if (isDataBusy.value || listStatus.value !== 'ready') {
-    return
-  }
+  if (!canEdit.value) return
+  const generation = accessGeneration
 
   const validation = validateQCItems(items.value)
   if (!validation.valid) {
@@ -169,6 +177,7 @@ async function saveItems() {
   saveMessage.value = ''
 
   const result = await service.create(items.value)
+  if (generation !== accessGeneration) return
   if (!result.ok) {
     saveStatus.value = 'error'
     saveError.value = result.error.message
@@ -177,11 +186,13 @@ async function saveItems() {
 
   saveStatus.value = 'success'
   saveMessage.value = t('qcItem.saveSuccess')
-  await loadItems()
+  await loadItems(generation)
+  if (generation !== accessGeneration) return
   saveStatus.value = 'success'
 }
 
 function openFilePicker() {
+  if (!canEdit.value) return
   fileInput.value?.click()
 }
 
@@ -204,7 +215,10 @@ function closeImportDialog() {
 }
 
 function onFileChange(event: Event) {
-  if (isDataBusy.value) {
+  if (!canEdit.value) {
+    const input = event.target as HTMLInputElement | null
+    if (input) input.value = ''
+    clearFileSelection()
     return
   }
 
@@ -230,15 +244,17 @@ function onFileChange(event: Event) {
 }
 
 async function uploadFile() {
-  if (!selectedFile.value || isDataBusy.value) {
+  if (!canEdit.value || !selectedFile.value) {
     return
   }
+  const generation = accessGeneration
 
   importStatus.value = 'loading'
   importError.value = ''
   importMessage.value = ''
 
   const result = await service.importFile(selectedFile.value)
+  if (generation !== accessGeneration) return
   if (!result.ok) {
     importStatus.value = 'error'
     importError.value = result.error.message
@@ -249,16 +265,23 @@ async function uploadFile() {
   importMessage.value = t('qcItem.importSuccess')
   importDialogOpen.value = false
   clearFileSelection()
-  await loadItems()
+  await loadItems(generation)
+  if (generation !== accessGeneration) return
   importStatus.value = 'success'
 }
 
 async function exportFile() {
+  if (!canExport.value) return
+  const generation = accessGeneration
   const exportWindow = globalThis.open?.('about:blank', '_blank')
   exportStatus.value = 'loading'
   exportError.value = ''
 
   const result = await service.exportFile()
+  if (generation !== accessGeneration) {
+    exportWindow?.close()
+    return
+  }
   if (!result.ok) {
     exportWindow?.close()
     exportStatus.value = 'error'
@@ -329,16 +352,16 @@ onMounted(() => {
           <p class="qc-item-count">{{ t('qcItem.count') }}: {{ total }}</p>
         </div>
         <div class="qc-item-actions" :aria-label="t('qcItem.actions')">
-          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-add" :disabled="isDataBusy || listStatus !== 'ready'" @click="addItem">
+          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-add" :disabled="!canEdit" @click="addItem">
             {{ t('qcItem.add') }}
           </button>
-          <button type="button" class="target-button" data-testid="qcitem-save" :disabled="isDataBusy || listStatus !== 'ready'" @click="saveItems">
+          <button type="button" class="target-button" data-testid="qcitem-save" :disabled="!canEdit" @click="saveItems">
             {{ saveStatus === 'loading' ? t('qcItem.saving') : t('qcItem.save') }}
           </button>
-          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-export" :disabled="exportStatus === 'loading'" @click="exportFile">
+          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-export" :disabled="!canExport" @click="exportFile">
             {{ exportStatus === 'loading' ? t('qcItem.exporting') : t('qcItem.export') }}
           </button>
-          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-import" @click="openFilePicker">
+          <button type="button" class="target-button target-button--secondary" data-testid="qcitem-import" :disabled="!canEdit" @click="openFilePicker">
             {{ t('qcItem.import') }}
           </button>
         </div>
@@ -377,7 +400,7 @@ onMounted(() => {
                     class="target-button target-button--danger qc-item-delete"
                     :data-testid="`qcitem-delete-${item.itemno}`"
                     :aria-label="`${t('qcItem.deleteItem')} ${item.itemno}`"
-                    :disabled="isDataBusy"
+                    :disabled="!canEdit"
                     @click="deleteItem(item)"
                   >
                     <span aria-hidden="true">×</span>
@@ -389,7 +412,7 @@ onMounted(() => {
                     class="target-control qc-item-input"
                     :data-testid="`qcitem-description-${item.itemno}`"
                     :aria-label="`${t('qcItem.descriptionColumn')} ${item.itemno}`"
-                    :disabled="isDataBusy"
+                    :disabled="!canEdit"
                     type="text"
                   >
                 </td>
@@ -399,7 +422,7 @@ onMounted(() => {
                     class="target-control qc-item-input"
                     :data-testid="`qcitem-remark-${item.itemno}`"
                     :aria-label="`${t('qcItem.remark')} ${item.itemno}`"
-                    :disabled="isDataBusy"
+                    :disabled="!canEdit"
                     type="text"
                   >
                 </td>
@@ -432,7 +455,7 @@ onMounted(() => {
       data-testid="qcitem-file-input"
       type="file"
       accept=".xlsx"
-      :disabled="isDataBusy"
+      :disabled="!canEdit"
       @change="onFileChange"
     >
 
@@ -454,7 +477,7 @@ onMounted(() => {
         <button type="button" class="target-button target-button--secondary" data-testid="qcitem-cancel-import" :disabled="importStatus === 'loading'" @click="closeImportDialog">
           {{ t('qcItem.cancel') }}
         </button>
-        <button type="button" class="target-button" data-testid="qcitem-upload" :disabled="!selectedFile || importStatus === 'loading'" @click="uploadFile">
+        <button type="button" class="target-button" data-testid="qcitem-upload" :disabled="!canEdit || !selectedFile" @click="uploadFile">
           {{ importStatus === 'loading' ? t('qcItem.uploading') : t('qcItem.upload') }}
         </button>
       </template>

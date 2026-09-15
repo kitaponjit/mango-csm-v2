@@ -70,10 +70,43 @@ describe('QCItem model', () => {
     expect(validateQCItems([])).toEqual({ valid: true })
   })
 
-  it('formats ISO, .NET, empty, and invalid date values', () => {
-    expect(formatQCItemDate('2026-09-11T09:30:00')).toBe('11/09/2026')
-    expect(formatQCItemDate('/Date(1789059600000)/')).toMatch(/^\d{2}\/\d{2}\/2026$/)
+  it('renders ISO-like timestamps with seconds without shifting wall-clock fields', () => {
+    expect(formatQCItemDate('2026-09-14T10:05:06Z')).toBe('14/09/2026 10:05:06')
+    expect(formatQCItemDate('2026-09-14 23:59:58')).toBe('14/09/2026 23:59:58')
+    expect(formatQCItemDate('2026-09-14')).toBe('14/09/2026 00:00:00')
+    expect(formatQCItemDate('2026-09-14T10:05:06.123+07:00')).toBe('14/09/2026 10:05:06')
+    expect(formatQCItemDate('2024-02-29T00:00:00-05:00')).toBe('29/02/2024 00:00:00')
+    expect(formatQCItemDate('2000-02-29')).toBe('29/02/2000 00:00:00')
+  })
+
+  it('renders Date and .NET date values in local time with seconds', () => {
+    const local = new Date(2026, 8, 14, 10, 5, 6)
+    expect(formatQCItemDate(local)).toBe('14/09/2026 10:05:06')
+    expect(formatQCItemDate(`/Date(${local.getTime()})/`)).toBe('14/09/2026 10:05:06')
+  })
+
+  it.each([
+    '2026-00-14',
+    '2026-13-14',
+    '2026-09-00',
+    '2026-09-31',
+    '2026-02-29',
+    '1900-02-29',
+    '2026-09-14T24:00:00Z',
+    '2026-09-14T10:60:00Z',
+    '2026-09-14T10:05:60Z',
+    '2026-09-14T10:05:06+24:00',
+    '2026-09-14T10:05:06+07:60',
+    '2026-09-14T10:05',
+    '2026-09-14invalid',
+  ])('renders invalid ISO-like date %s as empty text', (value) => {
+    expect(formatQCItemDate(value)).toBe('')
+  })
+
+  it('renders missing and invalid dates as empty text', () => {
     expect(formatQCItemDate('')).toBe('')
+    expect(formatQCItemDate(null)).toBe('')
     expect(formatQCItemDate('not-a-date')).toBe('')
+    expect(formatQCItemDate(new Date(Number.NaN))).toBe('')
   })
 })

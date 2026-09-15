@@ -12,6 +12,7 @@ const getContext = vi.fn()
 const checkMenuAccess = vi.fn()
 
 type QCItemSetup = {
+  items: { itemno: number, itemname: string, remark: string }[]
   initializePage(): Promise<void>
   loadItems(generation?: number): Promise<void>
   addItem(): void
@@ -21,10 +22,37 @@ type QCItemSetup = {
   onFileChange(event: Event): void
   uploadFile(): Promise<void>
   exportFile(): Promise<void>
+  selectedFile: File | null
+  importDialogOpen: boolean
+  importStatus: string
+  importError: string
+  importMessage: string
+  saveStatus: string
+  saveError: string
+  saveMessage: string
+  exportStatus: string
+  exportError: string
 }
 
 function pageSetup(wrapper: ReturnType<typeof mount>) {
   return (wrapper.vm as unknown as { $: { setupState: QCItemSetup } }).$.setupState
+}
+
+async function readonlyPage() {
+  getContext.mockReturnValue({ isAuthenticated: true })
+  checkMenuAccess.mockResolvedValue({ status: 'readonly' })
+  apiGet.mockResolvedValueOnce({ ok: true, status: 200, data: Array.from({ length: 11 }, (_, index) => ({
+    itemno: index + 1, itemname: 'Description', remark: 'Remark',
+  })) })
+  const wrapper = mount(QCItemPage)
+  await flushPromises()
+  return wrapper
+}
+
+function selectFile(wrapper: ReturnType<typeof mount>, name = 'QCItem.xlsx') {
+  const input = wrapper.get<HTMLInputElement>('[data-testid="qcitem-file-input"]').element
+  Object.defineProperty(input, 'files', { configurable: true, value: [new File(['xlsx'], name)] })
+  return input
 }
 
 const translations: Record<string, string> = {
@@ -95,6 +123,190 @@ afterEach(() => {
 })
 
 describe('QCItem page access and read state', () => {
+  it.each(['save', 'upload'] as const)('ignores old %s completion after a new access generation', async (action) => {
+    for (const status of ['denied', 'readonly', 'editable'] as const) {
+      for (const ok of [true, false]) {
+        getContext.mockReturnValue({ isAuthenticated: true })
+        checkMenuAccess.mockReset().mockResolvedValueOnce({ status: 'editable' }).mockResolvedValueOnce({ status })
+        apiGet.mockReset().mockResolvedValue({ ok: true, status: 200, data: [{ itemno: 1, itemname: 'Current', remark: 'Current' }] })
+        let resolveAction!: (value: unknown) => void
+        const request = new Promise(resolve => { resolveAction = resolve })
+        if (action === 'save') apiPost.mockReturnValueOnce(request)
+        else apiPostForm.mockReturnValueOnce(request)
+        const wrapper = mount(QCItemPage)
+        await flushPromises()
+        const setup = pageSetup(wrapper)
+        if (action === 'upload') {
+          const input = selectFile(wrapper)
+          setup.onFileChange({ target: input } as unknown as Event)
+        }
+        const pending = action === 'save' ? setup.saveItems() : setup.uploadFile()
+        await flushPromises()
+        await setup.initializePage()
+        expect(setup.saveStatus).toBe('idle')
+        expect(setup.importStatus).toBe('idle')
+        if (status === 'editable') {
+          expect(wrapper.get('[data-testid="qcitem-add"]').attributes('disabled')).toBeUndefined()
+        }
+        apiGet.mockClear()
+        resolveAction(ok
+          ? { ok: true, status: 200, data: true }
+          : { ok: false, error: { code: 'api', message: 'Stale failure' } })
+        await pending
+        await flushPromises()
+        expect(apiGet).not.toHaveBeenCalled()
+        expect(setup.saveStatus).toBe('idle')
+        expect(setup.saveError).toBe('')
+        expect(setup.saveMessage).toBe('')
+        expect(setup.importStatus).toBe('idle')
+        expect(setup.importError).toBe('')
+        expect(setup.importMessage).toBe('')
+        expect(setup.importDialogOpen).toBe(false)
+        expect(setup.selectedFile).toBeNull()
+        wrapper.unmount()
+      }
+    }
+  })
+
+  it.each(['save', 'upload'] as const)('ignores old %s status after its downstream reload is superseded', async (action) => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    checkMenuAccess.mockResolvedValueOnce({ status: 'editable' }).mockResolvedValueOnce({ status: 'denied' })
+    apiGet.mockResolvedValueOnce({ ok: true, status: 200, data: [{ itemno: 1, itemname: 'Current', remark: 'Current' }] })
+    let resolveRead!: (value: unknown) => void
+    apiGet.mockReturnValueOnce(new Promise(resolve => { resolveRead = resolve }))
+    apiPost.mockResolvedValue({ ok: true, status: 200, data: true })
+    apiPostForm.mockResolvedValue({ ok: true, status: 200, data: true })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    const setup = pageSetup(wrapper)
+    if (action === 'upload') setup.onFileChange({ target: selectFile(wrapper) } as unknown as Event)
+    const pending = action === 'save' ? setup.saveItems() : setup.uploadFile()
+    await flushPromises()
+    await setup.initializePage()
+    resolveRead({ ok: true, status: 200, data: [{ itemno: 2, itemname: 'Stale', remark: 'Stale' }] })
+    await pending
+    expect(setup.saveStatus).toBe('idle')
+    expect(setup.importStatus).toBe('idle')
+    expect(setup.saveMessage).toBe('')
+    expect(setup.importMessage).toBe('')
+    expect(setup.items).toEqual([])
+  })
+
+  it('closes an old reserved export popup without navigating after access changes', async () => {
+    for (const status of ['denied', 'readonly', 'editable'] as const) {
+      for (const ok of [true, false]) {
+        getContext.mockReturnValue({ isAuthenticated: true })
+        checkMenuAccess.mockReset().mockResolvedValueOnce({ status: 'editable' }).mockResolvedValueOnce({ status })
+        apiGet.mockReset().mockResolvedValueOnce({ ok: true, status: 200, data: [] })
+        let resolveExport!: (value: unknown) => void
+        apiGet.mockReturnValueOnce(new Promise(resolve => { resolveExport = resolve }))
+        apiGet.mockResolvedValueOnce({ ok: true, status: 200, data: [] })
+        apiOpenUrl.mockClear()
+        const popup = { closed: false, location: { href: '' }, close: vi.fn() }
+        const open = vi.fn().mockReturnValue(popup)
+        vi.stubGlobal('open', open)
+        const wrapper = mount(QCItemPage)
+        await flushPromises()
+        const setup = pageSetup(wrapper)
+        const pending = setup.exportFile()
+        await flushPromises()
+        await setup.initializePage()
+        expect(setup.exportStatus).toBe('idle')
+        if (status !== 'denied') {
+          expect(wrapper.get('[data-testid="qcitem-export"]').attributes('disabled')).toBeUndefined()
+        }
+        resolveExport(ok
+          ? { ok: true, status: 200, data: 'stale-token' }
+          : { ok: false, error: { code: 'api', message: 'Stale export failure' } })
+        await pending
+        expect(popup.close).toHaveBeenCalledOnce()
+        expect(popup.location.href).toBe('')
+        expect(apiOpenUrl).not.toHaveBeenCalled()
+        expect(open).toHaveBeenCalledTimes(1)
+        expect(setup.exportStatus).toBe('idle')
+        expect(setup.exportError).toBe('')
+        wrapper.unmount()
+      }
+    }
+  })
+  it('allows readonly reading, pagination and export while disabling mutation controls', async () => {
+    const wrapper = await readonlyPage()
+    for (const testId of ['description-1', 'remark-1', 'add', 'save', 'import', 'delete-1', 'file-input']) {
+      expect(wrapper.get(`[data-testid="qcitem-${testId}"]`).attributes('disabled')).toBeDefined()
+    }
+    await wrapper.get('[data-testid="qcitem-page-2"]').trigger('click')
+    expect(wrapper.find('[data-testid="qcitem-description-11"]').exists()).toBe(true)
+    apiGet.mockResolvedValueOnce({ ok: true, status: 200, data: 'server-token' })
+    vi.stubGlobal('open', vi.fn().mockReturnValue({ closed: false, location: { href: '' } }))
+    await wrapper.get('[data-testid="qcitem-export"]').trigger('click')
+    await flushPromises()
+    expect(apiOpenUrl).toHaveBeenCalledWith('server-token', { download: true })
+    pageSetup(wrapper).importDialogOpen = true
+    pageSetup(wrapper).selectedFile = new File(['xlsx'], 'QCItem.xlsx')
+    await nextTick()
+    expect(wrapper.get('[data-testid="qcitem-upload"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('blocks every readonly mutation handler independently of disabled controls', async () => {
+    const wrapper = await readonlyPage()
+    const setup = pageSetup(wrapper)
+    const confirm = vi.fn().mockReturnValue(true)
+    vi.stubGlobal('confirm', confirm)
+    const input = selectFile(wrapper)
+    const click = vi.spyOn(input, 'click')
+    Object.defineProperty(input, 'value', { configurable: true, writable: true, value: 'QCItem.xlsx' })
+    setup.addItem()
+    setup.deleteItem({ itemno: 1, itemname: 'Description', remark: 'Remark' })
+    await setup.saveItems()
+    setup.openFilePicker()
+    setup.selectedFile = new File(['xlsx'], 'Previous.xlsx')
+    setup.onFileChange({ target: input } as unknown as Event)
+    expect(input.value).toBe('')
+    expect(setup.selectedFile).toBeNull()
+    setup.selectedFile = new File(['xlsx'], 'Programmatic.xlsx')
+    await setup.uploadFile()
+    await nextTick()
+    expect(apiPost).not.toHaveBeenCalled()
+    expect(apiPostForm).not.toHaveBeenCalled()
+    expect(confirm).not.toHaveBeenCalled()
+    expect(click).not.toHaveBeenCalled()
+    expect(setup.items).toHaveLength(11)
+    expect(wrapper.find('[data-testid="qcitem-description-12"]').exists()).toBe(false)
+  })
+
+  it.each(['denied', 'checking', 'list-loading', 'list-error', 'export-loading'])(
+    'guards export before popup reservation for %s state', async (state) => {
+      getContext.mockReturnValue({ isAuthenticated: true })
+      if (state === 'denied') checkMenuAccess.mockResolvedValue({ status: 'denied' })
+      if (state === 'checking') checkMenuAccess.mockReturnValue(new Promise(() => {}))
+      if (state === 'list-loading') apiGet.mockReturnValue(new Promise(() => {}))
+      if (state === 'list-error') apiGet.mockResolvedValue({ ok: false, error: { code: 'network', message: 'Offline' } })
+      const wrapper = mount(QCItemPage)
+      await flushPromises()
+      const setup = pageSetup(wrapper)
+      if (state === 'export-loading') setup.exportStatus = 'loading'
+      apiGet.mockClear()
+      const open = vi.fn()
+      vi.stubGlobal('open', open)
+      void setup.exportFile()
+      await flushPromises()
+      expect(apiGet).not.toHaveBeenCalled()
+      expect(open).not.toHaveBeenCalled()
+    },
+  )
+
+  it('rejects .xls selection and blocks programmatic upload without a backend request', async () => {
+    getContext.mockReturnValue({ isAuthenticated: true })
+    const wrapper = mount(QCItemPage)
+    await flushPromises()
+    const input = selectFile(wrapper, 'QCItem.xls')
+    pageSetup(wrapper).onFileChange({ target: input } as unknown as Event)
+    await nextTick()
+    expect(wrapper.text()).toContain('Please choose an .xlsx file only.')
+    expect(wrapper.get('[data-testid="qcitem-upload"]').attributes('disabled')).toBeDefined()
+    await pageSetup(wrapper).uploadFile()
+    expect(apiPostForm).not.toHaveBeenCalled()
+  })
   it.each(['anonymous', 'denied'] as const)(
     'does not read QCItem data when access resolves to %s',
     async status => {
