@@ -83,6 +83,36 @@ describe('QCItem model', () => {
     const local = new Date(2026, 8, 14, 10, 5, 6)
     expect(formatQCItemDate(local)).toBe('14/09/2026 10:05:06')
     expect(formatQCItemDate(`/Date(${local.getTime()})/`)).toBe('14/09/2026 10:05:06')
+    expect(formatQCItemDate(`/Date(${local.getTime()}+0700)/`)).toBe('14/09/2026 10:05:06')
+    expect(formatQCItemDate(`/Date(${local.getTime()}-0500)/`)).toBe('14/09/2026 10:05:06')
+    expect(formatQCItemDate('/Date(-1000)/')).toBe(formatQCItemDate(new Date(-1000)))
+  })
+
+  it.each([
+    '/Date(0garbage',
+    '/Date(0)/junk',
+    '/Date(0)',
+    '/Date(0+070)/',
+    '/Date(0+2400)/',
+    '/Date(0+0760)/',
+  ])('renders malformed .NET date %s as empty text', (value) => {
+    expect(formatQCItemDate(value)).toBe('')
+  })
+
+  it.each([
+    '2026/02/29',
+    '2026/04/31 10:05:06',
+    '02/29/2026',
+    '04/31/2026 10:05:06',
+  ])('renders invalid slash calendar date %s as empty text', (value) => {
+    expect(formatQCItemDate(value)).toBe('')
+  })
+
+  it('preserves valid generic Date inputs and local slash dates', () => {
+    expect(formatQCItemDate('2026/02/28 10:05:06')).toBe('28/02/2026 10:05:06')
+    expect(formatQCItemDate('02/28/2026 10:05:06')).toBe('28/02/2026 10:05:06')
+    expect(formatQCItemDate('2024/02/29 10:05:06')).toBe('29/02/2024 10:05:06')
+    expect(formatQCItemDate('September 14, 2026 10:05:06')).toBe('14/09/2026 10:05:06')
   })
 
   it.each([

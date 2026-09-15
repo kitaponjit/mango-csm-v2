@@ -106,6 +106,12 @@ function pad(value: number) {
   return String(value).padStart(2, '0')
 }
 
+function isValidCalendarDate(year: number, month: number, day: number) {
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  return month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth[month - 1]!
+}
+
 export function formatQCItemDate(value: unknown) {
   if (!value) {
     return ''
@@ -117,20 +123,22 @@ export function formatQCItemDate(value: unknown) {
     if (!wallClock) return ''
 
     const [, year, month, day, hour = '00', minute = '00', second = '00', offsetHour = '00', offsetMinute = '00'] = wallClock
-    const yearNumber = Number(year)
-    const monthNumber = Number(month)
-    const dayNumber = Number(day)
-    const leapYear = yearNumber % 4 === 0 && (yearNumber % 100 !== 0 || yearNumber % 400 === 0)
-    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    if (monthNumber < 1 || monthNumber > 12
-      || dayNumber < 1 || dayNumber > daysInMonth[monthNumber - 1]!
+    if (!isValidCalendarDate(Number(year), Number(month), Number(day))
       || Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59
       || Number(offsetHour) > 23 || Number(offsetMinute) > 59) return ''
 
     return `${day}/${month}/${year} ${hour}:${minute}:${second}`
   }
 
-  const dotNetDate = /^\/Date\((-?\d+)/.exec(text)
+  const dotNetDate = /^\/Date\((-?\d+)(?:[+-](\d{2})(\d{2}))?\)\/$/.exec(text)
+  if (text.startsWith('/Date(') && (!dotNetDate
+    || Number(dotNetDate[2] ?? 0) > 23 || Number(dotNetDate[3] ?? 0) > 59)) return ''
+
+  const yearFirst = /^(\d{4})\/(\d{1,2})\/(\d{1,2})(?=$|[ T])/.exec(text)
+  const monthFirst = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?=$|[ T])/.exec(text)
+  if (yearFirst && !isValidCalendarDate(Number(yearFirst[1]), Number(yearFirst[2]), Number(yearFirst[3]))) return ''
+  if (monthFirst && !isValidCalendarDate(Number(monthFirst[3]), Number(monthFirst[1]), Number(monthFirst[2]))) return ''
+
   const date = value instanceof Date
     ? value
     : dotNetDate ? new Date(Number(dotNetDate[1])) : new Date(text)
