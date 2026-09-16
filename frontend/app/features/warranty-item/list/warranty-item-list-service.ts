@@ -19,10 +19,10 @@ export interface WarrantyItemListItem {
   durationLabel: string
   lifetime: boolean
   active: boolean
-  addedBy: string
-  addedAt: string
-  editedBy: string
-  editedAt: string
+  addedBy: string | null
+  addedAt: string | null
+  editedBy: string | null
+  editedAt: string | null
 }
 
 export interface WarrantyItemListResult {
@@ -41,10 +41,10 @@ interface RawWarrantyItemRow {
   tot_warranty: string
   lifetime: 'Y' | 'N'
   active: 'Y' | 'N'
-  add_user: string
-  add_dt: string
-  edit_user: string
-  edit_dt: string
+  add_user: string | null
+  add_dt: string | null
+  edit_user: string | null
+  edit_dt: string | null
 }
 
 const MALFORMED_RESPONSE_MESSAGE = 'Warranty Item list response is malformed.'
@@ -58,6 +58,10 @@ function isFlag(value: unknown): value is 'Y' | 'N' {
   return value === 'Y' || value === 'N'
 }
 
+function isNullableString(value: unknown): value is string | null {
+  return typeof value === 'string' || value === null
+}
+
 function isWarrantyItemRow(value: unknown): value is RawWarrantyItemRow {
   if (!isRecord(value)) {
     return false
@@ -69,10 +73,10 @@ function isWarrantyItemRow(value: unknown): value is RawWarrantyItemRow {
     && typeof value.tot_warranty === 'string'
     && isFlag(value.lifetime)
     && isFlag(value.active)
-    && typeof value.add_user === 'string'
-    && typeof value.add_dt === 'string'
-    && typeof value.edit_user === 'string'
-    && typeof value.edit_dt === 'string'
+    && isNullableString(value.add_user)
+    && isNullableString(value.add_dt)
+    && isNullableString(value.edit_user)
+    && isNullableString(value.edit_dt)
 }
 
 function normalizeRow(rawRow: unknown): WarrantyItemListItem {

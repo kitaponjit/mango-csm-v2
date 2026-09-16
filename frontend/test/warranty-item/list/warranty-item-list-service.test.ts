@@ -80,6 +80,31 @@ describe('createWarrantyItemListService', () => {
     })
   })
 
+  it('preserves missing nullable audit metadata as null', async () => {
+    const service = createWarrantyItemListService(createTransport(successfulResponse({
+      ...responseRow,
+      add_user: null,
+      add_dt: null,
+      edit_user: null,
+      edit_dt: null,
+    })))
+
+    await expect(service.read({
+      page: 1,
+      pageSize: 25,
+      field: 'war_code',
+      text: '',
+      active: 'Y',
+    })).resolves.toMatchObject({
+      items: [{
+        addedBy: null,
+        addedAt: null,
+        editedBy: null,
+        editedAt: null,
+      }],
+    })
+  })
+
   it('propagates the backend error when the response is unsuccessful', async () => {
     const service = createWarrantyItemListService(createTransport({
       success: false,
