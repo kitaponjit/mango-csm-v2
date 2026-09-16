@@ -41,7 +41,7 @@
         queryString,
         ui: window.ui,
         xt: $xt,
-        contentImage: baseUrl + "/Content/Images/Image/mango1.jpg"
+        contentImage: baseUrl + "vendor/Content/Images/Image/mango1.jpg"
       };
     },
     methods: {

@@ -2440,7 +2440,7 @@
                     </div>
                   </div>
                   <app-form ref="appForm">
-                    <template slot="extraBtn">
+                    <template #extraBtn>
                       <button class="btn btn-sm btn-warning" v-if="(isEdit && formData.request_empno == auth.empno && !['I','H','N','Y'].includes(formData.job_status) && tab2Active===0)|| isAdmin" @click="confirmNewApprove()"><i class="fas fa-refresh"></i> ส่งอนุมัติใหม่</button>
 
                       <button class="btn btn-sm btn-danger" v-if="isEdit && formData.request_empno == auth.empno && !['I','Y','N','H','D'].includes(formData['job_status']) && tab2Active===0" data-toggle="modal" data-target="#cancelModal"><i class="fas fa-times-circle"></i> ยกเลิกเอกสาร</button>
@@ -2586,7 +2586,7 @@
             <div class="row">
               <div class="col-lg-12 col-md-12 col-sm-12">
                 <vue-event-calendar :title="'CSM Documents'" :events="eventEmployee">
-                  <template slot-scope="props">
+                  <template #default="props">
                     <div v-for="(event, index) in props.showEvents" class="event-item">
                       <span style="font-size:14px;">Document No. <b class="pointer" @click="eventSelected(event.title)" v-text="event.title"></b></span>
                       <span class="pull-right">
@@ -2820,7 +2820,9 @@
 <script type="text/javascript">
   import { mapState, mapGetters } from '~/stores/helpers'
 
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+  let page = { loadingBox: { show() {}, hide() {} } }
   let appForm = {}
   let supplierPaging = {}
   let historyPaging = {}

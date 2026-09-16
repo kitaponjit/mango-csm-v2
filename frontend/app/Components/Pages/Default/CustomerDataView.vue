@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="cdv-wrapper">
 
           <!-- ===== MAIN TAB NAVIGATION ===== -->
@@ -217,7 +217,8 @@
   import application_type from './components/v_csm_application.vue'
   import infomation_Person from './components/v_csm_conPerson.vue'
   import infomation_Project from './components/v_csm_projectData.vue'
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     components: {
       "info-detail": infomation_detail,

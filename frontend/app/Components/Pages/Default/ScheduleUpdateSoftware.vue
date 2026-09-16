@@ -180,7 +180,8 @@
 <script type="text/javascript">
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.css";
-let page = {}
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } }
 export default {
     name: "ScheduleUpdateSoftware",
     data() {

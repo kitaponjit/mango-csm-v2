@@ -7,7 +7,7 @@
           <div class="container-fluid py-5">
             <div class="navbar-header">
               <a class="navbar-brand m-0 p-0 ">
-                <img :src="`${baseUrl}Content/Images/Logo/logo_mango_dark_default.png`" class=" max-height w-100 profile-img" alt="Mango Consultant">
+                <img :src="`${baseUrl}vendor/Content/Images/Logo/logo_mango_dark_default.png`" class=" max-height w-100 profile-img" alt="Mango Consultant">
               </a>
               <button type="button" class="navbar-toggle">
                 <span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span>
@@ -60,7 +60,7 @@
         <div class="modal-content qt-card">
           <div class="qt-card__top">
             <a class="qt-lang" @click="$refs.changeLang.openModal()"><i class="fas fa-globe"></i>{{ user_lang =='EN_MASTER' ?'EN':user_lang }}</a>
-            <img class="qt-logo" :src="baseUrl + 'Content/Images/Logo/logo_mango.png'" alt="Logo">
+            <img class="qt-logo" :src="baseUrl + 'vendor/Content/Images/Logo/logo_mango.png'" alt="Logo">
           </div>
           <div class="modal-body qt-card__body">
             <div class="qt-head">
@@ -100,7 +100,7 @@
       <div class="modal-dialog login qt-dialog" role="document">
         <div class="modal-content qt-card">
           <div class="qt-card__top">
-            <img class="qt-logo" :src="baseUrl + 'Content/Images/Logo/logo_mango.png'" alt="Logo">
+            <img class="qt-logo" :src="baseUrl + 'vendor/Content/Images/Logo/logo_mango.png'" alt="Logo">
           </div>
           <div class="modal-body qt-card__body">
             <div class="qt-badge"><i class="fas fa-unlock-alt"></i></div>
@@ -141,7 +141,7 @@
       <div class="modal-dialog login qt-dialog" role="document">
         <div class="modal-content qt-card">
           <div class="qt-card__top">
-            <img class="qt-logo" :src="baseUrl + 'Content/Images/Logo/logo_mango.png'" alt="Logo">
+            <img class="qt-logo" :src="baseUrl + 'vendor/Content/Images/Logo/logo_mango.png'" alt="Logo">
           </div>
           <div class="modal-body qt-card__body">
             <div class="qt-badge"><i class="fas fa-shield-alt"></i></div>
@@ -189,7 +189,7 @@
       <div class="modal-dialog login qt-dialog" role="document">
         <div class="modal-content qt-card">
           <div class="qt-card__top">
-            <img class="qt-logo" :src="baseUrl + 'Content/Images/Logo/logo_mango.png'" alt="Logo">
+            <img class="qt-logo" :src="baseUrl + 'vendor/Content/Images/Logo/logo_mango.png'" alt="Logo">
           </div>
           <div class="modal-body qt-card__body">
             <div class="qt-badge"><i class="fas fa-key"></i></div>
@@ -343,7 +343,7 @@
             // console.log('ccc mounted', `url(${dataServer + 'Api/File/DownLoad?id=' + this.img_bg[0].phi_path}) `)
           } else if (this.is_mango === "Y") {
             $('body').css({
-              'background-image': `url(${this.baseUrl + 'Content/Images/PNG/v2_mangoBG.png'})`,
+              'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/v2_mangoBG.png'})`,
               'background-size': 'cover',
               'background-repeat': 'no-repeat',
               'background-position': 'center center',
@@ -351,14 +351,14 @@
           }
           else if (this.is_mango === "N") {
             $('body').css({
-              'background-image': `url(${this.baseUrl + 'Content/Images/PNG/v2_customerBG.png'})`,
+              'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/v2_customerBG.png'})`,
               'background-size': 'cover',
               'background-repeat': 'no-repeat',
               'background-position': 'center center',
             });
           } else {
             $('body').css({
-              'background-image': `url(${this.baseUrl + 'Content/Images/PNG/bg.jpg'})`,
+              'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/bg.jpg'})`,
               'background-size': 'cover',
               'background-repeat': 'no-repeat',
               'background-position': 'center center',
@@ -661,7 +661,7 @@
       //     $('.content-header').css({
       //       'min-width': $(window).width() + 'px',
       //       'min-height': $(window).height() + 'px',
-      //       'background-image': `url(${this.baseUrl + 'Content/Images/PNG/bg.jpg'})`
+      //       'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/bg.jpg'})`
       //     });
       //   });
       //   $(window).trigger("resize");

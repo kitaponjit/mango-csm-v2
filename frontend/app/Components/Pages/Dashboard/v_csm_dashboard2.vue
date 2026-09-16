@@ -1,7 +1,7 @@
 <template>
   <div class="v-csm-dash2">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content d2-wrap">
           <!-- ส่วนที่ 1 : เงื่อนไขการค้นหา -->
           <div class="d2-bar">
@@ -154,7 +154,8 @@
   let year = date.getFullYear();
   let month = date.getMonth()+1;
   let month_th = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let chart = null;
   let barWidth = (num, div) => {
     let n = num || 0;

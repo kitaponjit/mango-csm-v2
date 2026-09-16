@@ -27,7 +27,7 @@
       <div v-else class="col-sm-12 col-md-12 my-10">
         <div class="hidden-xs" style="position: absolute; margin-top: -110px; left: 0;">
           <a class="btn" @click="goBack">
-            <img :src="`${baseUrl}Content/Images/Icon SVG/left_arrow_bordered.svg`" />
+            <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/left_arrow_bordered.svg`" />
           </a>
         </div>
 

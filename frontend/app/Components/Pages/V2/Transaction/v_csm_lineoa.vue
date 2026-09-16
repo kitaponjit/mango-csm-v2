@@ -8,8 +8,8 @@
             <div class="container-fluid py-5">
               <div class="navbar-header padding-l-10 padding-r-10">
                 <a class="navbar-brand m-0 p-0 " :class="{ 'hidden-xs' : selectedTabs.id != 'Header_tab1' }" @click="TabChange(0)">
-                  <img :src="baseUrl + 'Content/Images/Logo/logo_mango_dark_default.png'" class="max-height w-100 profile-img" alt="Mango Consultant" v-if=" (selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6'">
-                  <img :src="`${baseUrl}Content/Images/Logo/logo_mango_light_default.png`" class=" max-height w-100 profile-img" alt="Mango Consultant" v-else>
+                  <img :src="baseUrl + 'vendor/Content/Images/Logo/logo_mango_dark_default.png'" class="max-height w-100 profile-img" alt="Mango Consultant" v-if=" (selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6'">
+                  <img :src="`${baseUrl}vendor/Content/Images/Logo/logo_mango_light_default.png`" class=" max-height w-100 profile-img" alt="Mango Consultant" v-else>
                 </a>
                 <button type="button" class="navbar-toggle" @click.prevent="ToggleMenu('Open')">
                   <span class="glyphicon glyphicon-align-justify" :class="[(selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6' ? 'text-dark' : 'text-white']" aria-hidden="true" @click.prevent="ToggleMenu('Open')"></span>
@@ -21,13 +21,15 @@
               </div>
               <div class="collapse navbar-collapse" id="myNavbar">
                 <ul class="nav navbar-nav navbar-right hidden-xs d-flex gap-15">
-                  <li v-for="(x, idx) in tabs" v-if="x.showbutton">
-                    <a class="button-navbar" role="button" v-if="(selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6'" @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-success-v2 bg-success-v2-10' : 'text-success-v2']">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
-                    <a class="button-navbar" role="button" v-else @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-white bg-secondary-v4' : 'text-white' ]">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
-                  </li>
+                  <template v-for="(x, idx) in tabs">
+                    <li v-if="x.showbutton">
+                      <a class="button-navbar" role="button" v-if="(selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6'" @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-success-v2 bg-success-v2-10' : 'text-success-v2']">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
+                      <a class="button-navbar" role="button" v-else @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-white bg-secondary-v4' : 'text-white' ]">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
+                    </li>
+                  </template>
                   <li class="sidebar-button" @click.prevent="ToggleMenu('Open')">
                     <a class="button-navbar sidebar-button-a">
-                      <img :src="baseUrl + 'Content/Images/Icon PNG/man.png'" class="profile-img sidebar-profile" width="23" height="23" alt="Your Logo" @click.prevent="ToggleMenu('Open')">
+                      <img :src="baseUrl + 'vendor/Content/Images/Icon PNG/man.png'" class="profile-img sidebar-profile" width="23" height="23" alt="Your Logo" @click.prevent="ToggleMenu('Open')">
                     </a>
                   </li>
                 </ul>
@@ -100,7 +102,7 @@
               <div class="container-fluid d-flex py-10 hidden-xs" v-else>
                 <div class="d-flex justify-content-center align-items-center">
                   <a class="btn" @click="TabChange(1)">
-                    <img :src="`${baseUrl}Content/Images/Icon SVG/left_arrow_bordered.svg`" />
+                    <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/left_arrow_bordered.svg`" />
                   </a>
                 </div>
                 <div class="d-flex justify-content-center align-items-center w-100p">
@@ -201,7 +203,7 @@
                 <div class="d-flex hidden-xs">
                   <div class="d-flex justify-content-center align-items-center">
                     <a class="btn" @click="TabChange(2)">
-                      <img :src="`${baseUrl}Content/Images/Icon SVG/left_arrow_bordered.svg`" />
+                      <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/left_arrow_bordered.svg`" />
                     </a>
                   </div>
                   <div class="d-flex justify-content-center align-items-center w-100p">
@@ -272,7 +274,7 @@
               <div class="container-fluid d-flex py-10 hidden-xs" v-else>
                 <div class="d-flex justify-content-center align-items-center">
                   <a class="btn" @click="TabChange(6)">
-                    <img :src="`${baseUrl}Content/Images/Icon SVG/left_arrow_bordered.svg`" />
+                    <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/left_arrow_bordered.svg`" />
                   </a>
                 </div>
                 <div class="d-flex justify-content-center align-items-center w-100p">
@@ -358,7 +360,7 @@
               <div class="container-fluid d-flex py-10 hidden-xs" v-else>
                 <div class="d-flex justify-content-center align-items-center">
                   <a class="btn" @click="TabChange(7)">
-                    <img :src="`${baseUrl}Content/Images/Icon SVG/left_arrow_bordered.svg`" />
+                    <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/left_arrow_bordered.svg`" />
                   </a>
                 </div>
                 <div class="d-flex justify-content-center align-items-center w-100p">
@@ -623,7 +625,7 @@
                   </div>
                   <div class="container-fluid" v-if="form_picsAttach.length <= 0">
                     <div class="d-flex justify-content-center align-content-center">
-                      <img :src="baseUrl + 'Content/Images/Icon PNG/document-green.png'" alt="Your Logo">
+                      <img :src="baseUrl + 'vendor/Content/Images/Icon PNG/document-green.png'" alt="Your Logo">
                     </div>
                     <div class="d-flex justify-content-center align-content-center">
                       <span v-if="is_mango === 'Y'" class="text-center">{{ ui.csm_v2_add_your_task_mango }}<br>{{ ui.csm_v2_for_requesting_mango }}</span>
@@ -830,7 +832,7 @@
                   </div>
                   <div class="container-fluid" v-if="form_picsAttach.length <= 0">
                     <div class="d-flex justify-content-center align-content-center">
-                      <img :src="baseUrl + 'Content/Images/Icon PNG/document-green.png'" alt="Your Logo">
+                      <img :src="baseUrl + 'vendor/Content/Images/Icon PNG/document-green.png'" alt="Your Logo">
                     </div>
                     <div class="d-flex justify-content-center align-content-center">
                       <span v-if="is_mango === 'Y'" class="text-center">{{ ui.csm_v2_add_your_task_mango }}<br>{{ ui.csm_v2_for_requesting_mango }}</span>
@@ -859,7 +861,7 @@
                     <div class="d-flex gap-10 align-items-center" style="width: 100%;">
                       <div style="position:relative" :class="isSmallScreen ? 'align-self-start' : ''">
                         <span class="d-flex" style="position: absolute; left: 10px;bottom: 10px; background-color: rgba(0, 0, 0, 0.5); border-radius: 4px;padding: 4px;">
-                          <img class="margin-r-5" :src="`${baseUrl}Content/Images/Icon SVG/small-img.svg`" width="12" />
+                          <img class="margin-r-5" :src="`${baseUrl}vendor/Content/Images/Icon SVG/small-img.svg`" width="12" />
                           <p class="text-white" style="margin: 0px; font-size: 12px;">( {{x.pics.filter(pic => pic.item_type !== 'T').length || 0}} )</p>
                         </span>
                         <img v-if="x.pics && x.pics[0] && x.pics[0].src && ['png','jpeg','jpg'].includes(getFileExt(x.pics[0].filename))" class="w-100 h-100 border-radius-10 cursor" style="object-fit: cover;" :src="x.pics[0].src" @click="viewImage(x.pics.filter(pic => pic.item_type !== 'T'))"></img>
@@ -903,11 +905,11 @@
                     <span class="m-0 text-secondary-cc" v-else-if="x.job_status == 'W' || x.job_status == 'I'">{{ ui.csm_v2_due_date }} :<span class="text-secondary-v2"> {{ $date(xt.isEmpty(x.due_date) ? '-' : x.due_date, 'DD/MM/YYYY') }}</span></span>
                     <div v-show="status_text == 'Y' || x.job_status == 'Y'">
                       <button class="form-control border-radius-10 hidden-xs" :class="[x.total_ans == 0 ? 'bg-success-v2-10 text-success-v2' : 'bg-secondary-v3']" @click="Score_Read('web',x)">
-                        <img :src="`${baseUrl}Content/Images/Icon SVG/engineering_material-symbols-${x.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
+                        <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/engineering_material-symbols-${x.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
                         <span class="margin-l-5" v-text="x.total_ans == 0 ? ui.csm_v2_worker_evaluation : ui.csm_v2_evaluated"></span>
                       </button>
                       <button class="form-control border-radius-10 visible-xs" :class="[x.total_ans == 0 ? 'bg-success-v2-10 text-success-v2' : 'bg-secondary-v3']" @click="Score_Read('mobile', x)">
-                        <img :src="`${baseUrl}Content/Images/Icon SVG/engineering_material-symbols-${x.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
+                        <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/engineering_material-symbols-${x.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
                         <span class="margin-l-5" v-text="x.total_ans == 0 ? ui.csm_v2_worker_evaluation : ui.csm_v2_evaluated"></span>
                       </button>
                     </div>
@@ -931,13 +933,13 @@
                   <!-- <span class=" padding-l-10 padding-r-10 padding-t-5 padding-b-5 text-white" v-if="chkstatus_detail.pics.length > 0" style="font-size:10px !important;position:absolute; background-color: #00BF9D !important; right: -10px !important;top:-10px !important;border-radius: 50%;" v-text="chkstatus_detail.pics.length"></span> -->
                   <!-- <span class="d-flex" v-if="chkstatus_detail.pics.length > 0" :style="{ position: 'absolute', left: isImg ? '10px' : '35px', bottom: isImg ? '10px' : '25px', backgroundColor: 'rgba(0, 0, 0, 0.5)', borderRadius: '4px', padding: '4px'}"> -->
                   <span class="d-flex" v-if="chkstatus_detail.pics.length > 0" :style="{ position: 'absolute', left: '10px', bottom: '10px', backgroundColor: 'rgba(0, 0, 0, 0.5)', borderRadius: '4px', padding: '4px'}">
-                    <img class="margin-r-5" :src="`${baseUrl}Content/Images/Icon SVG/small-img.svg`" width="12" />
+                    <img class="margin-r-5" :src="`${baseUrl}vendor/Content/Images/Icon SVG/small-img.svg`" width="12" />
                     <p class="text-white" style="margin: 0px; font-size: 12px;">( {{chkstatus_detail.pics.filter(pic => pic.item_type !== 'T').length}} )</p>
                   </span>
                   <!-- <img class="w-100 h-100 border-radius-10 cursor" :src="chkstatus_detail.pics[0].src" @click="viewImage(chkstatus_detail.pics)"> -->
                   <img v-if="chkstatus_detail.pics && chkstatus_detail.pics[0] && chkstatus_detail.pics[0].src && ['png','jpeg','jpg'].includes(getFileExt(chkstatus_detail.pics[0].filename))" class="w-100 h-100 border-radius-10 cursor" :src="chkstatus_detail.pics[0].src" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type !== 'T'))"></img>
                   <i v-else="chkstatus_detail.pics && chkstatus_detail.pics[0] && chkstatus_detail.pics[0].src && !['png','jpeg','jpg'].includes(getFileExt(chkstatus_detail.pics[0].filename))" class="fas fa-file fa-5x w-100 h-100 border-radius-10 cursor" style="text-align: end;" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type !== 'T'))"></i>
-                  <!-- <img class="w-100 h-100 border-radius-10 cursor" :src="`${baseUrl}Content/Images/PNG/test-Image.png`" @click="viewImage(x.pics)" style="object-fit: cover;"></img> -->
+                  <!-- <img class="w-100 h-100 border-radius-10 cursor" :src="`${baseUrl}vendor/Content/Images/PNG/test-Image.png`" @click="viewImage(x.pics)" style="object-fit: cover;"></img> -->
 
                 </div>
                 <div class="hidden-xs">
@@ -969,7 +971,7 @@
             <div class="row margin-t-15">
               <div class="col-xs-12 col-sm-12 col-md-6 col-md-6 col-lg-6 margin-b-15">
                 <div class="d-flex align-items-end">
-                  <img :src="`${baseUrl}Content/Images/Icon SVG/document-gray.svg`" width="22" />
+                  <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/document-gray.svg`" width="22" />
                   <span>{{is_mango === 'Y' ? ui.csm_v2_request_form_info_mango : ui.csm_v2_request_form_info}}</span>
                 </div>
                 <div class="d-flex flex-column margin-t-5 margin-l-25">
@@ -980,7 +982,7 @@
               </div>
               <div class="col-xs-12 col-sm-12 col-md-6 col-md-6 col-lg-6">
                 <div class="d-flex align-items-end">
-                  <img :src="`${baseUrl}Content/Images/Icon SVG/calendar-outlinenone.svg`" width="22" />
+                  <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/calendar-outlinenone.svg`" width="22" />
                   <span>{{ ui.csm_v2_appointment_date }}</span>
                 </div>
                 <div class="d-flex flex-column margin-t-5 margin-l-25">
@@ -1003,18 +1005,18 @@
             <div class="margin-t-15" v-show="status_text == 'Y'">
               <div class="">
                 <button class="form-control border-radius-10 hidden-xs" :class="[chkstatus_detail.total_ans == 0 ? 'bg-success-v2-10 text-success-v2' : 'bg-secondary-v3']" @click="Score_Read('web',chkstatus_detail)">
-                  <img :src="`${baseUrl}Content/Images/Icon SVG/engineering_material-symbols-${chkstatus_detail.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
+                  <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/engineering_material-symbols-${chkstatus_detail.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
                   <span class="margin-l-5" v-text="chkstatus_detail.total_ans == 0 ? ui.csm_v2_worker_evaluation : ui.csm_v2_evaluated"></span>
                 </button>
 
                 <button class="form-control border-radius-10 visible-xs" :class="[chkstatus_detail.total_ans == 0 ? 'bg-success-v2-10 text-success-v2' : 'bg-secondary-v3']" @click="Score_Read('mobile', chkstatus_detail)">
-                  <img :src="`${baseUrl}Content/Images/Icon SVG/engineering_material-symbols-${chkstatus_detail.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
+                  <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/engineering_material-symbols-${chkstatus_detail.total_ans != 0 ? `grey` : `green`}.svg`" width="22" />
                   <span class="margin-l-5" v-text="chkstatus_detail.total_ans == 0 ? ui.csm_v2_worker_evaluation : ui.csm_v2_evaluated"></span>
                 </button>
               </div>
             </div>
             <div class="margin-t-15 padding-l-15 d-flex align-items-end">
-              <img :src="`${baseUrl}Content/Images/Icon SVG/wrench-gray.svg`" width="22" />
+              <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/wrench-gray.svg`" width="22" />
               <span>{{ ui.csm_v2_status }}</span>
             </div>
             <div class="padding-l-15">
@@ -1024,19 +1026,19 @@
                   <p class="progress__info text-secondary-v2" v-if="chkstatus_detail.add_dt">{{ ui.csm_v2_date }} {{ $date(chkstatus_detail.add_dt, 'DD/MM/YYYY HH:mm') }}</p>
                 </li>
                 <li class="progress__item" v-bind:class="{'progress__item--active': ['HW', 'P', 'Y'].includes(status_text)}">
-                  <p class="progress__title text-success-v2">{{ ui.csm_v2_status_pending }} <img v-if="['HW', 'P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}Content/Images/Icon SVG/image-search.svg`" width="20" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type === 'B'))" /></p>
+                  <p class="progress__title text-success-v2">{{ ui.csm_v2_status_pending }} <img v-if="['HW', 'P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}vendor/Content/Images/Icon SVG/image-search.svg`" width="20" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type === 'B'))" /></p>
                   <p class="progress__info text-secondary-v2" v-if="['HW', 'P', 'Y'].includes(status_text)">{{ $date(chkstatus_detail.response_date, 'DD/MM/YYYY HH:mm') }}</p>
                   <p class="progress__info text-secondary-v2" v-if="['HW', 'P', 'Y'].includes(status_text)">{{ ui.csm_v2_due_date }} <span class="text-success-v2">{{$date(chkstatus_detail.due_date, 'DD/MM/YYYY')}}</span></p>
                 </li>
                 <li class="progress__item" v-bind:class="{'progress__item--active': ['P', 'Y'].includes(status_text)}">
-                  <p class="progress__title text-success-v2">{{ ui.csm_v2_status_in_progress }} <img v-if="['P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}Content/Images/Icon SVG/image-search.svg`" width="20" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type === 'A'))" /></p>
+                  <p class="progress__title text-success-v2">{{ ui.csm_v2_status_in_progress }} <img v-if="['P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}vendor/Content/Images/Icon SVG/image-search.svg`" width="20" @click="viewImage(chkstatus_detail.pics.filter(pic => pic.item_type === 'A'))" /></p>
                   <p class="progress__info text-secondary-v2" v-if="['P', 'Y'].includes(status_text)">{{ $date(chkstatus_detail.worker_start_date, 'DD/MM/YYYY HH:mm') }}</p>
                   <p class="progress__info text-secondary-v2" v-if="['P', 'Y'].includes(status_text)">{{ ui.csm_v2_due_date }} <span class="text-success-v2">{{$date(chkstatus_detail.worker_end_date, 'DD/MM/YYYY')}}</span></p>
                 </li>
                 <li class="progress__item" :class="{'progress__item--active': status_text === 'Y'}">
                   <p class="progress__title text-success-v2" style="display: inline-flex; align-items: center; gap: 6px;">
                     {{ ui.csm_v2_status_finished }}
-                    <img v-if="['P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}Content/Images/Icon SVG/image-search.svg`" width="20" style="vertical-align: middle; cursor: pointer;" @click="viewImage(chkstatus_detail.pics.filter(pic => ['S1', 'Y'].includes(pic.item_type)))" />
+                    <img v-if="['P', 'Y'].includes(status_text)" class="svg-icon" :src="`${baseUrl}vendor/Content/Images/Icon SVG/image-search.svg`" width="20" style="vertical-align: middle; cursor: pointer;" @click="viewImage(chkstatus_detail.pics.filter(pic => ['S1', 'Y'].includes(pic.item_type)))" />
                     <i v-if="['Y'].includes(status_text) && is_mango === 'Y'" class="far fa-file text-black" style="font-size: 17px; cursor: pointer;" @click="viewImage(chkstatus_detail.pics.filter(pic => ['T'].includes(pic.item_type)))"></i>
                   </p>
                   <p class="progress__info text-secondary-v2" v-if="status_text == 'Y'">{{ ui.csm_v2_status_done }} <span class="text-success-v2">{{$date(chkstatus_detail.complete_date, 'DD/MM/YYYY')}}</span></p>
@@ -1066,12 +1068,12 @@
                 <div class="d-flex justify-content-center">
                   <img v-if="x.score_hover > 0"
                        id="default-image"
-                       :src="`${baseUrl}Content/Images/Icon PNG/rating_score${x.score_hover > 5 ? 5 : x.score_hover }.png`"
+                       :src="`${baseUrl}vendor/Content/Images/Icon PNG/rating_score${x.score_hover > 5 ? 5 : x.score_hover }.png`"
                        width="100"
                        height="100">
                   <img v-else
                        id="default-image"
-                       :src="`${baseUrl}Content/Images/Icon PNG/rating_score${x.score_ans > 5 ? 5 : x.score_ans}.png`"
+                       :src="`${baseUrl}vendor/Content/Images/Icon PNG/rating_score${x.score_ans > 5 ? 5 : x.score_ans}.png`"
                        width="100"
                        height="100">
                 </div>
@@ -1159,7 +1161,7 @@
             <div style="background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 30px; margin-bottom: 20px; text-align: center;">
               <div class="d-flex justify-content-center" style="margin-bottom: 15px;">
                 <div class="d-flex justify-content-center align-items-center" style="width: 70px; height: 70px; background: linear-gradient(135deg, #e6fff9 0%, #d4f7ed 100%); border-radius: 50%;">
-                  <img :src="baseUrl + 'Content/Images/Icon SVG/location-building.svg'" width="36" height="36" alt="Location">
+                  <img :src="baseUrl + 'vendor/Content/Images/Icon SVG/location-building.svg'" width="36" height="36" alt="Location">
                 </div>
               </div>
               <h3 class="text-bold" style="color: #00BF9D; margin-bottom: 15px;">{{ ui.csm_v2_address }}</h3>
@@ -1175,7 +1177,7 @@
             <div style="background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 30px; text-align: center;">
               <div class="d-flex justify-content-center" style="margin-bottom: 15px;">
                 <div class="d-flex justify-content-center align-items-center" style="width: 70px; height: 70px; background: linear-gradient(135deg, #e6fff9 0%, #d4f7ed 100%); border-radius: 50%;">
-                  <img :src="baseUrl + 'Content/Images/Icon SVG/info-outline.svg'" width="36" height="36" alt="Contact">
+                  <img :src="baseUrl + 'vendor/Content/Images/Icon SVG/info-outline.svg'" width="36" height="36" alt="Contact">
                 </div>
               </div>
               <h3 class="text-bold" style="color: #00BF9D; margin-bottom: 20px;">{{ ui.csm_v2_contact_us }}</h3>
@@ -1231,7 +1233,7 @@
                   <div v-for="x, idx in member">
                     <div class="d-flex justify-content-between padding-l-5 padding-t-5 padding-b-5 padding-r-0">
                       <div class="flex-container" style="gap:0px 15px !important">
-                        <img :src="`${baseUrl}Content/Images/Logo/logo_mango_dark_default.png`" class="img-responsive border-radius-25 h-50 w-50 align-self-center" style="object-fit: scale-down;" alt="Image not found!">
+                        <img :src="`${baseUrl}vendor/Content/Images/Logo/logo_mango_dark_default.png`" class="img-responsive border-radius-25 h-50 w-50 align-self-center" style="object-fit: scale-down;" alt="Image not found!">
                         <div class="d-flex flex-column">
                           <span class="text-bold">{{ ui.csm_v2_contact_name }} : {{ x.name_th }}</span>
                           <span class="text-bold">Username : {{ x.userid }}</span>
@@ -1262,7 +1264,7 @@
                   <div class="d-flex flex-column">
                     <div class="d-flex justify-content-between">
                       <div class="flex-container" style="gap:0px 15px !important">
-                        <img :src="`${baseUrl}Content/Images/Logo/logo_mango_dark.png`" class="img-responsive border-radius-25 h-50 w-50 align-self-center" style="object-fit: scale-down;" alt="Image not found!">
+                        <img :src="`${baseUrl}vendor/Content/Images/Logo/logo_mango_dark.png`" class="img-responsive border-radius-25 h-50 w-50 align-self-center" style="object-fit: scale-down;" alt="Image not found!">
                         <div class="flex-container flex-column">
                           <h4 class="text-bold mt-0">{{ x.name_th }}</h4>
                           <h4 class="text-bold mt-0">{{ x.userid }}</h4>
@@ -1309,44 +1311,44 @@
             <span class="v2-drawer-label">{{ ui.csm_v2_menu }}</span>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab5' }" @click="TabChange(4)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/user-line-${selectedTabs.id == 'Header_tab5' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/user-line-${selectedTabs.id == 'Header_tab5' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{ ui.csm_v2_profile }}</span>
             </a>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab2' }" @click="TabChange(1)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/wrench-${selectedTabs.id == 'Header_tab2' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/wrench-${selectedTabs.id == 'Header_tab2' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{is_mango === 'Y' ? ui.csm_v2_create_request_mango : ui.csm_v2_create_request}}</span>
             </a>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab3' }" @click="TabChange(2)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/document-${selectedTabs.id == 'Header_tab3' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/document-${selectedTabs.id == 'Header_tab3' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{ ui.csm_v2_status_follow_up }}</span>
             </a>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab7' }" v-if="customer.type == 'ar_cust'" @click="TabChange(6)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/document-${selectedTabs.id == 'Header_tab7' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/document-${selectedTabs.id == 'Header_tab7' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{ ui.csm_v2_member }}</span>
             </a>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab8' }" v-if="customer.type == 'ar_cust'" @click="TabChange(7)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/user-line-${selectedTabs.id == 'Header_tab8' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/user-line-${selectedTabs.id == 'Header_tab8' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{ ui.csm_v2_member_request }}</span>
               <span class="v2-menu-badge" v-if="tabs[7].total > 0">{{ tabs[7].total }}</span>
             </a>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab9' }" @click="TabChange(8)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/user-line-${selectedTabs.id == 'Header_tab9' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/user-line-${selectedTabs.id == 'Header_tab9' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{ ui.csm_v2_parcel_tracking }}</span>
             </a>
             <a class="v2-menu-item" :class="{ 'is-active' : selectedTabs.id == 'Header_tab6' }" @click="TabChange(5)">
               <span class="v2-menu-icon">
-                <img :src="baseUrl + `Content/Images/Icon SVG/building-${selectedTabs.id == 'Header_tab6' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
+                <img :src="baseUrl + `vendor/Content/Images/Icon SVG/building-${selectedTabs.id == 'Header_tab6' ? 'green' : 'gray'}.svg`" width="20" height="20" alt="">
               </span>
               <span class="v2-menu-text">{{ ui.csm_v2_ask_for_help }}</span>
             </a>
@@ -1458,7 +1460,7 @@
         <div class="container-fluid">
           <div class="container">
             <div class="d-flex justify-content-center">
-              <img :src="`${baseUrl}Content/Images/Icon PNG/document-sending.png`" class="img-responsive" />
+              <img :src="`${baseUrl}vendor/Content/Images/Icon PNG/document-sending.png`" class="img-responsive" />
             </div>
             <div class="text-center visible-xs">
               <p class="fs-1">{{ ui.csm_v2_confirm_send }}</p>
@@ -1488,8 +1490,8 @@
             <span class="fs-3 text-dark text-bold">{{idx+1}}. {{ x.itemname }}</span>
             <div class="d-flex flex-column gap-15  margin-t-15">
               <div class="d-flex justify-content-center">
-                <img v-if="x.score_hover > 0" id="default-image" :src="`${baseUrl}Content/Images/Icon PNG/rating_score${x.score_hover > 5 ? 5 : x.score_hover }.png`" width="100" height="100">
-                <img v-else id="default-image" :src="`${baseUrl}Content/Images/Icon PNG/rating_score${x.score_ans > 5 ? 5 : x.score_ans}.png`" width="100" height="100">
+                <img v-if="x.score_hover > 0" id="default-image" :src="`${baseUrl}vendor/Content/Images/Icon PNG/rating_score${x.score_hover > 5 ? 5 : x.score_hover }.png`" width="100" height="100">
+                <img v-else id="default-image" :src="`${baseUrl}vendor/Content/Images/Icon PNG/rating_score${x.score_ans > 5 ? 5 : x.score_ans}.png`" width="100" height="100">
               </div>
               <div class="d-flex gap-10 justify-content-center">
                 <i class="fa-star star-list" v-for="xx in x.max_score" :class="[ x.score_ans >= xx ? 'fas' : 'far', x.score_hover >= xx ? 'fas' : 'far' ]" style="color:#FFC93E" @click="addScore('score', idx, xx)" @mouseover="addScore('over', idx, xx)" @mouseleave="addScore('over', idx, 0)" :disabled="score_ans > 0"></i>
@@ -1587,7 +1589,7 @@
     <modalv3 ref="modal_updateMember" @close-function="Closemodal_updateMember()">
       <template #header>
         <div class="d-flex align-items-center gap-10">
-          <img :src="`${baseUrl}Content/Images/Icon SVG/user-line-green.svg`" width="24" height="24" />
+          <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/user-line-green.svg`" width="24" height="24" />
           <span class="fs-2 padding-b-5">{{ ui.csm_v2_member_info }}</span>
         </div>
       </template>
@@ -2398,7 +2400,7 @@
             break;
           case "Header_tab4":
             this.$nextTick(() => {
-              $('body').css({ 'width': '100%', 'background': 'url(' + this.baseUrl + 'Content/Images/PNG/success-submit.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)', 'background-repeat': 'no-repeat', 'background-position': 'center center' })
+              $('body').css({ 'width': '100%', 'background': 'url(' + this.baseUrl + 'vendor/Content/Images/PNG/success-submit.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)', 'background-repeat': 'no-repeat', 'background-position': 'center center' })
             })
             break;
           case "Header_tab5": case "Header_tab6":
@@ -3593,7 +3595,7 @@
             // console.log('ccc mounted', `url(${dataServer + 'Api/File/DownLoad?id=' + this.img_bg[0].phi_path}) `)
           } else if (this.is_mango === "Y") {
             $('body').css({
-              'background-image': `url(${this.baseUrl + 'Content/Images/PNG/v2_mangoBG.png'})`,
+              'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/v2_mangoBG.png'})`,
               'background-size': 'cover',
               'background-repeat': 'no-repeat',
               'background-position': 'center center',
@@ -3601,14 +3603,14 @@
           }
           else if (this.is_mango === "N") {
             $('body').css({
-              'background-image': `url(${this.baseUrl + 'Content/Images/PNG/v2_customerBG.png'})`,
+              'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/v2_customerBG.png'})`,
               'background-size': 'cover',
               'background-repeat': 'no-repeat',
               'background-position': 'center center',
             });
           } else {
             $('body').css({
-              'background-image': `url(${this.baseUrl + 'Content/Images/PNG/bg.jpg'})`,
+              'background-image': `url(${this.baseUrl + 'vendor/Content/Images/PNG/bg.jpg'})`,
               'background-size': 'cover',
               'background-repeat': 'no-repeat',
               'background-position': 'center center',
@@ -3753,7 +3755,7 @@
           })
         } else if (this.selectedTabs.id == 'Header_tab4') {
           this.$nextTick(() => {
-            $('body').css({ 'width': '100%', 'background': 'url(' + this.baseUrl + 'Content/Images/PNG/success-submit.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)', 'background-repeat': 'no-repeat', 'background-position': 'center center' })
+            $('body').css({ 'width': '100%', 'background': 'url(' + this.baseUrl + 'vendor/Content/Images/PNG/success-submit.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)', 'background-repeat': 'no-repeat', 'background-position': 'center center' })
           })
         } else if (this.selectedTabs.id == 'Header_tab5') {
           this.$nextTick(() => {
@@ -3785,7 +3787,7 @@
           })
         } else if (this.selectedTabs.id == 'Header_tab4') {
           this.$nextTick(() => {
-            $('body').css({ 'width': '100%', 'background': 'url(' + this.baseUrl + 'Content/Images/PNG/success-submit.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)', 'background-repeat': 'no-repeat', 'background-position': 'center center' })
+            $('body').css({ 'width': '100%', 'background': 'url(' + this.baseUrl + 'vendor/Content/Images/PNG/success-submit.png), linear-gradient(to bottom, #00BF9D 0%, #00BF9D 53%, white 0%, white 100%)', 'background-repeat': 'no-repeat', 'background-position': 'center center' })
           })
         } else {
           this.$nextTick(() => {

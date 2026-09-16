@@ -151,7 +151,8 @@ import 'flatpickr/dist/flatpickr.css';
 
 registerAllModules();
 
-let page = {};
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } };
 
 export default {
   data() {

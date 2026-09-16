@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <re-page ref="page">
-            <template slot="body">
+            <template #body>
                 <section class="content-header">
                     <h1>
                         Customer Service Dashboard
@@ -78,7 +78,8 @@
 <script type="text/javascript">
     import Chart from 'chart.js';
     import 'chartjs-plugin-labels';
-    let page = {};
+    // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+    let page = { loadingBox: { show() {}, hide() {} } };
     let cpn = {
         data() {
             return {

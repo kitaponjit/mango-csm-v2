@@ -55,13 +55,13 @@
 
     <!-- Modal : Criteria -->
     <modal ref="conditionModal">
-      <template slot="header">
+      <template #header>
         <div class="modal-header-icon">
           <i class="fas fa-filter"></i>
         </div>
         <h4 class="modal-title">{{ ui.erp_condition_report }} <span class="cond-title-badge" v-if="condData.length">{{ condData.length }}</span></h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="cond-modal-body">
           <!-- Extra Condition Slot -->
           <div class="cond-extra-section" v-if="$slots['extra-cond']">
@@ -164,7 +164,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <button class="btn btn-sm btn-cond-add" v-on:click="addCond()"><i class="fas fa-plus"></i> <span v-text="ui.re_add_condition || 'เพิ่มเงื่อนไข'"></span></button>
         <button class="btn btn-sm btn-cond-submit" v-on:click="callData()"><i class="fas fa-database"></i> <span v-text="ui.re_retri_dataa || 'เรียกข้อมูล'"></span></button>
       </template>
@@ -174,7 +174,8 @@
 </template>
 
 <script>
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let vue = {
     props: {
       extraCond: {

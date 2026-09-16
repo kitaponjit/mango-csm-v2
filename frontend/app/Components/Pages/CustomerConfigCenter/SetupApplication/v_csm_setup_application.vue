@@ -344,8 +344,7 @@
                     <tr v-for="(x,idx) in companyCopy" v-bind:class="{'table-selected': x.cc_select == 'Y'}">
                         <td align="center">
                             <p-check class="p-icon p-curve p-smooth p-table" color="primary" true-value="Y" false-value="N" v-model="x.cc_select">
-                                <i class="icon mdi mdi-check" slot="extra"></i>
-                                <label slot="off-label"></label>
+                                <template #extra><i class="icon mdi mdi-check"></i></template>
                             </p-check>
                         </td>
                         <td align="center">{{idx+1}}.</td>
@@ -366,7 +365,8 @@
 
 <script type="text/javascript">
 import "@mdi/font/css/materialdesignicons.css";
-let page = {}
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } }
 let process = false
 const applicationType = [
     { id: 'ANYWHERE', name: 'ERP Anywhere' },

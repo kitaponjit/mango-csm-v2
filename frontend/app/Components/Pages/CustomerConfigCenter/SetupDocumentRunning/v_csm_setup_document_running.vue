@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content">
         <!-- Control Button : Company -->
         <div class="row">
@@ -244,8 +244,7 @@
               <tr v-for="(x,idx) in companyCopy" v-bind:class="{'table-selected': x.cc_select == 'Y'}">
                 <td align="center">
                   <p-check class="p-icon p-curve p-smooth p-table" color="primary" true-value="Y" false-value="N" v-model="x.cc_select">
-                    <i class="icon mdi mdi-check" slot="extra"></i>
-                    <label slot="off-label"></label>
+                    <template #extra><i class="icon mdi mdi-check"></i></template>
                   </p-check>
                 </td>
                 <td align="center">{{idx+1}}.</td>
@@ -266,7 +265,8 @@
 </template>
 
 <script type="text/javascript">
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   export default {
     data() {
       return {

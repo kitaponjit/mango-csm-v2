@@ -393,7 +393,7 @@
                                  @add-worker="openAddWork('new')"
                                  @read-worker="openAddWork('read')"
                                  :refWorkerText="refWorkerCount">
-                <template slot="trail">
+                <template #trail>
                   <button type="button" class="btn wa-ai-btn"
                           v-if=" editDetailData.status !='W'&& (formData.assign_empno == auth.empno || editDetailData.assign_empno == auth.empno || editDetailData.tester_empno == auth.empno ||isMyWorker)"
                           @click.prevent="openAiAnalysisModal()"
@@ -1610,7 +1610,7 @@
         numWork: 0,
         modalWorkers: [],
         allWorkersLocal: [],
-        showPDf: baseUrl + "Content/Images/PDF/UpdateSoftwareManual.pdf" ,
+        showPDf: baseUrl + "vendor/Content/Images/PDF/UpdateSoftwareManual.pdf" ,
 
       }
     },

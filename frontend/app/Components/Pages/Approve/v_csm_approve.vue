@@ -2,7 +2,7 @@
   <div>
     <re-page ref="page">
 
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="row">
             <div class="col-md-12 col-sm-12 col-xs-12">
@@ -623,7 +623,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_data" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_data">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -644,7 +646,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_dataU" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_dataU">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -814,7 +818,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_dataC" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_dataC">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -839,7 +845,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_dataC" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_dataC">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -856,7 +864,8 @@
 </template>
 
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let pagingW = {};
   let pagingD = {};
   let pagingU = {};

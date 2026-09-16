@@ -671,7 +671,8 @@
   // import { db, auth } from '../../../csm_firebase.js';
   // import { db, auth } from './firebase'
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let loading = {};
 
   export default {

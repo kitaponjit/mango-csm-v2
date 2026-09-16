@@ -1,11 +1,11 @@
 ﻿<template>
     <div>
         <re-page ref="page">
-            <template slot="body">
+            <template #body>
                 <app-form-2 ref="appForm" :exportData_header="onSetup_beforeExport('header')"
                     :exportData="onSetup_beforeExport('detail')" exportName="RequestType" exportSelect="B"
                     exportUrl="csm/master/QCItem_ExportExcel">
-                    <template slot="form-detail">
+                    <template #form-detail>
                         <div class="box box-solid">
                             <div class="box-body with-border">
                                 <div class="row">
@@ -44,7 +44,8 @@
 <script>
 import XLSX from 'xlsx';
 let paging = {};
-let page = {};
+// no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+let page = { loadingBox: { show() {}, hide() {} } };
 let appForm = {};
 export default {
     data() {

@@ -25,7 +25,7 @@
             <li>
               <a href="#" data-toggle="control-sidebar">
                 <img
-                  :src="`${baseUrl}Content/Images/Icon SVG/man.svg`"
+                  :src="`${baseUrl}vendor/Content/Images/Icon SVG/man.svg`"
                   width="22"
                 />
                 <span class="hidden-sm hidden-xs" style="margin-left: 5px">{{
@@ -101,13 +101,13 @@
         <ul class="sidebar-menu tree" data-widget="tree">
           <li>
             <a :href="'page/external/v_csm_external/'">
-              <img :src="`${baseUrl}Content/Images/Icon SVG/home.svg`"
+              <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/home.svg`"
                    width="22" /><span> หน้าหลัก</span>
             </a>
           </li>
           <li>
             <a :href="'page/external/v_csm_request/'">
-              <img :src="`${baseUrl}Content/Images/Icon SVG/document.svg`"
+              <img :src="`${baseUrl}vendor/Content/Images/Icon SVG/document.svg`"
                    width="22" /><span> ข้อเสนอแนะ</span>
             </a>
           </li>

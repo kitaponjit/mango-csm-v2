@@ -228,9 +228,9 @@
         companyActive: -1,
         companyUp: false,
         companyMax: 300,
-        contentImage: baseUrl + '/Content/Images/Logo/logo_mangocsm.png',
-        bgImage: baseUrl + 'Content/Images/Image/login_bg.jpg',
-        defaultBgImage: baseUrl + 'Content/Images/Image/login_bg.jpg',
+        contentImage: baseUrl + 'vendor/Content/Images/Logo/logo_mangocsm.png',
+        bgImage: baseUrl + 'vendor/Content/Images/Image/login_bg.jpg',
+        defaultBgImage: baseUrl + 'vendor/Content/Images/Image/login_bg.jpg',
       };
     },
     computed: {

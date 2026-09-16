@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="upd-shell">
 
           <div class="upd-progress" :class="{ 'is-active': isLoading }"><span></span></div>
@@ -80,7 +80,8 @@
 <script>
   import trn_update_modal from './components/vs_csm_trn_updatemodal.vue'
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let cpn = {
     components: {

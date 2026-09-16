@@ -18,6 +18,12 @@ import {
 } from "./routes.others";
 
 const routes = [
+  /* The legacy app was only ever served under /page/** — Website/Page/Web.config
+     rewrote everything below that path to Default.aspx — so the site root was the
+     IIS root and never needed a route. Nuxt serves this SPA from the root instead,
+     which left "/" matching nothing but the wildcard "content not found" route.
+     Send it to the app home, which is also where login.vue lands after sign-in. */
+  { path: "/", redirect: "/page/" },
   ...defaultRoutes,
   ...dashboardRoutes,
   ...transactionRoutes,

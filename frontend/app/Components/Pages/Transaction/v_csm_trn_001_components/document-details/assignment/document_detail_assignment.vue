@@ -442,7 +442,8 @@
   import { mapState, mapGetters } from '~/stores/helpers'
 
   let historyPaging = {}
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   export default {
     components: {
       "history_poch": historyPochModal,

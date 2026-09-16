@@ -1,7 +1,7 @@
 <template>
   <div class="cx-page">
     <customer-page ref="page">
-      <template slot="body">
+      <template #body>
         <!-- Summary -->
         <div class="cx-hero">
           <span class="cx-hero__icon"><i class="fas fa-file-alt"></i></span>
@@ -206,7 +206,8 @@
 </template>
 <script type="text/javascript">
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       return {

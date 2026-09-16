@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="box-body">
             <!-- Customer List -->
@@ -693,7 +693,8 @@
 </template>
 <script>
   let process = false;
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let appForm = {};
   let paging = {};
   let paging2 = {};

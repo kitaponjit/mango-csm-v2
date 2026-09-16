@@ -311,7 +311,8 @@
 </template>
 
 <script>
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
 
   import PhotoSwipe from 'photoswipe';
   import 'photoswipe/style.css';

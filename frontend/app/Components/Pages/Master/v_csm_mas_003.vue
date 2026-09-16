@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-widget">
           <div class="box-body">
             <!-- Project Contract -->
@@ -94,11 +94,11 @@
     </re-page>
         <!--modal edit -->
               <modal ref="editdata">
-                <template slot="header">
+                <template #header>
                   <h4 class="text-white mb-0">แก้ไข</h4>
                 </template>
 
-                <template slot="body">
+                <template #body>
                   <div class="row align-items-end">
                     <div class="col-lg-3 col-md-4">
                       <div class="form-group mb-0">
@@ -131,7 +131,7 @@
                   </div>
                 </template>
 
-                <template slot="footer">
+                <template #footer>
                   <div class="row w-100" style="margin-left: 10px;">
                     <div class="col-12 text-right">
                       <button class="btn btn-sm btn-success px-4" @click.prevent="saveArea">
@@ -143,10 +143,10 @@
               </modal>
     <!-- modal main data -->
     <modal ref="maindata">
-      <template slot="header">
+      <template #header>
         <h4>Main Data</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-lg-2 col-md-4">
             <div class="form-group">
@@ -183,17 +183,17 @@
         </div>
 
       </template>
-      <template slot="footer">
+      <template #footer>
         <pagination class="pull-left" ref="paging1" @page-change="pageChange1($event.page)"></pagination>
         <button class="btn btn-sm  btn-success" @click.prevent="saveItem"><i class="fa fa-save"></i> บันทึกข้อมูล</button>
       </template>
     </modal>
     <!-- Item Warranty -->
     <modal ref="ItemWarranty">
-      <template slot="header">
+      <template #header>
         <h4>Item Warranty</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-md-4">
             <div class="form-group">
@@ -226,17 +226,17 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <pagination class="pull-left" ref="itemPaging" @page-change="onPageSelected($event.page, 'war_list')"></pagination>
         <button type="button" class="btn btn-sm btn-default" @click="pushItem"><i class="fa fa-plus"></i> Selected</button>
       </template>
     </modal>
     <!-- Item Materials -->
     <modal ref="ItemMaterials">
-      <template slot="header">
+      <template #header>
         <h4>Item Materials</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-lg-3 col-md-4 col-sm-2">
             <div class="form-group">
@@ -281,17 +281,17 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <pagination class="pull-left" ref="itemMatPaging" @page-change="onPageSelected($event.page, 'mat_list')"></pagination>
         <button type="button" class="btn btn-sm btn-default" @click="pushItemMat"><i class="fa fa-plus"></i> Selected</button>
       </template>
     </modal>
     <!-- Modal : Copy Area to Project -->
     <modal ref="projectCopyModal">
-      <template slot="header">
+      <template #header>
         <h4><i class="fas fa-building"></i> Project Contract</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-md-2">
             <div style="margin-bottom:10px">
@@ -311,16 +311,16 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <pagination class="pull-left" ref="projectPaging" @page-change="onPageSelected($event.page, 'ProjectContractCopy')"></pagination>
         <button class="btn btn-sm bg-olive" @click.prevent="copyClick()"><i class="fas fa-save"></i> <span v-text="ui.save || 'Save'"></span></button>
       </template>
     </modal>
     <!-- tab1-m1 -->
     <modal ref="tab1">
-      <template slot="header"><div class="form-group">
+      <template #header><div class="form-group">
         <h4>เพิ่มรายการใหม่</h4></div></template>
-        <template slot="body"> 
+        <template #body> 
           <div class="row">
           <div class="col-lg-3 col-md-4">
             <div class="form-group">
@@ -344,7 +344,7 @@
           </div>
         </div>   
       </template>
-      <template slot="footer">
+      <template #footer>
         <button class="btn btn-sm  btn-success" @click.prevent="saveArea "><i class="fa fa-save"></i> บันทึกข้อมูล</button>
       </template>
     </modal>
@@ -391,7 +391,8 @@
 </template>
 <script>
   let process = false;
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let itemPaging = {};
   let itemMatPaging = {};
   let projectPaging = {};

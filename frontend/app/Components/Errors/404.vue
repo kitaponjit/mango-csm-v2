@@ -41,7 +41,7 @@
       return {
         ui: window.ui,
         baseUrl,
-        contentImage: baseUrl + "/Content/Images/Image/mango1.jpg"
+        contentImage: baseUrl + "vendor/Content/Images/Image/mango1.jpg"
       };
     },
 

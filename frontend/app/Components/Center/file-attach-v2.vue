@@ -172,10 +172,9 @@
 </template>
 
 <script type='text/javascript'>
-  import vue2Dropzone from 'vue2-dropzone'
-  import 'vue2-dropzone/dist/vue2Dropzone.min.css'
-
-  import VueDocPreview from 'vue-doc-preview'
+  import vue2Dropzone from './file-dropzone.vue'
+  
+  import VueDocPreview from './doc-preview.vue'
 
   import draggable from 'vuedraggable'
 

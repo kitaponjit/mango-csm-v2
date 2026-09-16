@@ -501,7 +501,8 @@
 </template>
 
 <script type="text/javascript">
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
   let customerPaging = {}
   let copyPaging = {}

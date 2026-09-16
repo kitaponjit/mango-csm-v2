@@ -1,13 +1,13 @@
 ﻿<template>
   <div>
     <modal ref="langModal">
-      <template slot="header">
+      <template #header>
         <div class="lang-header">
           <i class="fas fa-globe"></i>
           <span>{{ ui.select_language }}</span>
         </div>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="lang-grid">
           <div
             v-for="x in langList"
@@ -23,7 +23,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <button
           class="lang-btn"
           :disabled="!user_lang"

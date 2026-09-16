@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="box box-solid">
           <div class="box-body">
             <!-- Search Panel -->
@@ -48,10 +48,10 @@
 
     <!-- Modal : Add Document Running -->
     <modal ref="addModal">
-      <template slot="header">
+      <template #header>
         <h4>{{editMode ? 'Edit Document Running' : 'Add Document Running'}}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
@@ -69,7 +69,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <button type="button" class="btn btn-sm bg-olive" v-on:click="onSave()">บันทึกช้อมูล</button>
         <button type="button" class="btn btn-sm btn-default" v-on:click="$refs.addModal.closeModal()">ปิดหน้าต่าง</button>
       </template>
@@ -78,7 +78,8 @@
   </div>
 </template>
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let cpn = {
     data() {

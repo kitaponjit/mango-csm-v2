@@ -6,7 +6,7 @@
                     exportName=""
                     exportSelect="B"
                     exportUrl="csm/master/CustomerServiceExport">
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="box box-widget">
               <div class="box-body">
                 <div class="row d-flex">
@@ -64,13 +64,13 @@
       </template>
     </re-page>
     <modal-2 ref="modal">
-      <template slot="header">
+      <template #header>
         <div class="d-flex align-items-center" style="gap:10px;">
           <i class="fa fa-cogs" style="font-size:18px;"></i>
           <span style="font-size:16px;font-weight:600;">{{ editMode ? "EDIT SERVICE TYPE" : "ADD SERVICE TYPE" }}</span>
         </div>
       </template>
-      <template slot="body">
+      <template #body>
 
         <!-- Section 1: ข้อมูลหลัก -->
         <div class="modal-section">
@@ -267,7 +267,7 @@
         </div>
 
       </template>
-      <template slot="footer">
+      <template #footer>
         <button class="btn btn-sm btn-success" @click.prevent="saveData()">
           <i class="fa fa-save"></i> บันทึกข้อมูล
         </button>
@@ -437,7 +437,9 @@
   import XLSX from 'xlsx'
   import { mapState, mapGetters } from '~/stores/helpers'
 
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
   let appForm = {}
   let process = false

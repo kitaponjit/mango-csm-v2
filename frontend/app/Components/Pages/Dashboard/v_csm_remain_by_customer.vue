@@ -1,7 +1,7 @@
 <template>
   <div class="v-csm-remain">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content rc-wrap">
           <!-- Filter / search bar -->
           <div class="rc-bar">
@@ -681,7 +681,8 @@
     import { mapState, mapGetters } from '~/stores/helpers'
   import * as echarts from 'echarts';
   import VChart from 'vue-echarts';
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       return {

@@ -1,9 +1,9 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <app-form-2 ref="appForm">
-          <template slot="extraBtn">
+          <template #extraBtn>
 
             <button v-if="headerTabSelected == 'header_tab1'"
                     class="btn btn-sm btn-primary"
@@ -32,7 +32,7 @@
             </ul>
           </div>
 
-          <template slot="form-detail">
+          <template #form-detail>
             <div class="nav-tabs-custom">
               <ul class="nav nav-tabs">
                 <li v-for="(x,idx) in headerTab" :key="idx" :class="{'active': x.id == headerTabSelected}">
@@ -318,7 +318,8 @@
 </template>
 <script type="text/javascript">
   import { mapState, mapGetters } from '~/stores/helpers'
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let appForm = {};
 

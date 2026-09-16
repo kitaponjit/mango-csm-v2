@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="ed">
           <div class="ed-bar">
             <div class="ed-bar__row">
@@ -63,7 +63,7 @@
 
     <!-- Modal : Tools -->
     <modal ref="toolModal">
-      <template slot="header">
+      <template #header>
         <div class="ed-mh">
           <span class="ed-mh__icon"><i class="fas fa-file-alt"></i></span>
           <div class="ed-mh__id">
@@ -72,7 +72,7 @@
           </div>
         </div>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="modal-section-title"><i class="fas fa-file-alt"></i> Document : Header</div>
         <div class="row">
           <div class="col-md-2 col-sm-6 col-xs-6">
@@ -265,9 +265,11 @@
                             <td align="center" class="text-modulebold">{{ x.itemno }}.</td>
                             <td align="center">{{ x.module }}</td>
                             <td align="center">{{ x.subject }}</td>
-                            <td align="center" v-for="item in serviceCodeData" :key="item.serv_code" v-if="item.serv_code === x.item_type">
-                              {{ item.serv_name || 'No DATA' }}
-                            </td>
+                            <template v-for="item in serviceCodeData" :key="item.serv_code">
+                              <td align="center" v-if="item.serv_code === x.item_type">
+                                {{ item.serv_name || 'No DATA' }}
+                              </td>
+                            </template>
                             <td align="center">
                               <template v-if="x.req_type === null">
                                 <td>-</td>
@@ -278,9 +280,11 @@
                                 </td>
                               </template>
                             </td>
-                            <td align="center" v-for="status in statusCodeData" :key="status.id" v-if="status.id === x.status">
-                              {{ status.name || '-' }}
-                            </td>
+                            <template v-for="status in statusCodeData" :key="status.id">
+                              <td align="center" v-if="status.id === x.status">
+                                {{ status.name || '-' }}
+                              </td>
+                            </template>
                             <td align="center">{{ $date(x.response_date, 'DD/MM/YYYY') }}</td>
                             <td align="center">{{ $date(x.due_date, 'DD/MM/YYYY') }}</td>
                             <td align="center">{{ $date(x.complete_date, 'DD/MM/YYYY') }}</td>
@@ -326,7 +330,7 @@
           </div>
         </div>
       </template>
-      <template slot="footer">
+      <template #footer>
         <div class="ed-mf">
           <button class="ed-abtn ed-abtn--warn" @click="confirmResetApprove(formData['job_no'], 'reset')">
             <i class="fa fa-undo"></i> ล้างสถานะอนุมัติ
@@ -357,7 +361,8 @@
 </template>
 
 <script>
-  let page = {}
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } }
   let paging = {}
   let cpn = {
     data() {

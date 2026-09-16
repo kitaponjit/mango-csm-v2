@@ -1,7 +1,7 @@
 <template>
   <div class="csm-dashboard">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content-header csm-page-header">
           <div class="csm-page-header-inner">
             <div class="csm-page-header-left">
@@ -204,7 +204,8 @@
   import "chartjs-plugin-piechart-outlabels";
   import * as echarts from 'echarts';
   import VChart from 'vue-echarts';
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let gmFont = "'Inter', 'Sarabun', sans-serif";
   let gmPalette = ['#1a73e8', '#00897b', '#f9ab00', '#d93025', '#7b1fa2', '#0288d1', '#1e8e3e', '#e8710a', '#c2185b', '#5e35b1', '#00acc1', '#9e9d24'];
   let chartColors = (n) => {

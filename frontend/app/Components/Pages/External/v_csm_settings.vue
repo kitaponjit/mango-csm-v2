@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="cx-page">
         <customer-page ref="page">
-            <template slot="body">
+            <template #body>
                 <div class="cx-hero">
                     <span class="cx-hero__icon"><i class="fas fa-user-cog"></i></span>
                     <div class="cx-hero__body">
@@ -17,9 +17,11 @@
                             <div class="box-body">
                                 <div class="nav-tabs-custom">
                                     <ul class="nav nav-tabs">
-                                        <li :class="{active: x.id===tabActive}" v-for="x in tabField" v-if="x.show">
-                                            <a href="#" @click.prevent="onTabChange(x.id)"><i class="fas" :class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i> <span v-text="x.text"></span></a>
-                                        </li>
+                                        <template v-for="x in tabField">
+                                          <li :class="{active: x.id===tabActive}" v-if="x.show">
+                                              <a href="#" @click.prevent="onTabChange(x.id)"><i class="fas" :class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i> <span v-text="x.text"></span></a>
+                                          </li>
+                                        </template>
                                     </ul>
                                     <div class="tab-content">
                                         <div class="tab-pane" :class="{active: tabActive===0}">
@@ -118,7 +120,8 @@
 </template>
 <script type="text/javascript">
 
-    let page = {};
+    // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+    let page = { loadingBox: { show() {}, hide() {} } };
     let cpn = {
         data() {
             return {

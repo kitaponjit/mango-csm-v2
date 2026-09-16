@@ -95,7 +95,7 @@
         isLoading: false,
         showPassword: false,
         focused: null,
-        logoImage: baseUrl + 'Content/Images/Logo/logo_mango.png'
+        logoImage: baseUrl + 'vendor/Content/Images/Logo/logo_mango.png'
       };
     },
     methods: {

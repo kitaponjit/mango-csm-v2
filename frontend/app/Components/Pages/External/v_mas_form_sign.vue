@@ -1,7 +1,7 @@
 <template>
   <div class="cx-page">
     <customer-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="cx-hero">
           <span class="cx-hero__icon"><i class="fa fa-fw fa-users"></i></span>
           <div class="cx-hero__body">
@@ -25,68 +25,70 @@
               </ul>
               <div class="tab-content tab-box">
                 <div class="tab-pane" v-bind:class="{'active':tabSelected}">
-                  <div class="panel cx-panel" v-bind:class="{'cx-panel--done': (idx+1) <= 2, 'cx-panel--wait': (idx+1) > 2}" v-for="(x, idx) in data" v-if="tabSelected == 'tab1' ? x.active == 'N' : x.active == 'Y' ">
-                    <div class="panel-heading">
-                      <h3 class="panel-title"><i class="fas fa-file-alt"></i> CSM No. {{x.job_no}} (ครั้งที่ {{idx+1}})</h3>
-                      <span class="label label-success" v-if="x.active == 'Y'"><i class="fas fa-check"></i> ลงชื่อแล้ว</span>
-                      <span class="label label-warning" v-else><i class="far fa-clock"></i> รอลงชื่อ</span>
-                    </div>
-                    <div class="panel-body">
-                      <div class="cx-def">
-                        <div class="cx-def__k">Description</div>
-                        <div class="cx-def__v">
-                          <label class="cx-def__box">{{x.detail}}</label>
-                        </div>
-
-                        <div class="cx-def__k">Attach File By IT</div>
-                        <div class="cx-def__v">
-                          <div class="cx-filebar cx-filebar--named">
-                            <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank" :title="x.filename">
-                              <i class="fas fa-file-word" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file-excel" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file-powerpoint" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file-pdf" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file" v-else=""></i>
-                              <span class="cx-filebar__name">{{x.filename}}</span>
-                            </a>
+                  <template v-for="(x, idx) in data">
+                    <div class="panel cx-panel" v-bind:class="{'cx-panel--done': (idx+1) <= 2, 'cx-panel--wait': (idx+1) > 2}" v-if="tabSelected == 'tab1' ? x.active == 'N' : x.active == 'Y' ">
+                      <div class="panel-heading">
+                        <h3 class="panel-title"><i class="fas fa-file-alt"></i> CSM No. {{x.job_no}} (ครั้งที่ {{idx+1}})</h3>
+                        <span class="label label-success" v-if="x.active == 'Y'"><i class="fas fa-check"></i> ลงชื่อแล้ว</span>
+                        <span class="label label-warning" v-else><i class="far fa-clock"></i> รอลงชื่อ</span>
+                      </div>
+                      <div class="panel-body">
+                        <div class="cx-def">
+                          <div class="cx-def__k">Description</div>
+                          <div class="cx-def__v">
+                            <label class="cx-def__box">{{x.detail}}</label>
                           </div>
-                        </div>
 
-                        <div class="cx-def__k">{{is_dev() ? 'Choose file' : 'Additional Attachments'}}</div>
-                        <div class="cx-def__v">
-                          <span class="cx-warn-text" v-show="x.signature == null && is_dev()">คุณจะทำการอัปโหลดไฟล์ได้ หลังจากที่ CSM ใบนี้ได้รับลายเซ็นต์แล้วเท่านั้น</span>
-                          <span class="cx-dash" v-if="x.filepath == null && !is_dev()">-</span>
-                          <div class="cx-filebar cx-filebar--named" v-if="x.filepath != null">
-                            <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank" :title="x.filename">
-                              <i class="fas fa-file-word" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file-excel" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file-powerpoint" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file-pdf" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
-                              <i class="fas fa-file" v-else=""></i>
-                              <span class="cx-filebar__name">{{x.filename}}</span>
-                            </a>
+                          <div class="cx-def__k">Attach File By IT</div>
+                          <div class="cx-def__v">
+                            <div class="cx-filebar cx-filebar--named">
+                              <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank" :title="x.filename">
+                                <i class="fas fa-file-word" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file-excel" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file-powerpoint" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file-pdf" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file" v-else=""></i>
+                                <span class="cx-filebar__name">{{x.filename}}</span>
+                              </a>
+                            </div>
                           </div>
-                          <div v-show="x.signature != null && is_dev()">
-                            <button class="cx-btn cx-btn--ghost custom-file-input" @click="addFile()"><i class="fas fa-upload"></i> Browse..</button>
-                            <!-- Input Attach File -->
-                            <input type="file" ref="myFile" name="myFile" accept=".doc, .docx, .xls, .xlsx, .txt, .ppt, .pptx, .pdf, .zip, .rar, image/*" style="display:none;">
-                          </div>
-                        </div>
 
-                        <div class="cx-def__k">Signature</div>
-                        <div class="cx-def__v">
-                          <div class="cx-signrow">
-                            <input type='checkbox' class='ios8-switch' id='checkbox-1' v-model.trim="x.active" true-value="Y" false-value="N" disabled>
-                            <label for='checkbox-1'></label>
-                            <div v-show="x.signature || !is_dev()">
-                              <button v-if="tabSelected == 'tab1'" class="cx-btn cx-btn--primary" @click="openSignature(x)"><i class="fa fa-pencil-alt"></i> ลงชื่อตรวจรับฟอร์ม</button>
-                              <span v-if="tabSelected == 'tab2'" class="label label-info"><i class="fa fa-pencil-alt"></i> Signature By : {{x.signature}}</span>
+                          <div class="cx-def__k">{{is_dev() ? 'Choose file' : 'Additional Attachments'}}</div>
+                          <div class="cx-def__v">
+                            <span class="cx-warn-text" v-show="x.signature == null && is_dev()">คุณจะทำการอัปโหลดไฟล์ได้ หลังจากที่ CSM ใบนี้ได้รับลายเซ็นต์แล้วเท่านั้น</span>
+                            <span class="cx-dash" v-if="x.filepath == null && !is_dev()">-</span>
+                            <div class="cx-filebar cx-filebar--named" v-if="x.filepath != null">
+                              <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank" :title="x.filename">
+                                <i class="fas fa-file-word" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file-excel" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file-powerpoint" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file-pdf" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
+                                <i class="fas fa-file" v-else=""></i>
+                                <span class="cx-filebar__name">{{x.filename}}</span>
+                              </a>
+                            </div>
+                            <div v-show="x.signature != null && is_dev()">
+                              <button class="cx-btn cx-btn--ghost custom-file-input" @click="addFile()"><i class="fas fa-upload"></i> Browse..</button>
+                              <!-- Input Attach File -->
+                              <input type="file" ref="myFile" name="myFile" accept=".doc, .docx, .xls, .xlsx, .txt, .ppt, .pptx, .pdf, .zip, .rar, image/*" style="display:none;">
+                            </div>
+                          </div>
+
+                          <div class="cx-def__k">Signature</div>
+                          <div class="cx-def__v">
+                            <div class="cx-signrow">
+                              <input type='checkbox' class='ios8-switch' id='checkbox-1' v-model.trim="x.active" true-value="Y" false-value="N" disabled>
+                              <label for='checkbox-1'></label>
+                              <div v-show="x.signature || !is_dev()">
+                                <button v-if="tabSelected == 'tab1'" class="cx-btn cx-btn--primary" @click="openSignature(x)"><i class="fa fa-pencil-alt"></i> ลงชื่อตรวจรับฟอร์ม</button>
+                                <span v-if="tabSelected == 'tab2'" class="label label-info"><i class="fa fa-pencil-alt"></i> Signature By : {{x.signature}}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </template>
                   <div class="cx-empty" v-if="!data.filter(w => tabSelected == 'tab1' ? w.active == 'N' : w.active == 'Y').length">
                     <i class="fas fa-inbox"></i>
                     {{ tabSelected == 'tab1' ? 'ไม่มีฟอร์มที่รอลงชื่อตรวจรับ' : 'ยังไม่มีประวัติการลงชื่อ' }}
@@ -124,7 +126,8 @@
   </div>
 </template>
 <script type="text/javascript">
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       return {

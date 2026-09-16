@@ -19,11 +19,6 @@ const vendorScripts = [
   'Scripts/Others/Pagination/Pagination.js',
   'Scripts/Others/Service/alert-service.js',
   'Scripts/Others/tinymce_4.7.13/tinymce/js/tinymce/tinymce.min.js',
-  'Scripts/Others/jquery.signalR-2.3.0.js',
-  'Scripts/Others/iwc-all.js',
-  'Scripts/Others/signalr-patch.js',
-  'Scripts/Others/iwc-signalr.js',
-  'Scripts/Others/MangoSignalR.js',
   'Scripts/Others/data-center.js'
 ]
 
@@ -50,6 +45,13 @@ const vendorStyles = [
   'Content/DarkTheme.css'
 ]
 
+// Vendor assets live in `public/`, so they are served from the site root. They
+// must be referenced from the app's base URL rather than relatively: a relative
+// `vendor/...` resolves against the *current route*, so on a nested route such
+// as /page/authentication/login/ every script and stylesheet 404s and the
+// jQuery-era globals ($, $xt, moment) are missing.
+const baseURL = (process.env.NUXT_APP_BASE_URL || '/').replace(/\/*$/, '/')
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-11',
 
@@ -60,19 +62,27 @@ export default defineNuxtConfig({
   components: { dirs: [] },
 
   app: {
-    baseURL: process.env.NUXT_APP_BASE_URL || '/',
+    baseURL,
     buildAssetsDir: 'assets/',
     head: {
       charset: 'utf-8',
+      // AdminLTE keys its whole layout off these body classes (.main-sidebar and
+      // .content-wrapper positioning, the mini/collapsible sidebar, the skin).
+      // Page/Default.aspx carried them on <body>; without them the sidebar renders
+      // full-width in normal flow and the content area loses its offset.
+      // login.vue adds 'login-page' on top of these, exactly as it did on the
+      // legacy host page.
+      bodyAttrs: { class: 'hold-transition skin-black fixed sidebar-mini sidebar-collapse' },
       viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: 'vendor/Content/Images/Logo/mango_icon.ico' },
-        ...vendorStyles.map(href => ({ rel: 'stylesheet', href: `vendor/${href}` }))
+        { rel: 'icon', type: 'image/x-icon', href: `${baseURL}vendor/Content/Images/Logo/mango_icon.ico` },
+        ...vendorStyles.map(href => ({ rel: 'stylesheet', href: `${baseURL}vendor/${href}` }))
       ],
       script: [
-        { src: 'config.js' },
-        ...vendorScripts.map(src => ({ src: `vendor/${src}` })),
-        { src: 'signalr-hubs.js' }
+        { src: `${baseURL}config.js` },
+        ...vendorScripts.map(src => ({ src: `${baseURL}vendor/${src}` })),
+        // Must run after every vendor script — see the file header.
+        { src: `${baseURL}globals-bridge.js` },
       ]
     }
   },

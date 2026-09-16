@@ -1,7 +1,7 @@
 ﻿<template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <section class="content-header">
           <h1>
             Majors Defect Dashboard
@@ -20,7 +20,7 @@
                 <div class="col-md-3">
                   <div class="form-group">
                     <label v-text="ui.re_select_period || 'เลือกช่วงเวลา'"></label><br />
-                    <date-picker v-model="date_range" input-class="form-control input-sm" range v-on:change="loadData()" lang="th" :append-to-body="true"></date-picker>
+                    <date-picker v-model="date_range" input-class-name="form-control input-sm" range :auto-apply="true" @update:model-value="loadData()" locale="th" :teleport="true"></date-picker>
                     <i class="fas fa-spin fa-pulse" v-show="loading"></i>
                   </div>
                 </div>
@@ -70,7 +70,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="x,idx in dashDetail" v-if="dashDetail.length">
+                      <tr v-for="x,idx in dashDetail">
                         <td align="center">{{idx+1}}</td>
                         <td align="center">{{x.csm_no}}</td>
                         <td align="center">{{$date(x.csm_date)}}</td>
@@ -102,7 +102,8 @@
 <script type="text/javascript">
   import Chart from 'chart.js';
   import 'chartjs-plugin-labels';
-  import DatePicker from 'vue2-datepicker';
+  import DatePicker from '@vuepic/vue-datepicker';
+  import '@vuepic/vue-datepicker/dist/main.css';
   let date = new Date();
   let year = date.getFullYear();
   let month = date.getMonth() + 1;
@@ -122,7 +123,8 @@
     X: '#0F8774',
     Y: '#007F2F'
   };
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let cpn = {
     data() {
       return {

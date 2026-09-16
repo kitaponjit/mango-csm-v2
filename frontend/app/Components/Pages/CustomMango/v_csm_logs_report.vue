@@ -33,10 +33,10 @@
 
     <!-- Modal : Attachment -->
     <modal-2 ref="showFileModal">
-      <template slot="header">
+      <template #header>
         <h4>คู่มือย่อ {{subject}}</h4>
       </template>
-      <template slot="body">
+      <template #body>
         <div class="row">
           <div class="col-lg-12 col-md-12 col-sm-12">
             <table class="table table-hover">

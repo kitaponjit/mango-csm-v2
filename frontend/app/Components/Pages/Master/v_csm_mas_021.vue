@@ -1,7 +1,7 @@
 <template>
   <div class="track-page">
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="track-container">
           <!-- Fixed Header -->
           <div class="track-header">
@@ -67,11 +67,11 @@
             <!-- Tabs -->
             <div class="track-tabs">
               <button class="track-tab" :class="{ 'track-tab--active': tabActive === 0 }" @click="onChangeTab(0)">
-                <img :src="baseUrl + 'Content/Images/Icon SVG/box-on-load.svg'" width="18" height="18" />
+                <img :src="baseUrl + 'vendor/Content/Images/Icon SVG/box-on-load.svg'" width="18" height="18" />
                 <span>พัสดุรอดำเนินการ</span>
               </button>
               <button class="track-tab" :class="{ 'track-tab--active': tabActive === 1 }" @click="onChangeTab(1)">
-                <img :src="baseUrl + 'Content/Images/Icon SVG/box-check.svg'" width="18" height="18" />
+                <img :src="baseUrl + 'vendor/Content/Images/Icon SVG/box-check.svg'" width="18" height="18" />
                 <span>พัสดุเสร็จสิ้น</span>
               </button>
             </div>
@@ -271,7 +271,8 @@
   import PhotoSwipe from 'photoswipe';
   import 'photoswipe/style.css';
 
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let pagingPending = {};
   let pagingComplete = {};
   let appForm = {};

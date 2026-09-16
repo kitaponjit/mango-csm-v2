@@ -1,7 +1,7 @@
 <template>
   <div>
     <re-page ref="page">
-      <template slot="body">
+      <template #body>
         <div class="d-flex justify-content-end mb-2">
           <button class="btn btn-sm bg-success" @click.prevent="saveActivityHistory()">
             <i class="fa fa-save"></i> บันทึกข้อมูล
@@ -65,7 +65,8 @@
   </div>
 </template>
 <script>
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let appForm = {};
   let cpn = {
     data() {

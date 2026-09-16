@@ -1,7 +1,7 @@
 <template>
   <div class="cx-page">
     <customer-page ref="page">
-      <template slot="body">
+      <template #body>
         <!-- KPI -->
         <div class="cx-kpi-row">
           <div class="cx-kpi cx-kpi--ok" @click.prevent="onItem('Y')" style="cursor:pointer;">
@@ -139,7 +139,8 @@
   </div>
 </template>
 <script type="text/javascript">
-  let page = {};
+  // no-op until mounted() assigns $refs.page — child callbacks (FullCalendar datesSet) can fire first
+  let page = { loadingBox: { show() {}, hide() {} } };
   let paging = {};
   let cpn = {
     data() {
