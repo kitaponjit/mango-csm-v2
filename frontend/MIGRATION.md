@@ -320,6 +320,39 @@ Moving those would have broken intentional behaviour.
 
 Still open from the original list: `chart.js` remains pinned to v2 with two v2-only plugins.
 
+### Legacy `Vue.use()` plugins ported (2026-09-16)
+
+The old "11 `Vue.use()` registrations from `main.js` are not ported" item. Working from the legacy
+`main.js` rather than guessing, the plugins were: `VTooltip`, `feather` (the `vue-icon` package,
+registered as `v-icon`), `echartsPlugin`, `ColorPanel`/`ColorPicker`, `PrettyCheckbox`,
+`VueThaiAddressInput`, `vueEventCalendar`, `VueSweetalert2`, `VScrollSync` and `VueRouter`.
+`PrettyCheckbox` and `vueEventCalendar` were already handled; `VueRouter` is Nuxt's job.
+
+| Provided | Uses | Resolution |
+| --- | --- | --- |
+| `<ECharts>` (`echarts-for-vue`) | 26 in 9 files | Wrapper over **`vue-echarts`, already a dependency**. It exposes a different surface - Vue events and `.chart` - so the wrapper re-presents the old contract: an `events` array of `[name, handler]` pairs and `.inst`. No call site changed. |
+| `<v-icon>` (`vue-icon`) | 41 in 17 files | The 7 Feather icons actually used are inlined, **copied verbatim from `vue-icon/lib/vue-feather.esm.js`** rather than retyped, along with its exact decoder and SVG attributes. Every `name` is a static literal - there is not one dynamic `:name` - so no dependency was added. |
+| `v-tooltip` directive | 35 in 11 files | Backed by **Bootstrap's jQuery tooltip, already loaded as a vendor script**, instead of adding floating-vue and a second tooltip style. All call sites pass a plain string with no modifiers. |
+| `<color-panel>` (`one-colorpicker`) | 2 in 2 files | Rebuilt on the native colour input plus a preset palette. |
+
+A registration diff against the legacy `main.js` confirms the global component list is otherwise
+complete: of its 58 `Vue.component()` names, the only one missing from the port is
+`vue-picture-swipe`, which has **zero** call sites.
+
+Verified by rendering all four: 7 icons emit the same `icon` / `icon-<name>` classes and shape
+counts as the source encoding, a chart draws to canvas with `.inst` returning a live echarts
+instance and the click handler attached, and the tooltip initialises.
+
+**Still unresolved, and why each is a decision rather than a task:**
+
+- `<thai-address-input>` (3 uses, 1 file). `vue-thai-address-input` is Vue 2 and has no successor.
+  Replacing it means vendoring its **3.8 MB bundled Thai address database** and rebuilding the
+  autocomplete (`type` = subdistrict/district/province, `v-model`, `@selected` filling the sibling
+  fields). That bundling decision is not one to make silently.
+- `<ModalEMP>` and `<worker-ref-action>`. These resolve to nothing - but they are used identically
+  in `Website/` and registered nowhere there either, so they were **already broken before the
+  port**. Mapping them to a component would be a guess that could switch on a dead code path.
+
 ### Verified working end-to-end
 
 Login page renders with the company list from SQL Server via the .NET 8 backend;
@@ -330,16 +363,20 @@ Login page renders with the company list from SQL Server via the .NET 8 backend;
 ## Still outstanding
 
 - ~~SignalR / realtime~~ **ported 2026-09-15** - see below.
-- **Only the login and guard paths have been exercised.** The other ~109 routes have not
-  been walked against their `menu_id` permission checks.
+- All 98 staff routes were walked (see the route-walk section); what remains is that they were
+  walked as **one admin user**, so per-role `menu_id` permission gating is still unexercised.
 - `datepicker` call sites pass `:beforedate` / `:overdate` (26 sites), which match no
   declared prop and are silently ignored — a **pre-existing** Vue 2 bug, preserved
   deliberately rather than "fixed" into newly-enforced date limits. Decide the intent
   before changing it.
-- `slot="extra"` (Vue 2 slot syntax, removed in Vue 3) still appears in the
-  CustomerConfigCenter screens; harmless at build time, but inert.
+- ~~`slot="extra"` in the CustomerConfigCenter screens~~ **done** - converted with the rest of
+  the Vue 2 slot syntax; no `slot=` or `slot-scope=` remains anywhere in the tree.
 - ~~Template audit~~ **done 2026-09-16** - see below.
 - `chart.js` is still pinned to v2 with two v2-only plugins.
+- `<thai-address-input>` (3 uses, 1 file) is still unresolved - see below, it needs a decision.
+- `<ModalEMP>` and `<worker-ref-action>` resolve to nothing, but they did in the **legacy Vue 2
+  app too** - pre-existing bugs, not port regressions. Do not guess a mapping.
+- `$swal` (1 use) - `vue-sweetalert2` was a legacy `Vue.use()` and is not installed.
 
 ## Ordering note
 

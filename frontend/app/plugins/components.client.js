@@ -7,6 +7,9 @@ import pCheck from '~/Components/Center/p-check.vue'
 import vuePdfApp from '~/Components/Center/vue-pdf-app.vue'
 import vueEventCalendar from '~/Components/Center/vue-event-calendar.vue'
 import docPreview from '~/Components/Center/doc-preview.vue'
+import eCharts from '~/Components/Center/ECharts.vue'
+import vIcon from '~/Components/Center/v-icon.vue'
+import colorPanel from '~/Components/Center/color-panel.vue'
 import datepicker from '~/Components/Center/datepicker.vue'
 import timepicker from '~/Components/Center/timepicker.vue'
 import inumber from '~/Components/Center/number.vue'
@@ -124,4 +127,9 @@ export default defineNuxtPlugin((nuxtApp) => {
   app.component('vue-pdf-app', vuePdfApp)
   app.component('vue-event-calendar', vueEventCalendar)
   app.component('VueDocPreview', docPreview)
+  // echarts-for-vue -> vue-echarts, and the `vue-icon` Feather plugin;
+  // both were Vue.use() registrations in the legacy main.js that the port dropped.
+  app.component('ECharts', eCharts)
+  app.component('v-icon', vIcon)
+  app.component('color-panel', colorPanel)
 })
