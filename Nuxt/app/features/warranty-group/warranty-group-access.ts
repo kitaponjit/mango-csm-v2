@@ -1,2 +1,0 @@
-export const WARRANTY_GROUP_MENU_NAME = 'CSM_WEB'
-export const WARRANTY_GROUP_MENU_ID = '20810'

@@ -670,7 +670,7 @@ describe('QCItem page access and read state', () => {
         ...initialItems
           .filter(item => item.itemno !== 22)
           .map(item => item.itemno === 21 ? { ...item, itemname: 'Updated 21' } : item),
-        { itemno: 26, itemname: 'New 26', remark: 'New remark 26', line_number: 26 },
+        { itemno: 26, itemname: 'New 26', remark: 'New remark 26' },
       ],
     })
     expect(apiGet).toHaveBeenCalledTimes(2)

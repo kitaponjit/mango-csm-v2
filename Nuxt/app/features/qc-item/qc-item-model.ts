@@ -76,12 +76,8 @@ export function getPageItems<T>(rows: T[], page: number, pageSize = PAGE_SIZE) {
   return rows.slice(start, start + size)
 }
 
-export function createNewQCItem(rows: Pick<EditableQCItem, 'itemno' | 'line_number'>[], now = new Date()): EditableQCItem {
+export function createNewQCItem(rows: Pick<EditableQCItem, 'itemno'>[], now = new Date()): EditableQCItem {
   const maxItemNumber = rows.reduce((maximum, row) => Math.max(maximum, row.itemno), 0)
-  const maxLineNumber = rows.reduce((maximum, row) => {
-    const lineNumber = Number(row.line_number)
-    return Number.isInteger(lineNumber) && lineNumber > 0 ? Math.max(maximum, lineNumber) : maximum
-  }, 0)
   const itemno = maxItemNumber + 1
 
   return {
@@ -89,7 +85,7 @@ export function createNewQCItem(rows: Pick<EditableQCItem, 'itemno' | 'line_numb
     itemname: '',
     remark: '',
     adddate: now,
-    line_number: (maxLineNumber > 0 ? maxLineNumber : maxItemNumber) + 1,
+    line_number: itemno,
   }
 }
 

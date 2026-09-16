@@ -45,12 +45,10 @@ Knowledge classes used below: `CONTRACT` · `COMPATIBILITY CONSTRAINT` · `OBSER
 ## 1. Quick Navigation Map
 
 ```text
-Local Agent Fast Path    → .agent-local/backend/MangoServiceNetCore (machine-local junction, git-excluded)
 Auth / session (internal) → Authentication.GetAuthorize          (E1)
 Portal auth               → _BasedCustomerController / Models/Customer/Login.cs  (E2)
 Manual listing            → CSM/Manual/ManualController → Models/Manual          (E4)
 Customer CRUD             → CSM/Master/MasterController → Models/Customer.cs     (E5)
-QCItem CRUD & Import/Exp  → CSM/Master/MasterController → Models/Master/QC.cs    (E15)
 Lookups / settings        → CSM/Center/CenterController → Models/Center          (E6)
 Config                    → CSM/Config/ConfigController → Models/Config          (E7)
 Shared ERP                → Areas/Anywhere/Controllers/{Module}Controller        (E8)
@@ -307,34 +305,6 @@ Config keys             confuse mg_csr_config vs sm_config                 R6: d
   all frontend-facing contracts (X-Mango-Auth, portal/post-back tokens, envelope, rate limits,
   SignalR, language, file/print) are ported with parity tests. Legacy .NET Fx backend remains
   the reference for this file's evidence entries until cutover.
-
-## 11. Local Backend Discovery & Fast Path
-
-When a CSM migration task requires inspecting backend behavior:
-
-1. Check `.agent-local/backend/MangoServiceNetCore` relative to repository root.
-2. If present, inspect the backend repository directly through this path.
-3. Do not ask the user for the backend location.
-4. If absent, report `EXTERNAL_DEPENDENCY`.
-5. Never invent backend behavior from frontend code.
-6. The path `.agent-local/` is machine-local and excluded via `.git/info/exclude`. Never commit absolute paths into tracked documentation.
-
-## 12. QCItem Master Contract & Security Findings
-
-```text
-Backend Area: CSM / Controller: MasterController.cs / Model: Areas/CSM/Models/Master/QC.cs
-Endpoints:
-- GET  CSM/Master/QCItem_ReadList   -> QC.QCItem_ReadList: Returns raw array of mg_csr_qc_item. Tenant-isolated by maincode (where a.maincode == auth.maincode).
-- POST CSM/Master/QCItem_Create     -> QC.QCItem_Create: Receives JSON { item: [] }. Tenant-isolated (deletes where maincode == auth.maincode, then inserts all with maincode = auth.maincode).
-- POST CSM/Master/QCItem_Import     -> QC.QCItem_Import: Multipart field 'file' (.xlsx only via EPPlus ExcelPackage). HIGH RISK: Reads row itemno and executes `Where(a => a.itemno == inExcelFile.itemno).FirstOrDefault()`. LACKS maincode filter on lookup. If itemno exists under another company, it updates that other company's row and sets edituser. If null, inserts with auth.maincode.
-- POST CSM/Master/QCItem_ExportExcel-> QC.QCItem_Export: Generates .xlsx, returns file token hex via CreateTokenHex(). Tenant-isolated on export query (where a.maincode == auth.maincode).
-- GET  Api/File/DownLoad            -> FileController.DownLoad: Accepts id = hex token, resolves temp path, serves file stream.
-
-Authorization Analysis:
-- Authentication: Enforced via MasterController.OnActionExecutingMango -> if (!auth.is_authenticated) return AccessDeniedStatus() (HTTP 403).
-- Menu Authorization: NOT ENFORCED SERVER-SIDE. No check for 'CSM_WEB' or menu_id '21010' in MasterController or QC.cs. Any authenticated user with a valid session can invoke QCItem endpoints directly.
-- Readonly / Save Enforcement: Frontend UI gates readonly mode; backend has NO readonly check. A readonly user sending direct POST QCItem_Create or QCItem_Import will succeed.
-```
 
 ---
 
