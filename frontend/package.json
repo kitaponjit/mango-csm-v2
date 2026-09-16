@@ -12,7 +12,9 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "sync:vendor": "node scripts/sync-vendor.mjs"
+    "sync:vendor": "node scripts/sync-vendor.mjs",
+    "test:warranty-item": "vitest run",
+    "typecheck:warranty-item": "nuxt prepare && vue-tsc -p tsconfig.warranty-item.json --noEmit"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.21",
@@ -56,7 +58,10 @@
     "xlsx": "^0.16.9"
   },
   "devDependencies": {
-    "sass": "^1.77.4"
+    "sass": "^1.77.4",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "vue-tsc": "3.3.11"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
