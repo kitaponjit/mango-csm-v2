@@ -30,7 +30,7 @@
   "include": [
     ".nuxt/imports.d.ts",
     ".nuxt/types/imports.d.ts",
-    "app/features/warranty-item/runtime/**/*",
-    "test/warranty-item/runtime/**/*.ts"
+    "app/features/warranty-item/**/*",
+    "test/warranty-item/**/*.ts"
   ]
 }
