@@ -42,24 +42,26 @@
                     </div>
                     <div class="config-card-body">
                       <div class="config-list">
-                        <div 
-                          v-for="x in initial" 
-                          :key="x.config_id"
+                        <template v-for="x in initial" :key="x.config_id">
+                          <div 
+                          
+                         
                           v-if="auth.is_admin && (isAdminMG() || !adminMGOnlyItems.includes(x.config_id))"
                           class="config-item">
-                          <div class="config-item-label">
-                            <i class="fas fa-circle config-item-dot"></i>
-                            <span>{{ x.description }}</span>
+                            <div class="config-item-label">
+                              <i class="fas fa-circle config-item-dot"></i>
+                              <span>{{ x.description }}</span>
+                            </div>
+                            <div class="config-item-control">
+                              <template v-if="x.type == 'checkbox'">
+                                <label class="modern-switch">
+                                  <input type="checkbox" true-value="Y" false-value="N" v-model="x.config_value" />
+                                  <span class="modern-switch-slider"></span>
+                                </label>
+                              </template>
+                            </div>
                           </div>
-                          <div class="config-item-control">
-                            <template v-if="x.type == 'checkbox'">
-                              <label class="modern-switch">
-                                <input type="checkbox" true-value="Y" false-value="N" v-model="x.config_value" />
-                                <span class="modern-switch-slider"></span>
-                              </label>
-                            </template>
-                          </div>
-                        </div>
+                        </template>
                       </div>
                     </div>
                     <div class="config-card-footer">
@@ -171,55 +173,59 @@
                         <span>{{ activeConfigTotalOn }}/{{ activeConfigTotalCount }} เปิดใช้งาน</span>
                         <span class="ac2-overview__bar"><span :style="{ width: activeConfigTotalPercent + '%' }"></span></span>
                       </div>
-                      <div v-for="section in activeConfigSections"
-                           :key="section.header.config_id"
+                      <template v-for="section in activeConfigSections" :key="section.header.config_id">
+                        <div
+                          
                            v-if="auth.is_admin && ((!adminMGOnlyItems.includes(section.header.config_id)) || (isAdminMG() && adminMGOnlyItems.includes(section.header.config_id)))"
                            class="ac2-section">
-                        <div class="ac2-band">
-                          <div class="ac2-band__icon">
-                            <i class="fas fa-layer-group"></i>
+                          <div class="ac2-band">
+                            <div class="ac2-band__icon">
+                              <i class="fas fa-layer-group"></i>
+                            </div>
+                            <div class="ac2-band__text">
+                              <div class="ac2-band__title">{{ section.header.description }}</div>
+                              <div class="ac2-band__code">{{ section.header.config_id }}</div>
+                            </div>
+                            <span class="ac2-band__count">{{ section.onCount }}/{{ section.total }} เปิดใช้งาน</span>
+                            <label class="ac2-master">
+                              <span class="ac2-master__caption">เปิดทั้งหมด</span>
+                              <span class="ac2-switch" :class="{ 'ac2-switch--partial': section.header.config_value !== 'Y' && section.onCount > 0 }">
+                                <input
+                                  type="checkbox"
+                                  true-value="Y"
+                                  false-value="N"
+                                  v-model="section.header.config_value"
+                                  @change="SelectAll(section.header.id_section, section.header.config_value)" />
+                                <span class="ac2-switch__track"></span>
+                              </span>
+                            </label>
                           </div>
-                          <div class="ac2-band__text">
-                            <div class="ac2-band__title">{{ section.header.description }}</div>
-                            <div class="ac2-band__code">{{ section.header.config_id }}</div>
+                          <div class="ac2-field-grid">
+                            <template v-for="item in section.items" :key="item.config_id">
+                              <label
+                                  
+                                   v-if="auth.is_admin && ((!adminMGOnlyItems.includes(item.config_id)) || (isAdminMG() && adminMGOnlyItems.includes(item.config_id)))"
+                                   class="ac2-field"
+                                   :class="{ 'ac2-field--on': item.config_value === 'Y' }">
+                                <span class="ac2-field__main">
+                                  <span class="ac2-field__dot"></span>
+                                  <span class="ac2-field__label">{{ item.description }}</span>
+                                </span>
+                                <span class="ac2-field__code">{{ item.config_id }}</span>
+                                <span class="ac2-switch ac2-switch--sm">
+                                  <input
+                                    type="checkbox"
+                                    true-value="Y"
+                                    false-value="N"
+                                    v-model="item.config_value"
+                                    @change="SelectItem()" />
+                                  <span class="ac2-switch__track"></span>
+                                </span>
+                              </label>
+                            </template>
                           </div>
-                          <span class="ac2-band__count">{{ section.onCount }}/{{ section.total }} เปิดใช้งาน</span>
-                          <label class="ac2-master">
-                            <span class="ac2-master__caption">เปิดทั้งหมด</span>
-                            <span class="ac2-switch" :class="{ 'ac2-switch--partial': section.header.config_value !== 'Y' && section.onCount > 0 }">
-                              <input
-                                type="checkbox"
-                                true-value="Y"
-                                false-value="N"
-                                v-model="section.header.config_value"
-                                @change="SelectAll(section.header.id_section, section.header.config_value)" />
-                              <span class="ac2-switch__track"></span>
-                            </span>
-                          </label>
                         </div>
-                        <div class="ac2-field-grid">
-                          <label v-for="item in section.items"
-                                 :key="item.config_id"
-                                 v-if="auth.is_admin && ((!adminMGOnlyItems.includes(item.config_id)) || (isAdminMG() && adminMGOnlyItems.includes(item.config_id)))"
-                                 class="ac2-field"
-                                 :class="{ 'ac2-field--on': item.config_value === 'Y' }">
-                            <span class="ac2-field__main">
-                              <span class="ac2-field__dot"></span>
-                              <span class="ac2-field__label">{{ item.description }}</span>
-                            </span>
-                            <span class="ac2-field__code">{{ item.config_id }}</span>
-                            <span class="ac2-switch ac2-switch--sm">
-                              <input
-                                type="checkbox"
-                                true-value="Y"
-                                false-value="N"
-                                v-model="item.config_value"
-                                @change="SelectItem()" />
-                              <span class="ac2-switch__track"></span>
-                            </span>
-                          </label>
-                        </div>
-                      </div>
+                      </template>
                     </div>
                     <div class="config-card-footer">
                       <button class="config-btn config-btn-save" @click.prevent="saveClick2()">
@@ -239,45 +245,47 @@
                     </div>
                     <div class="config-card-body">
                       <div class="config-list">
-                        <div 
-                          v-for="x in initial3" 
-                          :key="x.config_id"
+                        <template v-for="x in initial3" :key="x.config_id">
+                          <div 
+                          
+                         
                           v-if="auth.is_admin && (isAdminMG() || !adminMGOnlyItems.includes(x.config_id))"
                           :class="['config-item', { 
                             'config-item-header': x.config_id === 'HTRN001C',
                             'config-item-child': x.config_id !== 'HTRN001C'
                           }]">
-                          <div class="config-item-label">
-                            <i v-if="x.config_id === 'HTRN001C'" 
-                               class="fas fa-layer-group config-item-icon"></i>
-                            <i v-else class="fas fa-circle config-item-dot"></i>
-                            <span>{{ x.description }}</span>
+                            <div class="config-item-label">
+                              <i v-if="x.config_id === 'HTRN001C'" 
+                                 class="fas fa-layer-group config-item-icon"></i>
+                              <i v-else class="fas fa-circle config-item-dot"></i>
+                              <span>{{ x.description }}</span>
+                            </div>
+                            <div class="config-item-control">
+                              <template v-if="x.type == 'checkbox'">
+                                <label class="modern-switch">
+                                  <input 
+                                    type="checkbox" 
+                                    true-value="Y" 
+                                    false-value="N" 
+                                    v-model="x.config_value"
+                                    @change="SelectItem()" />
+                                  <span class="modern-switch-slider"></span>
+                                </label>
+                              </template>
+                              <template v-if="x.type == 'checkbox3'">
+                                <label class="modern-switch">
+                                  <input 
+                                    type="checkbox" 
+                                    true-value="Y" 
+                                    false-value="N" 
+                                    v-model="x.config_value" 
+                                    @change="SelectAll(x.id_section, x.config_value)" />
+                                  <span class="modern-switch-slider"></span>
+                                </label>
+                              </template>
+                            </div>
                           </div>
-                          <div class="config-item-control">
-                            <template v-if="x.type == 'checkbox'">
-                              <label class="modern-switch">
-                                <input 
-                                  type="checkbox" 
-                                  true-value="Y" 
-                                  false-value="N" 
-                                  v-model="x.config_value"
-                                  @change="SelectItem()" />
-                                <span class="modern-switch-slider"></span>
-                              </label>
-                            </template>
-                            <template v-if="x.type == 'checkbox3'">
-                              <label class="modern-switch">
-                                <input 
-                                  type="checkbox" 
-                                  true-value="Y" 
-                                  false-value="N" 
-                                  v-model="x.config_value" 
-                                  @change="SelectAll(x.id_section, x.config_value)" />
-                                <span class="modern-switch-slider"></span>
-                              </label>
-                            </template>
-                          </div>
-                        </div>
+                        </template>
                       </div>
                     </div>
                     <div class="config-card-footer">

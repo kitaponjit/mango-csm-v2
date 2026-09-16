@@ -287,6 +287,39 @@ Verified: the login background image and all previously-broken asset URLs now re
 `image/*` responses, and `<body>` carries the AdminLTE classes plus `login-page`. The
 **authenticated sidebar layout itself is unverified** - it needs a logged-in session.
 
+### Vue 3 template audit (2026-09-16)
+
+The last pending item from this file. All three checks were run against the whole tree.
+
+**`v-if` + `v-for` on the same element - 19 found, 18 genuinely broken.** Vue 2 gave `v-for` the
+higher priority, so the condition ran per iteration. **Vue 3 reverses it**: the condition is
+hoisted *outside* the loop, where the loop variable does not exist yet. Confirmed by compiling the
+pattern rather than assuming - `@vue/compiler-dom` emits
+
+    return (x.ok) ? (... _renderList(list, (x) => ...)) : _createCommentVNode()
+
+so `x` in the condition resolves against the render context, not the iteration, and throws.
+
+These did **not** surface in the 98-route walk because each sits behind a parent `v-if` - a closed
+modal, an unselected tab, an empty table - so they only fire once a user opens the right screen
+with data. Latent by nature.
+
+Fixed by lifting `v-for` (and its `:key`, where present) onto a wrapping `<template v-for>` and
+leaving `v-if` on the element, which is the canonical Vue 3 form. 18 sites across 11 files.
+The 19th (`v_csm_most_defect.vue`) had a loop-**invariant** condition, `v-if="dashDetail.length"`
+next to `v-for="x,idx in dashDetail"` - harmless, and redundant since a `v-for` over an empty
+array renders nothing, so the guard was simply dropped.
+
+**`key` on `<template v-for>` - nothing to fix.** A loose scan suggested 6 misplaced keys, but the
+compiler only rejects a key on a **direct child** of the template, and it raises that as a hard
+error, not a warning - a build that exits 0 proves there are none. The 6 were keys nested deeper,
+including the deliberate `:key="'agrArea' + idx + agTableKey"` remount pattern on `<ag-table>`.
+Moving those would have broken intentional behaviour.
+
+**Transition class renames - nothing to fix.** Zero custom `v-enter*` / `v-leave*` CSS in the tree.
+
+Still open from the original list: `chart.js` remains pinned to v2 with two v2-only plugins.
+
 ### Verified working end-to-end
 
 Login page renders with the company list from SQL Server via the .NET 8 backend;
@@ -305,8 +338,7 @@ Login page renders with the company list from SQL Server via the .NET 8 backend;
   before changing it.
 - `slot="extra"` (Vue 2 slot syntax, removed in Vue 3) still appears in the
   CustomerConfigCenter screens; harmless at build time, but inert.
-- Template audit still pending: `v-if`/`v-for` precedence, `key` on `<template v-for>`,
-  transition class renames.
+- ~~Template audit~~ **done 2026-09-16** - see below.
 - `chart.js` is still pinned to v2 with two v2-only plugins.
 
 ## Ordering note

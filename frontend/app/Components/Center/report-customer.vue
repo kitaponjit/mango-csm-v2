@@ -22,9 +22,11 @@
                   </button>
                 </div>
                 <div class="cx-rptview__meta" v-show="showCondition">
-                  <span class="cx-cond" v-for="x in condData" v-if="x.field_name">
-                    <b>{{x.option.display_name}} {{x['operatorx']}}</b> {{displayCondValue(x)}}
-                  </span>
+                  <template v-for="x in condData">
+                    <span class="cx-cond" v-if="x.field_name">
+                      <b>{{x.option.display_name}} {{x['operatorx']}}</b> {{displayCondValue(x)}}
+                    </span>
+                  </template>
                   <span class="cx-cond cx-cond--time"><i class="far fa-clock"></i> {{$date(reportedDate, 'DD/MM/YYYY HH:mm')}}</span>
                 </div>
               </div>

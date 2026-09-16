@@ -24,9 +24,11 @@
                     <div class="box-body">
                         <div class="nav-tabs-custom">
                             <ul class="nav nav-tabs">
-                                <li :class="{active: x.id===tabActive}" v-for="x in tabField" v-if="x.show">
-                                    <a href="#" @click.prevent="onTabChange(x.id) "><i class="fas" :class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i><span v-text="x.text"></span></a>
-                                </li>
+                                <template v-for="x in tabField">
+                                  <li :class="{active: x.id===tabActive}" v-if="x.show">
+                                      <a href="#" @click.prevent="onTabChange(x.id) "><i class="fas" :class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i><span v-text="x.text"></span></a>
+                                  </li>
+                                </template>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane active">

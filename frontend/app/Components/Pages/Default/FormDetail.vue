@@ -32,76 +32,78 @@
                     <div class="tab-pane" v-bind:class="{'active':tabSelected}">
                       <div class="row">
                         <div class="col-lg-12">
-                          <div class="panel" v-bind:class="{'panel-custom-success': (idx+1) <= 2, 'panel-custom-danger': (idx+1) > 2}" v-for="(x, idx) in data" v-if="tabSelected == 'tab1' ? x.active == 'N' : x.active == 'Y' ">
-                            <div class="panel-heading " v-bind:class="{'panel-heading-success': (idx+1) <= 2, 'panel-heading-danger': (idx+1) > 2}">
-                              <h3 class="panel-title">CRM No. {{x.job_no}} (ครั้งที่ {{idx+1}})</h3>
-                            </div>
-                            <div class="panel-body">
-                              <div class="row">
-                                <div class="col-md-12">
-                                  <div class="row">
-                                    <div class="form-group">
-                                      <label class="col-lg-2 control-label text-right">Description</label>
-                                      <div class="col-md-4">
-                                        <label class="form-control" style="white-space:pre-wrap;height:auto ">{{x.detail}}</label>
+                          <template v-for="(x, idx) in data">
+                            <div class="panel" v-bind:class="{'panel-custom-success': (idx+1) <= 2, 'panel-custom-danger': (idx+1) > 2}" v-if="tabSelected == 'tab1' ? x.active == 'N' : x.active == 'Y' ">
+                              <div class="panel-heading " v-bind:class="{'panel-heading-success': (idx+1) <= 2, 'panel-heading-danger': (idx+1) > 2}">
+                                <h3 class="panel-title">CRM No. {{x.job_no}} (ครั้งที่ {{idx+1}})</h3>
+                              </div>
+                              <div class="panel-body">
+                                <div class="row">
+                                  <div class="col-md-12">
+                                    <div class="row">
+                                      <div class="form-group">
+                                        <label class="col-lg-2 control-label text-right">Description</label>
+                                        <div class="col-md-4">
+                                          <label class="form-control" style="white-space:pre-wrap;height:auto ">{{x.detail}}</label>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                  <br />
-                                  <div class="row">
-                                    <div class="form-group">
-                                      <label class="col-lg-2 control-label text-right">Attach File By IT</label>
-                                      <div class="col-lg-10">
-                                        <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank">
-                                          <i class="fas fa-file-word fa-2x" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file-excel fa-2x" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file-powerpoint fa-2x" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file-pdf fa-2x" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file fa-2x" v-else=""></i>
-                                        </a>
+                                    <br />
+                                    <div class="row">
+                                      <div class="form-group">
+                                        <label class="col-lg-2 control-label text-right">Attach File By IT</label>
+                                        <div class="col-lg-10">
+                                          <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank">
+                                            <i class="fas fa-file-word fa-2x" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file-excel fa-2x" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file-powerpoint fa-2x" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file-pdf fa-2x" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file fa-2x" v-else=""></i>
+                                          </a>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                  <br />
-                                  <div class="row">
-                                    <div class="form-group">
-                                      <label class="col-lg-2 control-label text-right">{{is_dev() ? 'Choose file' : 'Additional Attachments'}}</label>
-                                      <label class="col-lg-10 control-label text-danger" v-show="x.signature == null && is_dev()">คุณจะทำการอัปโหลดไฟล์ได้ หลังจากที่ CRM ใบนี้ได้รับลายเซ็นต์แล้วเท่านั้น</label>
-                                      <div class="col-lg-10" v-if="x.filepath == null && !is_dev()">-</div>
-                                      <div class="col-lg-10" v-if="x.filepath != null">
-                                        <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank">
-                                          <i class="fas fa-file-word fa-2x" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file-excel fa-2x" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file-powerpoint fa-2x" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file-pdf fa-2x" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
-                                          <i class="fas fa-file fa-2x" v-else=""></i>
-                                        </a>
-                                      </div>
-                                      <div class="col-lg-10" v-bind:class="{'col-lg-offset-2': x.filepath != null}" v-show="x.signature != null && is_dev()">
-                                        <div class="form-group">
-                                          <div class="col-md-5">
-                                            <div class="input-group">
-                                              <button class="btn btn-sm bg-navy custom-file-input" @click="addFile()"><i class="fas fa-upload"></i> Browse..</button>
-                                              <!-- Input Attach File -->
-                                              <input type="file" ref="myFile" name="myFile" accept=".doc, .docx, .xls, .xlsx, .txt, .ppt, .pptx, .pdf, .zip, .rar, image/*" style="display:none;">
+                                    <br />
+                                    <div class="row">
+                                      <div class="form-group">
+                                        <label class="col-lg-2 control-label text-right">{{is_dev() ? 'Choose file' : 'Additional Attachments'}}</label>
+                                        <label class="col-lg-10 control-label text-danger" v-show="x.signature == null && is_dev()">คุณจะทำการอัปโหลดไฟล์ได้ หลังจากที่ CRM ใบนี้ได้รับลายเซ็นต์แล้วเท่านั้น</label>
+                                        <div class="col-lg-10" v-if="x.filepath == null && !is_dev()">-</div>
+                                        <div class="col-lg-10" v-if="x.filepath != null">
+                                          <a v-for="(x,idx) in x.qa" v-bind:href="createFilePath(x.filepath)" target="_blank">
+                                            <i class="fas fa-file-word fa-2x" v-if="['doc','docx'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file-excel fa-2x" v-else-if="['xls','xlsx'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file-powerpoint fa-2x" v-else-if="['ppt','pptx'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file-pdf fa-2x" v-else-if="['pdf'].includes(getFileExt(x.filename))"></i>
+                                            <i class="fas fa-file fa-2x" v-else=""></i>
+                                          </a>
+                                        </div>
+                                        <div class="col-lg-10" v-bind:class="{'col-lg-offset-2': x.filepath != null}" v-show="x.signature != null && is_dev()">
+                                          <div class="form-group">
+                                            <div class="col-md-5">
+                                              <div class="input-group">
+                                                <button class="btn btn-sm bg-navy custom-file-input" @click="addFile()"><i class="fas fa-upload"></i> Browse..</button>
+                                                <!-- Input Attach File -->
+                                                <input type="file" ref="myFile" name="myFile" accept=".doc, .docx, .xls, .xlsx, .txt, .ppt, .pptx, .pdf, .zip, .rar, image/*" style="display:none;">
+                                              </div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
-                                  <br />
-                                  <div class="row">
-                                    <div class="form-group">
-                                      <label class="col-lg-2 control-label text-right">Signature</label>
-                                      <div class="col-lg-10">
-                                        <div class="form-group">
-                                          <div class="input-group">
-                                            <input type='checkbox' class='ios8-switch' id='checkbox-1' v-model.trim="x.active" true-value="Y" false-value="N" disabled>
-                                            <label for='checkbox-1'></label>
-                                            <div class="input-group-btn" v-show="x.signature || !is_dev()">
-                                              <button v-if="tabSelected == 'tab1'" class="btn-primary btn-xs signature" @click="openSignature(x)"><i class="fa fa-pencil-alt"></i> Signature By :</button>
-                                              <button v-if="tabSelected == 'tab2'" class="btn-primary btn-xs signature"><i class="fa fa-pencil-alt"></i> Signature By : {{x.signature}}</button>
+                                    <br />
+                                    <div class="row">
+                                      <div class="form-group">
+                                        <label class="col-lg-2 control-label text-right">Signature</label>
+                                        <div class="col-lg-10">
+                                          <div class="form-group">
+                                            <div class="input-group">
+                                              <input type='checkbox' class='ios8-switch' id='checkbox-1' v-model.trim="x.active" true-value="Y" false-value="N" disabled>
+                                              <label for='checkbox-1'></label>
+                                              <div class="input-group-btn" v-show="x.signature || !is_dev()">
+                                                <button v-if="tabSelected == 'tab1'" class="btn-primary btn-xs signature" @click="openSignature(x)"><i class="fa fa-pencil-alt"></i> Signature By :</button>
+                                                <button v-if="tabSelected == 'tab2'" class="btn-primary btn-xs signature"><i class="fa fa-pencil-alt"></i> Signature By : {{x.signature}}</button>
+                                              </div>
                                             </div>
                                           </div>
                                         </div>
@@ -111,7 +113,7 @@
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </template>
                         </div>
                       </div>
                     </div>

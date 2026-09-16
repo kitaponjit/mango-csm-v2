@@ -265,9 +265,11 @@
                             <td align="center" class="text-modulebold">{{ x.itemno }}.</td>
                             <td align="center">{{ x.module }}</td>
                             <td align="center">{{ x.subject }}</td>
-                            <td align="center" v-for="item in serviceCodeData" :key="item.serv_code" v-if="item.serv_code === x.item_type">
-                              {{ item.serv_name || 'No DATA' }}
-                            </td>
+                            <template v-for="item in serviceCodeData" :key="item.serv_code">
+                              <td align="center" v-if="item.serv_code === x.item_type">
+                                {{ item.serv_name || 'No DATA' }}
+                              </td>
+                            </template>
                             <td align="center">
                               <template v-if="x.req_type === null">
                                 <td>-</td>
@@ -278,9 +280,11 @@
                                 </td>
                               </template>
                             </td>
-                            <td align="center" v-for="status in statusCodeData" :key="status.id" v-if="status.id === x.status">
-                              {{ status.name || '-' }}
-                            </td>
+                            <template v-for="status in statusCodeData" :key="status.id">
+                              <td align="center" v-if="status.id === x.status">
+                                {{ status.name || '-' }}
+                              </td>
+                            </template>
                             <td align="center">{{ $date(x.response_date, 'DD/MM/YYYY') }}</td>
                             <td align="center">{{ $date(x.due_date, 'DD/MM/YYYY') }}</td>
                             <td align="center">{{ $date(x.complete_date, 'DD/MM/YYYY') }}</td>

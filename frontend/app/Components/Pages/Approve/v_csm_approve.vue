@@ -623,7 +623,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_data" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_data">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -644,7 +646,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_dataU" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_dataU">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -814,7 +818,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_dataC" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_dataC">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -839,7 +845,9 @@
                 <div class="row">
                   <div class="col-lg-12 col-md-12 col-sm-12">
                     <label>Remark: </label>
-                    <textarea v-for="(x,idx) in h_dataC" v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    <template v-for="(x,idx) in h_dataC">
+                      <textarea v-if="x.prno == remark_reject" v-model="x.remark_cancel" class="form-control input-sm"></textarea>
+                    </template>
                   </div>
                 </div>
               </div>

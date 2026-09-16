@@ -24,9 +24,11 @@
               <td colspan="10">
                 <h4>{{x.empfullname_t}} ({{x.data.length}})</h4>
                 <span>{{x.department}}</span>
-                <!--<span v-for="(y,z) in statusNameNew" :key="z" v-if="x.count[z]">-->
-                <!--({{statusNameNew[z]}} : {{x.count[z]}}) &nbsp;-->
-                <!--</span>-->
+                <!--<template v-for="(y,z) in statusNameNew" :key="z">
+                  <span v-if="x.count[z]">-->
+                  <!--({{statusNameNew[z]}} : {{x.count[z]}}) &nbsp;-->
+                  <!--</span>
+                </template>-->
               </td>
               <td class="text-center">
                 <a href="#" @click.prevent="toggleTable(x)">

@@ -70,7 +70,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="x,idx in dashDetail" v-if="dashDetail.length">
+                      <tr v-for="x,idx in dashDetail">
                         <td align="center">{{idx+1}}</td>
                         <td align="center">{{x.csm_no}}</td>
                         <td align="center">{{$date(x.csm_date)}}</td>

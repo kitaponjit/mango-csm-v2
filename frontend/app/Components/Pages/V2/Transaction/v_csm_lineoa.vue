@@ -21,10 +21,12 @@
               </div>
               <div class="collapse navbar-collapse" id="myNavbar">
                 <ul class="nav navbar-nav navbar-right hidden-xs d-flex gap-15">
-                  <li v-for="(x, idx) in tabs" v-if="x.showbutton">
-                    <a class="button-navbar" role="button" v-if="(selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6'" @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-success-v2 bg-success-v2-10' : 'text-success-v2']">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
-                    <a class="button-navbar" role="button" v-else @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-white bg-secondary-v4' : 'text-white' ]">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
-                  </li>
+                  <template v-for="(x, idx) in tabs">
+                    <li v-if="x.showbutton">
+                      <a class="button-navbar" role="button" v-if="(selectedTabs.isEdit && selectedTabs.id == 'Header_tab3') || selectedTabs.id == 'Header_tab5' || selectedTabs.id == 'Header_tab6'" @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-success-v2 bg-success-v2-10' : 'text-success-v2']">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
+                      <a class="button-navbar" role="button" v-else @click="TabChange(idx)" :class="[ selectedTabs.id == x.id ? 'text-white bg-secondary-v4' : 'text-white' ]">{{ x.text }} <span v-if="x.showTotal">({{ x.total }})</span></a>
+                    </li>
+                  </template>
                   <li class="sidebar-button" @click.prevent="ToggleMenu('Open')">
                     <a class="button-navbar sidebar-button-a">
                       <img :src="baseUrl + 'vendor/Content/Images/Icon PNG/man.png'" class="profile-img sidebar-profile" width="23" height="23" alt="Your Logo" @click.prevent="ToggleMenu('Open')">

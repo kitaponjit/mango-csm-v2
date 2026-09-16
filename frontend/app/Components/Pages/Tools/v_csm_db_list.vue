@@ -4,9 +4,11 @@
       <template #body>
         <div class="nav-tabs-custom">
           <ul class="nav nav-tabs">
-            <li :class="{active: x.id===tabActive}" v-for="x in tabField" v-if="x.show">
-              <a href="#" @click.prevent="onTabChange(x.id)"><i class="fas" v-bind:class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i> <span v-text="x.text"></span></a>
-            </li>
+            <template v-for="x in tabField">
+              <li :class="{active: x.id===tabActive}" v-if="x.show">
+                <a href="#" @click.prevent="onTabChange(x.id)"><i class="fas" v-bind:class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i> <span v-text="x.text"></span></a>
+              </li>
+            </template>
             <li class="pull-right">
               <div v-if="tabActive == 1">
                 <button class="btn btn-sm btn-primary" v-on:click="checkNewItems()"><i class="fa fa-plus"></i> ทำรายการใหม่</button>
