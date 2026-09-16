@@ -271,7 +271,7 @@
     <!-- Modal : Approve Detail -->
     <approve-detail-modal ref="approveModal"
                           :approveFormOptions="approveFormOptions"
-                          :approveFormCode.sync="approveFormCode"
+                          v-model:approveFormCode="approveFormCode"
                           :approveDetailData="approveDetailData"
                           :loadFormDetail="loadFormDetail"
                           :closeApproveModal="closeApproveModal"
@@ -283,7 +283,7 @@
                                 modalRef="DescModal"
                                 eventType="description"
                                 :descriptionData="descriptionData"
-                                :desc_text.sync="desc_text"
+                                v-model:desc_text="desc_text"
                                 :loadDescriptionData="loadDescriptionData"
                                 :sendComponent="sendComponent"
                                 :onPageChange="onPageChange"
@@ -294,7 +294,7 @@
                                 eventType="description1"
                                 :showExtraColumn="true"
                                 :descriptionData="descriptionData"
-                                :desc_text.sync="desc_text"
+                                v-model:desc_text="desc_text"
                                 :loadDescriptionData="loadDescriptionData"
                                 :sendComponent="sendComponent"
                                 :onPageChange="onPageChange"
@@ -304,7 +304,7 @@
     <!-- Modal :Select Plan -->
     <select-plan-modal ref="select_plan"
                        :list_ppn="list_ppn"
-                       :selectedPlan.sync="selectedPlan"
+                       v-model:selectedPlan="selectedPlan"
                        :DBgetApiPPN="DBgetApiPPN"
                        :getApiPPN="getApiPPN"></select-plan-modal>
     <!-- Modal : Change Detail Task -->
@@ -319,7 +319,7 @@
                               :ValidUpdateDetailTask="ValidUpdateDetailTask"></change-detail-task-modal>
     <!-- Modal : AI Analysis Result -->
     <ai-analysis-modal ref="ai_analysis_modal"
-                       :aiModalTab.sync="aiModalTab"
+                       v-model:aiModalTab="aiModalTab"
                        :aiAnalysisModalTokenIn="aiAnalysisModalTokenIn"
                        :aiAnalysisModalTokenOut="aiAnalysisModalTokenOut"
                        :aiAnalysisModalSubject="aiAnalysisModalSubject"

@@ -209,11 +209,11 @@
     },
     directives: {
       clickOutside: {
-        bind(el, binding) {
+        beforeMount(el, binding) {
           el._clickOutsideHandler = (e) => { if (!el.contains(e.target)) binding.value(e) }
           document.addEventListener('click', el._clickOutsideHandler)
         },
-        unbind(el) { document.removeEventListener('click', el._clickOutsideHandler) }
+        unmounted(el) { document.removeEventListener('click', el._clickOutsideHandler) }
       }
     },
     data() {
@@ -823,7 +823,7 @@
 .ed-pop-enter-active,
 .ed-pop-leave-active { transition: opacity .16s ease, transform .16s ease; }
 
-.ed-pop-enter,
+.ed-pop-enter-from,
 .ed-pop-leave-to {
   opacity: 0;
   transform: translateY(-6px) scale(.985);

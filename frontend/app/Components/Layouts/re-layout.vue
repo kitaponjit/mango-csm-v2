@@ -690,9 +690,9 @@ const activityHandler = () => {
                 reloadCallHistory: () => { try { this.$parent.loadHistoryService() } catch (e) { } },
                 reloadCallCenter: () => { try { this.$parent.loadCustomerService() } catch (e) { } },
                 reloadTransaction: () => { try { this.$parent.loadTotal(); this.$parent.loadData() } catch (e) { } },
-                AiChatChunk: (data) => { this.$root.$emit('AiChatChunk', data) },
-                AiChatDone: (data) => { this.$root.$emit('AiChatDone', data) },
-                AiChatError: (data) => { this.$root.$emit('AiChatError', data) },
+                AiChatChunk: (data) => { this.$eventBus.$emit('AiChatChunk', data) },
+                AiChatDone: (data) => { this.$eventBus.$emit('AiChatDone', data) },
+                AiChatError: (data) => { this.$eventBus.$emit('AiChatError', data) },
               }
 
               xR = window.signalR(cfn, () => {
@@ -1699,7 +1699,7 @@ const activityHandler = () => {
 
   .re-snav-slide-enter-active,
   .re-snav-slide-leave-active { transition: transform .25s ease; }
-  .re-snav-slide-enter, .re-snav-slide-leave-to { transform: translateX(100%); }
+  .re-snav-slide-enter-from, .re-snav-slide-leave-to { transform: translateX(100%); }
 
   /* ═══════════════════════════════════════════
      Notification bell — due-date dropdown
@@ -1880,5 +1880,5 @@ const activityHandler = () => {
 
   .re-snav-fade-enter-active,
   .re-snav-fade-leave-active { transition: opacity .2s ease; }
-  .re-snav-fade-enter, .re-snav-fade-leave-to { opacity: 0; }
+  .re-snav-fade-enter-from, .re-snav-fade-leave-to { opacity: 0; }
 </style>

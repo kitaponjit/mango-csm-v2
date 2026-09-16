@@ -99,7 +99,7 @@
   transition: opacity .22s ease, transform .22s ease;
   transform-origin: top center;
 }
-.rc-filter-enter,
+.rc-filter-enter-from,
 .rc-filter-leave-to {
   opacity: 0;
   transform: scaleY(0.92) translateY(-6px);

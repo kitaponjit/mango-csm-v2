@@ -513,7 +513,7 @@
   transition: all 0.3s ease;
 }
 
-.fade-enter, .fade-leave-to {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
 }

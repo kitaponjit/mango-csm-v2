@@ -6266,6 +6266,7 @@ grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
 }
 
 .gm-toast-enter,
+.gm-toast-enter-from,
 .gm-toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(12px);
