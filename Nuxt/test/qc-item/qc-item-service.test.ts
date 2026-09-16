@@ -24,6 +24,25 @@ describe('createQCItemService', () => {
     expect(post).toHaveBeenCalledWith('CSM/Master/QCItem_Create', { item: items })
   })
 
+  it('preserves the server-provided line_number in the replace-all payload', async () => {
+    const post = vi.fn().mockResolvedValue({ ok: true, status: 200, data: {} })
+    const api = { post } as unknown as ApiClient
+    const service = createQCItemService(api)
+    const items = [
+      { itemno: 1, itemname: 'Description', remark: 'Remark', line_number: 5 },
+      { itemno: 2, itemname: 'Description 2', remark: 'Remark 2', line_number: 9 },
+    ]
+
+    await service.create(items)
+
+    expect(post).toHaveBeenCalledWith('CSM/Master/QCItem_Create', {
+      item: [
+        { itemno: 1, itemname: 'Description', remark: 'Remark', line_number: 5 },
+        { itemno: 2, itemname: 'Description 2', remark: 'Remark 2', line_number: 9 },
+      ],
+    })
+  })
+
   it('appends the upload as the backend-required file field', async () => {
     const postForm = vi.fn().mockResolvedValue({ ok: true, status: 200, data: true })
     const api = { postForm } as unknown as ApiClient

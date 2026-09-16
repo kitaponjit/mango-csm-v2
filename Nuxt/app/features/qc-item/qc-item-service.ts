@@ -14,7 +14,7 @@ export function createQCItemService(api: ApiClient): QCItemService {
       return api.get<QCItem[]>('CSM/Master/QCItem_ReadList')
     },
     create(items) {
-      const payload = items.map(({ itemno, itemname, remark }) => ({ itemno, itemname, remark }))
+      const payload = items.map(({ itemno, itemname, remark, line_number }) => ({ itemno, itemname, remark, line_number }))
       return api.post<unknown>('CSM/Master/QCItem_Create', { item: payload })
     },
     importFile(file) {

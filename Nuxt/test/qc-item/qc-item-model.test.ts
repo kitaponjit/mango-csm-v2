@@ -56,6 +56,19 @@ describe('QCItem model', () => {
       .toMatchObject({ itemno: 1, itemname: '', remark: '', line_number: 1 })
   })
 
+  it('mints the next line_number from the maximum existing line_number', () => {
+    const now = new Date('2026-09-14T10:00:00Z')
+    expect(createNewQCItem([
+      { itemno: 1, line_number: 5 },
+      { itemno: 2, line_number: 9 },
+      { itemno: 3, line_number: 2 },
+    ], now)).toMatchObject({ itemno: 4, line_number: 10 })
+    expect(createNewQCItem([
+      { itemno: 1, line_number: null },
+      { itemno: 2 },
+    ], now)).toMatchObject({ itemno: 3, line_number: 3 })
+  })
+
   it('rejects the first row with a blank description or remark', () => {
     expect(validateQCItems([{ itemno: 7, itemname: '  ', remark: 'Remark' }])).toEqual({
       valid: false,
