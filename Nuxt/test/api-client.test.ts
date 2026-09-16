@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createApiClient } from '../app/services/http/api-client'
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(body: unknown, status = 200, responseHeaders: Record<string, string> = {}) {
+  const values = new Map(Object.entries(responseHeaders).map(([name, value]) => [name.toLowerCase(), value]))
+
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: { get: (name: string) => values.get(name.toLowerCase()) ?? null },
     json: vi.fn().mockResolvedValue(body),
   }
 }
@@ -27,6 +30,51 @@ describe('createApiClient', () => {
       { method: 'GET', headers: { 'X-Mango-Auth': 'secret-token' } },
     )
     expect(result).toEqual({ ok: true, data: { id: 7 }, status: 200 })
+  })
+
+  it('sends an authenticated JSON POST body', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({ success: true }))
+    const client = createApiClient({
+      baseUrl: '/service/',
+      fetcher,
+      credentialProvider: { getCredential: () => 'token' },
+      onMissingCredential: vi.fn(),
+      onInvalidCredential: vi.fn(),
+    })
+
+    await client.post('CSM/Master/QCItem_Create', { item: [{ itemno: 1 }] })
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/service/CSM/Master/QCItem_Create',
+      {
+        method: 'POST',
+        headers: {
+          'X-Mango-Auth': 'token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ item: [{ itemno: 1 }] }),
+      },
+    )
+  })
+
+  it('sends FormData without overriding its multipart boundary header', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({ success: true, data: true }))
+    const client = createApiClient({
+      baseUrl: '/service/',
+      fetcher,
+      credentialProvider: { getCredential: () => 'token' },
+      onMissingCredential: vi.fn(),
+      onInvalidCredential: vi.fn(),
+    })
+    const form = new FormData()
+    form.append('file', new File(['itemno,itemname,remark'], 'QCItem.xlsx'))
+
+    await client.postForm('CSM/Master/QCItem_Import', form)
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/service/CSM/Master/QCItem_Import',
+      { method: 'POST', headers: { 'X-Mango-Auth': 'token' }, body: form },
+    )
   })
 
   it('returns an unauthenticated result without making a request when the credential is missing', async () => {
@@ -115,6 +163,23 @@ describe('createApiClient', () => {
     expect(await client.get('second')).toEqual({
       ok: false,
       error: { code: 'forbidden', message: 'The request is not permitted.', status: 403 },
+    })
+    expect(onInvalidCredential).toHaveBeenCalledOnce()
+  })
+
+  it('invalidates a 403 response when the backend marks it as an authentication failure', async () => {
+    const onInvalidCredential = vi.fn()
+    const client = createApiClient({
+      baseUrl: '/service/',
+      fetcher: vi.fn().mockResolvedValue(jsonResponse({}, 403, { 'X-MG-Auth-Error': 'MG_TIME' })),
+      credentialProvider: { getCredential: () => 'expired' },
+      onMissingCredential: vi.fn(),
+      onInvalidCredential,
+    })
+
+    expect(await client.get('protected')).toEqual({
+      ok: false,
+      error: { code: 'unauthenticated', message: 'The internal session is invalid or expired.', status: 403 },
     })
     expect(onInvalidCredential).toHaveBeenCalledOnce()
   })

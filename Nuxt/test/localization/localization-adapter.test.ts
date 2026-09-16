@@ -17,6 +17,62 @@ describe('createLocalizationAdapter', () => {
     expect(adapter.t('manual.title')).toBe('Program update list')
   })
 
+  it('provides localized QCItem labels and states in both supported languages', () => {
+    const keys = [
+      'title',
+      'description',
+      'count',
+      'number',
+      'action',
+      'actions',
+      'descriptionColumn',
+      'remark',
+      'addDate',
+      'add',
+      'save',
+      'saving',
+      'export',
+      'exporting',
+      'import',
+      'importTitle',
+      'selectedFile',
+      'chooseFile',
+      'cancel',
+      'upload',
+      'uploading',
+      'importHint',
+      'loading',
+      'empty',
+      'error',
+      'invalidResponse',
+      'retry',
+      'validation',
+      'descriptionRequired',
+      'remarkRequired',
+      'deleteConfirm',
+      'deleteItem',
+      'saveSuccess',
+      'importSuccess',
+      'exportError',
+      'fileTypeError',
+      'authChecking',
+      'authRequired',
+      'authUnavailable',
+      'accessDeniedTitle',
+      'accessDeniedMessage',
+      'accessErrorTitle',
+      'accessRetry',
+      'readOnly',
+    ]
+    const thai = createLocalizationAdapter({ getItem: () => null })
+    const english = createLocalizationAdapter({ getItem: () => 'EN' })
+
+    for (const key of keys) {
+      expect(thai.t(`qcItem.${key}`)).not.toBe(`qcItem.${key}`)
+      expect(english.t(`qcItem.${key}`)).not.toBe(`qcItem.${key}`)
+    }
+  })
+
   it('falls back to Thai for unknown preferences and missing keys', () => {
     const adapter = createLocalizationAdapter({ getItem: () => 'JP' })
 
