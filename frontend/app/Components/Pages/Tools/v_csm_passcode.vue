@@ -4,11 +4,13 @@
       <template #body>
         <div class="nav-tabs-custom">
           <ul class="nav nav-tabs">
-            <li :class="{ active: x.id === tabActive }"v-for="x in tabField"v-if="x.show">
-              <a href="#" @click.prevent="onTabChange(x.id)">
-                <i class="fas" v-bind:class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i>
-                <span v-text="x.text"></span></a>
-            </li>
+            <template v-for="x in tabField" :key="x.id">
+              <li :class="{ active: x.id === tabActive }" v-if="x.show">
+                <a href="#" @click.prevent="onTabChange(x.id)">
+                  <i class="fas" v-bind:class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i>
+                  <span v-text="x.text"></span></a>
+              </li>
+            </template>
           </ul>
           <div class="tab-content">
             <!-- Tab 1 : Passcode -->
