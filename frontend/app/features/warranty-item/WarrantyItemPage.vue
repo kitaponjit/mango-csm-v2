@@ -5,6 +5,7 @@ import { createWarrantyItemListService } from './list/warranty-item-list-service
 import {
   createWarrantyItemListController,
   createWarrantyItemListState,
+  getWarrantyItemPageNumbers,
   type WarrantyItemListController,
 } from './list/warranty-item-list-state'
 import { getWarrantyItemPagePolicy } from './page-policy'
@@ -23,6 +24,7 @@ const filters = reactive({
 const controller = shallowRef<WarrantyItemListController | null>(null)
 const busy = computed(() => state.status === 'initial-loading' || state.status === 'refreshing')
 const displayedPage = ref(1)
+const pageNumbers = computed(() => getWarrantyItemPageNumbers(state.maxPage))
 
 // Retained rows still belong to the last successful page if a later request fails.
 watch(() => state.status, status => {
@@ -137,9 +139,45 @@ onMounted(() => {
               </table>
             </div>
             <nav class="warranty-item-paging" aria-label="Warranty Item pages">
-              <button type="button" class="btn btn-sm btn-default" :disabled="busy || !controller || state.query.page <= 1" @click="controller?.goToPage(state.query.page - 1)">Previous</button>
+              <button
+                type="button"
+                class="btn btn-sm btn-default"
+                :disabled="busy || !controller || state.query.page <= 1"
+                aria-label="First page"
+                @click="controller?.goToPage(1)"
+              >First</button>
+              <button
+                type="button"
+                class="btn btn-sm btn-default"
+                :disabled="busy || !controller || state.query.page <= 1"
+                aria-label="Previous page"
+                @click="controller?.goToPage(state.query.page - 1)"
+              >Previous</button>
+              <button
+                v-for="pageNumber in pageNumbers"
+                :key="pageNumber"
+                type="button"
+                class="btn btn-sm btn-default"
+                :disabled="busy || !controller || pageNumber === state.query.page"
+                :aria-current="pageNumber === state.query.page ? 'page' : undefined"
+                :aria-label="`Page ${pageNumber}`"
+                @click="controller?.goToPage(pageNumber)"
+              >{{ pageNumber }}</button>
               <span>Page {{ state.query.page }} of {{ state.maxPage }} · {{ state.total }} total rows</span>
-              <button type="button" class="btn btn-sm btn-default" :disabled="busy || !controller || state.query.page >= state.maxPage" @click="controller?.goToPage(state.query.page + 1)">Next</button>
+              <button
+                type="button"
+                class="btn btn-sm btn-default"
+                :disabled="busy || !controller || state.query.page >= state.maxPage"
+                aria-label="Next page"
+                @click="controller?.goToPage(state.query.page + 1)"
+              >Next</button>
+              <button
+                type="button"
+                class="btn btn-sm btn-default"
+                :disabled="busy || !controller || state.query.page >= state.maxPage"
+                aria-label="Last page"
+                @click="controller?.goToPage(state.maxPage)"
+              >Last</button>
             </nav>
           </template>
         </div>

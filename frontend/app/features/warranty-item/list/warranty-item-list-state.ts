@@ -43,6 +43,11 @@ function maxPageFor(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(Math.max(0, total) / pageSize))
 }
 
+export function getWarrantyItemPageNumbers(maxPage: number): number[] {
+  const pageCount = Number.isFinite(maxPage) ? Math.max(1, Math.trunc(maxPage)) : 1
+  return Array.from({ length: pageCount }, (_, index) => index + 1)
+}
+
 function clampPage(page: number, maxPage: number): number {
   if (!Number.isFinite(page)) {
     return 1
