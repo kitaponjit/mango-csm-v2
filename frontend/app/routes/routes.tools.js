@@ -1,6 +1,17 @@
 /* Tools */
 const toolsRoutes = [
   {
+    /* Document browser over the `log_web` Mongo collection. Reads through
+       ~/services/document-store, which today queries a JSON document file and
+       can be pointed at a backend endpoint without changing the screen. */
+    name: "v_csm_log_web",
+    path: "/page/Tools/v_csm_log_web/",
+    component: () => import(`../Components/Pages/Tools/v_csm_log_web.vue`),
+    meta: {
+      auth: true,
+    },
+  },
+  {
     name: "v_csm_employee",
     path: "/page/Tools/v_csm_employee/",
     component: () => import(`../Components/Pages/Tools/v_csm_employee.vue`),
