@@ -1,80 +1,111 @@
-# [EPIC] Migrate Warranty Item Core to frontend target
+# [EPIC] Align Warranty Item Core with the frontend Nuxt 4 target
 
 | Field | Value |
 |---|---|
-| Status | PLANNING / READY FOR DEV (no implementation) |
+| Status | PLANNING / DOCUMENTATION ALIGNMENT |
 | Owner (handoff_to) | Thanat-wut |
-| Source slice | mas_002 Warranty Item Core (T1–T4 GREEN in Nuxt scaffold, T5 PAUSED) |
-| Target | `frontend/` Nuxt 4 SPA (dev decision 2026-09-15) — `Nuxt/` is HISTORY_ONLY |
-| Legacy owner | `Website/.../Master/v_csm_mas_002.vue` + `frontend/.../Master/v_csm_mas_002.vue` (ported verbatim, still shippable) |
+| Capability | `mas_002` Warranty Item Core |
+| Target application | `frontend/` |
+| Target framework | Nuxt 4.5.2 + Vue 3, SPA mode |
+| New capability language | TypeScript mandatory; Vue SFC logic uses `<script setup lang="ts">` |
+| Legacy behavioral source | `Website/` |
+| Historical migration evidence | `Nuxt/` (SUPERSEDED / HISTORY_ONLY) |
 | Date | 2026-09-16 |
 
-## 1. Context
+## 1. Architecture decision
 
-Warranty Items live on legacy screen `/page/master/v_csm_mas_002/` (Vue 2 idioms, ported verbatim to `frontend/`). The combined screen mixes ordinary catalog CRUD with Reference IC linking and 22-column Auto Import. T1–T4 proved the Core slice (list/search/paging, create/edit, delete guard, 12-col Master Import) in the superseded `Nuxt/` scaffold (`/csm-next/master/warranty-item/`, 81/81 suite, build pass). T5 export PAUSED after PR #25 declared `frontend/` the target. This Epic translates — never blind-copies — the proven Core slice into the `frontend/` target. No `Nuxt/` revival. No legacy/backend edits. No Reference IC / Auto Import.
+Warranty Item Core will be implemented as a typed capability inside the existing `frontend/` application. `frontend/` is already the repository's Nuxt 4 + Vue 3 target runtime even though most ported screens still use Options API JavaScript.
 
-Authoritative inputs: `.scratch/mas-002-warranty-item/spec.md`, `issues/01–05`, root `AGENTS.md`, `frontend/MIGRATION.md`, `docs/integration/frontend-backend-connection.md`, `frontend/app/Components/Pages/Master/v_csm_mas_002.vue` (~1547 lines), `docs/backend/contract-navigation-knowledge.md` §3 (MasterController pointer only).
+New Warranty Item-owned code must use TypeScript for the page logic, models, service/API contracts, form and page state, pagination, mutation results, error normalization, import/export results, and any capability-owned composables or adapters. Raw or untrusted values enter as `unknown` and are normalized or narrowed. `any` requires a documented boundary.
 
-## 2. Domain Model (4 layers)
+Existing JavaScript in `frontend/` remains in place unless the Warranty Item integration seam requires a scoped change. This Epic does not authorize a bulk TypeScript conversion or adjacent-page modernization.
 
-**Business:** Tenant-scoped warranty catalog. Warranty Group (type_code/type_name, `default_=='Y'` pick) classifies items. Warranty Item = salable warranty definition (war_code PK within tenant, war_des, group, discrete Days/Months/Years OR Lifetime, material ref, vendor + validity window, active flag). Duration rule: discrete non-negative integers, no rollover; Lifetime Y ⟺ D=M=Y=0. Material (itemcode/itemname) is a manual reference, no picker. Reference IC = passive receipt linkage (ic_docno/ic_itemno, cust→vendor, war_date_start/end, acct_no, loccode, pre_event) shown read-only, bulk-created via Create reuse with computed durations — NOT core. Unit/Area refs (`rd_mas_area_item`, `rd_mas_proj_warranty` per spec) are server-side delete guards only, never client-invented.
-**Legacy storage:** SQL Server behind API (EF6 + raw SQL per backend survey; tables `rd_mas_area_item`/`rd_mas_proj_warranty` cited in spec only, unverified in this checkout — UNKNOWN authority). No tenant field in payloads; audit cols (add_user/add_dt/edit_user/edit_dt) display-only.
-**API contract (verified client-side, server behavior UNKNOWN):** `CSM/Master/WarrantyItem_ReadList?skip&take&field&text&active` → `{data_rows,total}` (≠ Group's `data.data`); `WarrantyItem_Read?war_code=` (fresh edit prefill + passive IC meta); `WarrantyItem_Create/Update {header:{war_code,war_des,type_code,tot_date,tot_month,tot_year,lifetime,itemcode,active}}` (code immutable, IC omitted; preserve lowercase `Warrantyitem_Update`); `WarrantyItem_Delete {header:{war_code}}`; `WarrantyItemImportData_Master {data:[12-col rows]}` (one batch, upsert by tenant+code); `WarrantyItemExport_Master` → token → `Api/File/DownLoad?download=true&id=`; `WarrantyRefIC?skip&take&search_field&search_text` → `{data,total}` (deferred); `WarrantyAutoImportData` 22-col A–V (deferred); sibling consumer `WarrantyItem_ReadList2?search_text=` in mas_003.
-**Frontend representation (target):** Route `/page/master/v_csm_mas_002/` (`routes.master.js:17-28`, meta `CSM_WEB/20820 checkUserRight`), menu `menu.vue:175-187` under 20800 group. Page state in SFC `data()` + vendor `Pagination.js`; transport `$xt.getServer/postServerJson` at `{dataServer}/service/...`; auth via `auth.global.js` + `X-Mango-Auth`; language bundle for `mas002.*`; dialogs via `jquery-confirm`/`toastr`/`alert-service.js`; grids ag-Grid v33 + `ModuleRegistry`.
+`Website/` remains the behavioral and client-contract reference. The separate `Nuxt/` application remains historical migration evidence only. “No Nuxt revival” means do not restore or extend that superseded application; it does not prohibit Nuxt, because the selected `frontend/` runtime is Nuxt 4. Knowledge and proven patterns may be re-evaluated, but runtime code must not be cross-imported from `Nuxt/`.
 
-## 3. Scope IN / OUT
+## 2. Verified route ownership
 
-IN: catalog list/search (`war_code|war_des`)/active filter/server paging (take=500 default); create/edit with group-default + validation + lifetime rule; delete with server guard surfacing; 12-col Master Import (A–L logical: code,name,group,d,m,y,lifetime,itemcode,vendor,start,end,active — legacy physical skips I/uses M, follow logical per T4 contract); server export via File capability; `CSM_WEB/20820` gating; read-only guards; legacy quirks preserved (`active=N`=unfiltered, no `testday()` hook, single init path).
-OUT: Reference IC toolbar/dialog/receipt linking (`iccost=='3'` gate, `WarrantyRefIC`, `addRefIC` bulk, IC readonly section); 22-col Auto Import (`WarrantyAutoImportData`, `Template_All_Warranty`); Material picker (`vue-itemcode-list` stays manual input); client `XLSX.writeFile` fallback; backend/schema/migration changes; `Website/` edits; shared-infra abstractions; new Group ticket; cutover/retirement/E2E (deferred with evidence).
+Repository evidence in `frontend/app/routes/routes.master.js` verifies:
 
-## 4. Evidence links
+- Route name: `v_csm_mas_002`
+- Route path: `/page/master/v_csm_mas_002/`
+- Current component resolution: `frontend/app/Components/Pages/Master/v_csm_mas_002.vue`
+- Authorization metadata: `CSM_WEB / 20820`, `checkUserRight: true`
 
-- Spec: `.scratch/mas-002-warranty-item/spec.md` §§1–10; tickets `issues/01–05`.
-- Legacy: `Website/Scripts/App/Application/Components/Pages/Master/v_csm_mas_002.vue` (ReadList L659, RefIC L683, Read L745, Create L759+964, Update L761, Delete L795, ImportMaster L883, AutoImport L1028, exportUrl L8; no `rd_mas_*` client refs; dead `testday()` binding).
-- Target mirror: `frontend/app/Components/Pages/Master/v_csm_mas_002.vue` (mechanical port only: `#slots`, `~/stores/helpers`, `loadingBox` no-op guard).
-- T1–T4 proof (HISTORY): `Nuxt/app/features/warranty-item/*`, `Nuxt/app/pages/master/warranty-item/index.vue`, `Nuxt/test/warranty-item/*` (81/81); T4 contract: logical A–L, one-batch `{data}`, blank-code skip, blank-active throws, lifetime-Y zeroes.
-- Platform: root `AGENTS.md` (frontend/=target, Nuxt/=superseded, no direct DB, no new SSO); `frontend/MIGRATION.md` (port deltas, ag-Grid/v-model/SignalR/vendor fixes); `docs/integration/frontend-backend-connection.md` §§2–9 (path base `/service/`, `X-Mango-Auth`, URL shape, vendor rule, failure modes).
-- Consumers: mas_003 (ReadList2 pick + area attach), mas_008 (expiry calc duplicate), mas_008_delete (match-key), trn_001 + edit_details (lifetime text), war_rpt01/branch/rpt_002 (war_des/war_code filters). See V2 report §5.
+`frontend/app/Components/Layouts/menu.vue` links menu item `20820` to the same path under the `20800` Warranty group. The target capability must preserve this registered route and menu contract unless a separate routing decision is approved. Repository evidence does not establish whether third-party bookmarks or integrations depend on the URL, so external dependency is **UNVERIFIED**.
 
-## 5. Strategy: Discover → Model → Verify → Translate → Test → Learn → Next
+The historical `/csm-next/master/warranty-item/` route belongs to the superseded scaffold and is not a target route.
 
-D: read-only domain + consumer survey (this Epic). M: 4-layer model + INV register (V2 report). V: backend contract confirmation in owning repo (guard tables, import validation, count semantics) before delete/import parity claims. T: per-capability translation into `frontend/` idioms (§6), smallest diff, no generic abstractions. T: RED→GREEN observable-behavior tests + regression (sibling masters, shared seams) + build; unit ≠ UAT. L: record deltas/quirks as evidence. N: Phase plan §7.
+## 3. Scope
 
-## 6. frontend/ target mapping + T1–T4 disposition
+### In scope for the future feature PR
 
-| Capability | Target seam | T1–T4 artifact → disposition |
+- Typed list, search, active filter, server paging, loading, empty, retry, and stale-response handling.
+- Typed create/edit form, validation, pending state, duplicate-submit protection, and Warranty Group lookup dependency.
+- Typed delete flow with pending state, duplicate-click protection, server-error surfacing, and pagination clamp.
+- Typed two-stage Master Import flow: spreadsheet upload/preview followed by Warranty Item batch submission.
+- Typed server export/download flow owned by `frontend/`.
+- Existing `CSM_WEB / 20820` authentication and authorization behavior.
+- Focused automated tests plus build/typecheck evidence once the minimum target test/typecheck seam exists.
+
+### Out of scope
+
+- Feature implementation in this documentation PR.
+- Production feature work in `Nuxt/` or runtime imports from it.
+- Broad conversion of existing `frontend/` JavaScript.
+- `Website/`, backend, schema, deployment, or root-governance changes.
+- Reference IC workflows or glossary definition.
+- 22-field Auto Import, Material picker, client-side XLSX export fallback, and unrelated Master features.
+- Warranty Group implementation or refactor beyond the minimum typed lookup capability required by Warranty Item.
+- Cutover, retirement, live UAT, or merge approval.
+
+## 4. Evidence roles
+
+| Boundary | Role | Use |
 |---|---|---|
-| Route/ownership | `routes.master.js` 20820 entry + `Master/v_csm_mas_002.vue` (owner) | `index.vue` structure → REBUILD (AdminLTE + vendor dialogs) |
-| API | `$xt.getServer/postServerJson` at `{dataServer}/service/...` | `warranty-item-service.ts` (6 endpoints+shapes, lowercase Update) → TRANSLATE |
-| Auth/authz | `auth.global.js` + `ViewUserAuthentication` + `meta.mangoMenu` | `warranty-item-access.ts` (`CSM_WEB/20820`) → REUSE verbatim |
-| State/paging | SFC `data()` + `Pagination.js` vendor | `warranty-item-model.ts` (take=500, `data_rows`, pager math, validation) → ADAPT |
-| Dialogs | `jquery-confirm`/`toastr`/`alert-service.js`, `#slots` | page handlers/generation guard/`data-testid` → REBUILD; guard logic → ADAPT |
-| Import | page script + `$xt.postServerJson`, upload via `postServerForm` pattern | `warranty-item-import.ts` (A–L map, coerce, paste parse) → ADAPT |
-| Export | server token → shared File capability `DownLoad?id=` | T5 (no artifact; exportUrl L8 + local XLSX noted) → REBUILD (server path only) |
-| Localization | language bundle (`LanguageSelector→LangDisplay`) + `window.auth/userRight` | `warranty-item-texts.ts` (`mas002.*` EN/TH) → ADAPT via bundle/`$t` |
-| Testing | route-level observable tests (ports of T1–T4 suites) | all `Nuxt/test/warranty-item/*` → TRANSLATE (assert same behaviors, vendor idioms) |
-| History | `Nuxt/` scaffold retained, not built upon | all `Nuxt/` files → HISTORY_ONLY; legacy quirks (`active=N`, no `testday`) → REUSE as behavior |
+| `Website/` | LEGACY | Observable behavior and current client API usage. Do not modify in this slice. |
+| `frontend/` | TARGET | Nuxt 4 + Vue 3 runtime owner and only production implementation destination. |
+| `Nuxt/` | HISTORY_ONLY | Typed API/result, session, access, file, testing, stale-response, and race-protection patterns. Re-evaluate; do not import or restore. |
+| Backend repository | CONTRACT OWNER | Required to confirm mutation, guard, import, and export semantics that client code alone cannot prove. |
 
-## 7. Next Work (Phases A–H)
+## 5. Contract status
 
-A Discover-verify: confirm backend guard/import/export semantics in owning repo. In: spec+legacy evidence. Out: verified contract sheet. Dep: backend access. Stop: guard tables unconfirmed → no delete parity claim. Ev: contract sheet.
-B Model-freeze: lock 4-layer model + INV-01..15. Out: this Epic + V2 report. Dep: A. Stop: ambiguity → OPEN QUESTION, not guess.
-C Route seam: establish `frontend/` capability slice boundary (no shared-infra edits). Dep: B. Stop: shared change needed → separate approval.
-D List/paging/auth (ex-T1): translate. Dep: C. Stop: envelope mismatch → halt.
-E Create/edit (ex-T2): group-default + validation + IC-exclusion. Dep: D (+Group service as-is).
-F Delete guard (ex-T3): server message surfacing. Dep: D+A. Stop: no backend proof → message-passthrough only.
-G Master Import (ex-T4): A–L map/preview/one-batch. Dep: D+A.
-H Server Export (ex-T5): token→File capability. Dep: D+A. Stop: token semantics unconfirmed → error-path only.
-Each phase: RED→GREEN, focused + sibling regression, build, `git diff --check`; unit ≠ UAT stated.
+The detailed registry lives in `spec.md`. The following summary prevents assumptions from becoming contracts.
 
-## 8. Acceptance / DoD
+| Contract | Status | Evidence / boundary |
+|---|---|---|
+| Target route `/page/master/v_csm_mas_002/` and menu `CSM_WEB / 20820` | VERIFIED | Current `frontend/` route and menu source. |
+| `WarrantyItem_Update` casing | VERIFIED | Both `Website/.../v_csm_mas_002.vue` and `frontend/.../v_csm_mas_002.vue` call this exact spelling. |
+| List/read/create/update/delete/import/export endpoint names | VERIFIED | Both clients contain the calls; this verifies current client usage only, while backend action behavior still requires owning-repository or runtime confirmation where noted in the spec. |
+| Delete referential-guard tables and rejection rules | REQUIRES BACKEND CONFIRMATION | No owning backend source is available in this checkout. |
+| Master Import validation, upsert, atomicity, and processed-count semantics | REQUIRES BACKEND CONFIRMATION | Client code shows request flow, not server transaction/result semantics. |
+| Export endpoint returns a file token in `rsp.data` | VERIFIED | Shared form code passes `rsp.data` to `Api/File/DownLoad`; this verifies current client usage only, while the endpoint-specific response needs backend/runtime confirmation. |
+| Reference IC business meaning | UNVERIFIED DOMAIN TERM — REQUIRES DOMAIN/BUSINESS CONFIRMATION | Client labels and fields exist, but no authoritative business definition was found. |
 
-Parity for IN-scope behaviors with evidence; no OUT-scope leakage; smallest reviewable diff; `frontend/` idioms only; `active=N` quirk + lifetime rule + code immutability + IC-exclusion preserved; read-only guards enforced; no `Nuxt/` edits; no legacy/backend edits; validation known, skips stated; unresolved items as OPEN MIGRATION QUESTIONs.
+## 6. Target architecture
 
-## 9. Constraints (binding)
+The implementation will introduce the smallest typed Warranty Item slice under `frontend/app/`. Exact directories and filenames are intentionally not fixed until the implementation plan accounts for the current `frontend/` structure. The slice must nevertheless provide clear typed boundaries for:
 
-No `Nuxt/` revival. No blind copy of T1–T4 (translate per §6). No `Website/`/`Backend/` edits. No Reference IC / Auto Import / Material picker / client-XLSX. No new SSO. No generic CRUD/pager/importer/abstraction. No production cutover/retirement claim. Unit/component pass ≠ integration/UAT.
+1. Route/page composition using `<script setup lang="ts">`.
+2. Domain and form models.
+3. Query, request, response, and normalized-result types.
+4. Capability-owned service methods.
+5. Pagination and async generation state.
+6. Import upload/preview/submission state.
+7. Export request/token/download state.
+8. Error normalization from `unknown`.
 
-## 10. Open questions
+The current target has no tracked application `tsconfig.json`, typecheck script, Warranty Item test baseline, typed API client, typed file/download abstraction, or `WarrantyGroupService`. Those are future architecture-enablement requirements. Gate 2 only documents them; it adds no config, dependencies, source, or tests.
 
-1. Server delete-guard tables/rules (`rd_mas_area_item`, `rd_mas_proj_warranty`) — no client evidence; needs owning-repo read. 2. Import processed-count semantics (backend exposes none; T4 used submitted count). 3. Blank-active reject vs coerce (backend rejects per survey). 4. `WarrantyItem_ReadList2` ownership (mas_003 consumer). 5. Group-broadcast/realtime for warranty screens (none — `JoinGroup` has no caller). 6. Cutover/retirement criteria (nothing retireable today per AGENTS.md).
+## 7. Delivery sequence
+
+1. **Architecture enablement:** establish the minimum source-controlled TypeScript, typecheck, test, typed API/result, session/access, and file/download seams required by this capability. Each shared change needs narrow ownership and review.
+2. **Ticket 01:** route-owned shell, access, list, search, server paging, and async race protection.
+3. **Ticket 02:** create/edit and the required typed Warranty Group lookup capability.
+4. **Ticket 03:** delete guard handling, duplicate-mutation protection, and pagination clamp.
+5. **Ticket 04:** Master Import upload, preview/mapping, validation, and batch submission.
+6. **Ticket 05:** server export and target-owned typed download abstraction.
+7. **Integration verification:** real backend contract checks, browser behavior, authorization, and parity against `Website/`.
+
+## 8. Completion boundary
+
+This Epic is ready for implementation planning only when the Epic, specification, and five tickets agree on `frontend/` ownership, Nuxt 4 + Vue 3, mandatory TypeScript for new Warranty Item code, the verified route, and the contract classifications. Feature implementation remains blocked wherever the specification says **REQUIRES BACKEND CONFIRMATION** or **UNVERIFIED**.

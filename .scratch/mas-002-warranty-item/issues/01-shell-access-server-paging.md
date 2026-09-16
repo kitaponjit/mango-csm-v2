@@ -1,19 +1,45 @@
-# 01 — Shell, access, and server-paged Warranty Item catalog
+# 01 — Typed shell, access, and server-paged Warranty Item catalog
 
-**What to build:** An authorized user can open the Warranty Item migration route, browse the server-paged catalog, search by Warranty Code or Warranty Name, filter active records, and recover from loading, empty, and retryable error states. Anonymous and unauthorized users receive the correct access outcome, while read-only users can inspect but not mutate.
+**Target:** `frontend/` — Nuxt 4 + Vue 3.
 
-**Blocked by:** None — can start immediately.
+**Language:** TypeScript mandatory for newly owned Warranty Item code; page logic uses `<script setup lang="ts">`.
 
-**Status:** ready-for-agent
+**Route:** Preserve verified target route `/page/master/v_csm_mas_002/` and `CSM_WEB / 20820`. Do not create `/csm-next/**`.
 
-- [ ] RED tests cover the missing route, access states, list model/service, paging, and page behavior before implementation.
-- [ ] The target route is added without changing the legacy Warranty Item route or `v_csm_mas_002.vue`.
-- [ ] Anonymous users are redirected through the existing session adapter; `CSM_WEB / 20820` yields checking, denied, read-only, and editable outcomes through the existing access service.
-- [ ] Read-only users can read the catalog but cannot invoke New, Edit, Delete, Import, or Export handlers.
-- [ ] The initial list request uses `skip=0`, `take=500`, Warranty Code as the default field, empty text, and `active=Y`.
-- [ ] The list response is normalized from `data.data_rows` and `data.total`; malformed responses show an error state.
-- [ ] Search resets to page one; First, Previous, numbered, Next, and Last paging work for empty, full, and partial final pages.
-- [ ] Row numbers equal `skip + index + 1`, and fixed server ordering is rendered without client sorting.
-- [ ] Unchecked Active sends `active=N` and preserves the verified legacy meaning of an unfiltered result set.
-- [ ] Retry preserves search and filter state; stale asynchronous responses cannot overwrite a newer access generation.
-- [ ] Focused ticket tests and relevant existing regression tests pass; no backend, shared-infrastructure, or legacy-page changes are made.
+**Blocked by:** Minimum approved TypeScript, typecheck, test, typed API/result, and session/access enablement in `frontend/`.
+
+**What to build:** An authorized user can open the existing target route, browse the server-paged catalog, search/filter it, and recover from loading, empty, and retryable errors without stale responses winning races.
+
+## Typed boundaries
+
+- List query: `skip`, `take`, `field`, `text`, and `active`.
+- Raw API response as `unknown`, normalized into typed rows and total.
+- Pagination: page, page size, skip, total, maximum page, and row number.
+- Search/filter state.
+- Access state.
+- Loading, empty, error, retry, and request-generation state.
+
+## Acceptance criteria
+
+- [ ] RED tests cover route ownership, access outcomes, query construction, response normalization, paging boundaries, page reset, empty/error/retry behavior, and stale-response protection.
+- [ ] Implementation is owned by `frontend/`; no production code or test is added to `Nuxt/` or `Website/`.
+- [ ] Newly owned Vue logic uses `<script setup lang="ts">`; capability code uses `*.ts` where appropriate and does not use undocumented `any`.
+- [ ] Navigation continues to resolve `/page/master/v_csm_mas_002/`; route name `v_csm_mas_002` and menu identity `CSM_WEB / 20820` remain intact.
+- [ ] Anonymous users follow the existing login flow; users without the enabled menu right reach Access Denied.
+- [ ] Read-only users can inspect the catalog but cannot invoke create, edit, delete, import, or export handlers.
+- [ ] Initial render shows loading and sends exactly `skip=0`, `take=500`, `field=war_code`, empty `text`, and `active=Y`.
+- [ ] A valid response normalizes `data_rows` and `total`; malformed or incompatible data produces a visible error rather than unsafe assumptions.
+- [ ] A valid zero-row response ends loading and shows an empty state.
+- [ ] Search by Warranty Code or Warranty Name resets to page one before requesting and preserves field/text after failure.
+- [ ] Changing the active filter resets to page one; unchecked sends the observed `active=N` value without claiming unverified backend filtering semantics.
+- [ ] First, Previous, numbered, Next, and Last controls stay within server-derived bounds for zero rows, a full page, and a partial final page.
+- [ ] Displayed row numbers equal `skip + index + 1`; client sorting does not replace server order.
+- [ ] Retry reuses the current query/filter and clears the previous error only when a new request starts.
+- [ ] Each list/access generation has an identifier; a late older response cannot replace rows, totals, loading, error, or authorization state from a newer generation.
+- [ ] Focused tests, relevant target regressions, typecheck, and `frontend/` build have recorded results.
+
+## Evidence and open verification
+
+- **VERIFIED:** route, component resolution, menu, and `CSM_WEB / 20820` from current `frontend/` source.
+- **VERIFIED:** current clients use `WarrantyItem_ReadList` with the documented query names and read `data_rows` / `total`; runtime variants still require integration evidence.
+- **UNVERIFIED:** external consumers of the URL and runtime behavior of `active=N`; preserve current contracts pending integration evidence.

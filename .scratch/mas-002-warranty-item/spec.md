@@ -1,378 +1,211 @@
-# mas_002 Warranty Item (Core Slice) — Formal Implementation Specification
-
-## 1. Problem statement
-
-Warranty Items are still managed through the legacy Vue 2 screen at `/page/master/v_csm_mas_002/`. That screen combines the ordinary warranty catalog with Reference IC linking and a multi-table Auto Import workflow. The combined surface contains legacy quirks and makes the core catalog unavailable to the `/csm-next/` migration surface.
-
-The migration target is the ordinary Warranty Item catalog only. It must preserve the verified legacy API behavior and remain safe to operate beside the untouched legacy screen. It must not broaden into Reference IC, receipt linking, or Auto Import work.
+# mas_002 Warranty Item Core — Architecture-Aligned Specification
 
-## 2. Goal and approved boundary
+## 1. Goal and approved boundary
 
-Build the core Warranty Item capability at:
+Implement Warranty Item Core inside `frontend/`, the existing Nuxt 4.5.2 + Vue 3 SPA. All newly owned Warranty Item code uses TypeScript; Vue SFC logic uses `<script setup lang="ts">`.
 
-`/csm-next/master/warranty-item/`
-
-The slice must provide:
-
-- Catalog list, search, active filtering, and server paging.
-- Authentication and `CSM_WEB / 20820` menu-right enforcement.
-- Create and edit, including Warranty Group default selection.
-- Delete with server-enforced referential-integrity protection.
-- The verified 12-column Master Import workflow.
-- Server-side catalog export through the shared file capability.
+The capability preserves the registered target route `/page/master/v_csm_mas_002/` and authorization key `CSM_WEB / 20820`. It replaces or composes through the current route-owned implementation without creating `/csm-next/**`, reviving `Nuxt/`, or modifying `Website/`.
 
-The legacy page, route, menu entries, and backend remain operational and unchanged by this slice.
+The core slice includes list/search/server paging, create/edit, delete, Master Import, and server export. Reference IC and 22-field Auto Import remain deferred.
 
-## 3. User-visible behavior
+## 2. Ownership and evidence
 
-### 3.1 Catalog and navigation
+| Boundary | Classification | Rule |
+|---|---|---|
+| `frontend/` | TARGET | Owns runtime implementation, tests, and the minimum typed integration seams. |
+| `Website/` | LEGACY | Read-only source for observable behavior and existing client contract usage. |
+| `Nuxt/` | HISTORY_ONLY | Read-only source for typed patterns and migration lessons; no runtime imports or production edits. |
+| Backend repository | CONTRACT OWNER | Confirms server semantics that client source cannot prove. It is not available in this checkout. |
 
-1. An authenticated user with read access can navigate to the target route and see the Warranty Item catalog.
-2. The first request loads the first server page with `take=500` and active-only filtering (`active=Y`).
-3. The user can use First, Previous, numbered pages, Next, and Last controls.
-4. Search can target Warranty Code or Warranty Name and accepts free text.
-5. Search starts from page one and preserves the selected field and text when retrying a failed request.
-6. `active=Y` requests active records only. `active=N` requests the legacy unfiltered result set, including inactive records; this behavior must not be “fixed” in the target UI.
-7. Each row displays its pagination-aware row number, Warranty Code, Warranty Name, Warranty Group, duration, Active state, and available audit metadata.
-8. Loading, empty, and retryable error states are explicit and mutually understandable.
-9. A failed list request does not discard the current search or filter state.
+Existing JavaScript in `frontend/` is preserved unless a scoped route integration change is required. The feature does not authorize broad conversion, adjacent-page refactoring, or a second Nuxt application.
 
-### 3.2 Access control
+## 3. Target route and access contract
 
-1. An unauthenticated user is redirected through the existing session/login adapter.
-2. A user without `CSM_WEB / 20820` receives an Access Denied state.
-3. A read-only user can inspect the catalog but cannot invoke New, Edit, Delete, Import, or Export mutations/actions that require edit permission.
-4. Access checks and asynchronous list responses are generation-guarded so stale responses cannot repopulate a reset or unauthorized view.
-5. No new authentication or SSO dependency is introduced.
-
-### 3.3 Create
+### Verified repository contract
 
-1. An editable user can open an Add Warranty Item dialog.
-2. The dialog loads active Warranty Groups using the existing `WarrantyGroupService`.
-3. The group with `default_ == 'Y'` is selected automatically when one is available.
-4. If no default exists, or the group request fails, the user can select an active group manually; the page does not invent a default.
-5. Warranty Code is required, trimmed, limited to 15 characters, and restricted to the verified alphanumeric character set.
-6. Warranty Name is required and limited to 150 characters.
-7. Days, Months, and Years accept non-negative integers and remain discrete values; they do not roll over into one another.
-8. Enabling Lifetime sets Days, Months, and Years to zero and disables those inputs.
-9. Material Code is optional and entered manually; no material-picker dialog is added.
-10. A valid create submits one atomic request with the verified header contract, closes the dialog, reports success, and reloads the list.
-11. Invalid input prevents the request and shows field-level feedback.
-
-### 3.4 Edit
-
-1. An editable user can open Edit for a catalog row.
-2. Edit loads fresh data through the single-item read endpoint rather than trusting stale grid data.
-3. Warranty Code is displayed read-only and remains the lookup/identity key.
-4. The user can change Warranty Name, Warranty Group, discrete duration values, Lifetime, Material Code, and Active status.
-5. Existing passive Reference IC metadata may be shown read-only when returned by the read endpoint.
-6. Reference IC fields are never sent as mutable update fields and cannot be cleared accidentally.
-7. A rejected update leaves the dialog open with the current inputs and displays the server error.
-8. A successful update closes the dialog, reports success, and reloads the list.
+- Route name: `v_csm_mas_002`.
+- Route path: `/page/master/v_csm_mas_002/`.
+- Current resolution: `frontend/app/Components/Pages/Master/v_csm_mas_002.vue`.
+- Route metadata: `auth: true`, menu `CSM_WEB / 20820`, rights check enabled.
+- Menu: `frontend/app/Components/Layouts/menu.vue` links item `20820` to the same path.
 
-### 3.5 Delete
+The capability preserves the path and menu identity. Whether external bookmarks or integrations depend on the URL is **UNVERIFIED**, so a route rename is not authorized.
 
-1. An editable user must confirm deletion before a request is sent.
-2. The confirmation names both Warranty Code and Warranty Name.
-3. The request uses the verified delete header shape.
-4. If the server reports a reference from unit warranty records or project area allocations, the item remains and the server message is shown.
-5. A successful delete reports completion and reloads the current catalog view safely.
-6. There is no client-side referential-integrity guess; the server remains authoritative.
+### Required access behavior
+
+1. Anonymous users follow the existing target login behavior.
+2. Users without the enabled `CSM_WEB / 20820` right reach Access Denied.
+3. Read-only users may inspect the catalog but cannot invoke create, edit, delete, import, or export actions that require write permission.
+4. Access state and list generations prevent late responses from repopulating an unauthorized, reset, or newer view.
+5. No authentication, token, or SSO contract is redesigned in this slice.
+
+## 4. TypeScript requirements
+
+The future feature PR must define and use typed boundaries for at least:
+
+- `WarrantyItemListQuery`, list response, row, and normalized pagination state.
+- Search/filter, loading, empty, error, and retry state.
+- `WarrantyItemFormState`, validation state, create payload, and update payload.
+- Warranty Group lookup request/result and default-selection state.
+- Delete request/result and per-row mutation state.
+- Selected import file, upload request/response, mapped preview row, validation error, submission payload/result, and import pending state.
+- Export request, token result, download result, and export pending state.
+- Normalized success/failure result and error model.
+
+Raw network, vendor-global, spreadsheet, and browser values are `unknown` until narrowed. `any` is not a default escape hatch; each unavoidable use must document the external boundary.
+
+The current `frontend/` tree has no tracked application `tsconfig.json`, typecheck script, feature-test baseline, typed API client, typed session/access service, typed file/download abstraction, or typed Warranty Group service. The implementation phase must establish only the minimum viable seams needed by Warranty Item and review shared changes separately. This documentation PR creates none of that infrastructure.
+
+## 5. Capability behavior
+
+### 5.1 List, search, and server paging
+
+1. Initial navigation shows an explicit loading state and requests page one with `skip=0`, `take=500`, field `war_code`, empty text, and `active=Y`.
+2. A successful empty response shows an empty state, not a loading spinner or error.
+3. Search supports Warranty Code and Warranty Name, preserves entered criteria on failure/retry, and resets the current page to one before requesting.
+4. Changing the active filter resets to page one before requesting.
+5. `active=N` preserves the current client-observed meaning of the unchecked/all-records state; backend filtering semantics require runtime confirmation.
+6. First, Previous, numbered, Next, and Last controls derive boundaries from server `total`; row numbers equal `skip + index + 1`.
+7. A request failure keeps the current query and filter state and offers retry without displaying stale data as fresh.
+8. Each request has a generation/request identifier. Only the latest still-authorized request may commit rows, totals, loading, or error state.
 
-### 3.6 Master Import
+### 5.2 Create and edit
 
-1. An editable user can open the Master Import dialog.
-2. The accepted source has 12 columns, in the verified logical order:
-   Warranty Code, Warranty Name, Warranty Group, Days, Months, Years, Lifetime, Material Code, Vendor, Start Date, End Date, Active.
-3. The user can map spreadsheet columns A through L to those fields.
-4. A preview is shown before submission.
-5. Rows with blank Warranty Code are skipped.
-6. Active values are normalized according to the verified legacy ingestion behavior.
-7. Numeric duration values are coerced to the request representation without introducing rollover behavior.
-8. The confirmed mapped rows are submitted as one atomic request to the master import endpoint.
-9. Success reports the processed count and reloads the catalog.
-10. Import is disabled and its handler is guarded for read-only users.
+1. Form state, validation, payloads, pending state, and results are typed.
+2. Warranty Code is required, trimmed, limited to 15 characters, and immutable after creation. The exact allowed-character rule is **UNVERIFIED** and requires backend/business confirmation before implementation.
+3. Warranty Name is required and limited to 150 characters based on current client fields; backend validation requires confirmation.
+4. Days, Months, and Years accept non-negative discrete integers. Lifetime sets all three to zero and disables their inputs.
+5. Material Code remains manual input; a new picker is out of scope.
+6. Add requires an active Warranty Group lookup and selects `default_ == 'Y'` only when returned. `frontend/` has no typed `WarrantyGroupService`; the feature must introduce or adapt the minimum typed lookup capability rather than assume one exists.
+7. Edit loads current data by Warranty Code before opening the editable state.
+8. Save is disabled while pending and the handler rejects duplicate invocation.
+9. Invalid input sends no request. A failed read/save preserves useful form context and leaves the dialog available for correction.
+10. A successful save closes the dialog, reports success once, and reloads the current list query.
+11. Reference IC fields are not intentionally edited. Whether read-one metadata must round-trip unchanged in an update payload is **REQUIRES BACKEND CONFIRMATION**; do not strip, reinterpret, or mutate it by assumption. The business meaning remains an **UNVERIFIED DOMAIN TERM — REQUIRES DOMAIN/BUSINESS CONFIRMATION**.
 
-### 3.7 Server Export
+### 5.3 Delete
 
-1. An authorized user can request a full tenant catalog extract through the server export endpoint.
-2. The server-returned token is passed to the shared file capability for download.
-3. Export does not build a client-side file from the currently loaded page.
-4. Popup blockage, missing tokens, and download failures report an error and never show a false success message.
+1. Confirmation identifies both Warranty Code and Warranty Name; cancel sends no request.
+2. Delete request/result and error normalization are typed.
+3. The affected row/action remains pending until the request settles; repeated clicks while pending send no additional request.
+4. Server rejection leaves the row visible and displays the normalized server message. The exact referential rules and tables are **REQUIRES BACKEND CONFIRMATION**.
+5. Success reports once and reloads a valid page.
+6. After deletion, compute `maxPage = max(1, ceil(totalAfterDelete / pageSize))` for non-empty data and request `min(currentPage, maxPage)`. If the dataset becomes empty, request/show page one with an empty state.
+7. Required edge evidence includes normal deletion, the last row on a non-final page, the last row on the final page, and the dataset becoming empty.
+8. Example: page 3, page size 10, total 21; deleting row 21 makes total 20 and clamps the next request to page 2.
 
-## 4. Technical decisions and contracts
+### 5.4 Master Import
 
-### 4.1 Migration seam and reuse
+The observed target flow has two network stages and both require typed boundaries.
 
-The target route is the only new feature seam. Reuse the existing shared adapters and primitives:
-
-- `ApiClient` for transport and `{ success, error, data }` envelope handling.
-- `SessionAdapter` for authentication context and login redirection.
-- `AccessControlService` for `CSM_WEB / 20820` access states.
-- `TargetState` for loading, empty, and error/retry rendering.
-- `TargetDialog` for Add/Edit and Import dialogs.
-- `FileCapability` for token-based export download.
-- `LocalizationAdapter` for slice-scoped text.
-- Existing `WarrantyGroupService` for active groups and `default_ == 'Y'` lookup.
-
-Do not modify shared infrastructure to make this slice fit. Adapt only within the Warranty Item feature/page boundary.
-
-### 4.2 Feature units
-
-The slice is organized as six focused units:
-
-1. Access mapping: menu name/id and access-state handling.
-2. Domain model: row types, form types, response normalization, duration/lifetime rules, validation, and pagination helpers.
-3. Service: thin methods for the verified Warranty Item API actions.
-4. Texts: localized `mas002.*` strings.
-5. Import: 12-column parsing, A–L mapping, preview rows, blank-code filtering, and value normalization.
-6. Page: route-level composition of access gate, list, dialogs, row actions, import, and export.
-
-No new generic CRUD, pager, importer, or authorization abstraction is justified by this slice.
-
-### 4.3 API contracts
-
-The frontend must preserve these verified contracts. No backend change is part of this work.
-
-| Capability | Contract |
-|---|---|
-| Read list | `CSM/Master/WarrantyItem_ReadList` with `skip`, `take`, `field`, `text`, `active`; default `take=500` and `active=Y`. |
-| Read-list response | The API result envelope contains `data.data_rows` for rows and `data.total` for the filtered count. This differs from Warranty Group's `data.data` shape. |
-| Read one | `CSM/Master/WarrantyItem_Read?war_code={code}`; used for fresh Edit prefill and may include material and passive Reference IC metadata. |
-| Create | `CSM/Master/WarrantyItem_Create` with `{ header: { war_code, war_des, type_code, tot_date, tot_month, tot_year, lifetime, itemcode, active } }`. |
-| Update | `CSM/Master/Warrantyitem_Update` with the same mutable header shape. `war_code` is the lookup key and is immutable. Reference IC fields are omitted. |
-| Delete | `CSM/Master/WarrantyItem_Delete` with `{ header: { war_code } }`; the server rejects rows referenced by `rd_mas_area_item` or `rd_mas_proj_warranty`. |
-| Import | `CSM/Master/WarrantyItemImportData_Master` with `{ data: Array<Mapped12ColRow> }`; server upserts by tenant and Warranty Code. |
-| Export | `CSM/Master/WarrantyItemExport_Master`; the returned token is downloaded using `Api/File/DownLoad?download=true&id={token}` through the shared file capability. |
-
-The request builder must trim user-entered text where the legacy contract expects trimmed values, preserve server-owned tenant/audit fields, and avoid adding client-only fields to payloads.
-
-### 4.4 Domain invariants
-
-- Identity is tenant plus Warranty Code.
-- Warranty Code is immutable after creation.
-- Warranty Code and Warranty Name validation is enforced before mutation requests.
-- Days, Months, and Years are non-negative discrete integers.
-- Lifetime is mutually exclusive with non-zero duration inputs and forces all three values to zero.
-- The legacy `@change="testday()"` hook is not reproduced; the target has no undefined hook.
-- The legacy duplicate `reset()` behavior is replaced by one predictable form initialization path.
-- The `active=N` list quirk is preserved.
-- Passive Reference IC metadata is display-only and never part of a mutable update payload.
-- Server referential-integrity responses are authoritative.
-- Tenant scoping and audit authorship remain server-owned.
-
-## 5. Ticket breakdown and acceptance criteria
-
-Exactly five tickets are authorized. T2–T5 all depend on T1. T2 consumes the existing Warranty Group capability and does not create another Warranty Group ticket.
-
-### T1 — Shell, access, and server-paged catalog
-
-**Blocked by:** None — can start immediately.
-
-**What it delivers:** An authorized user can open the target route, browse the server-paged Warranty Item catalog, search/filter it, and recover from loading, empty, and error states.
-
-**Acceptance criteria:**
-
-- [ ] RED tests demonstrate missing list, model, access, service, and page behavior before implementation.
-- [ ] The target route exists without changing the legacy route or page.
-- [ ] Authentication redirects anonymous users through `SessionAdapter`.
-- [ ] `CSM_WEB / 20820` produces checking, anonymous, denied, read-only, and editable states through the existing access service.
-- [ ] Read-only users see the catalog but cannot invoke mutation handlers.
-- [ ] Initial list request uses `skip=0`, `take=500`, Warranty Code search by default, empty text, and `active=Y`.
-- [ ] List service uses `data.data_rows` and `data.total`; malformed responses become a visible error state.
-- [ ] Search resets to page one; pager supports First, Previous, numbered, Next, and Last, including a zero-result state and partial final page.
-- [ ] Row numbers equal `skip + index + 1`; server ordering is not replaced by client sorting.
-- [ ] `active=N` is sent for the unchecked/all-records state and is documented as the preserved legacy behavior.
-- [ ] Retry preserves search/filter state and stale async responses cannot overwrite a newer access generation.
-- [ ] Slice-level tests pass without backend, shared-shell, or legacy-page edits.
-
-### T2 — Create and edit Warranty Items
-
-**Blocked by:** T1. Consumes the existing `WarrantyGroupService`; no new Warranty Group ticket.
-
-**What it delivers:** An authorized administrator can create and edit Warranty Items with validated durations, default Warranty Group selection, immutable identity, and safe passive metadata handling.
-
-**Acceptance criteria:**
-
-- [ ] RED tests demonstrate missing form, validation, group-default, read-one, create, update, and modal lifecycle behavior before implementation.
-- [ ] Add loads active Warranty Groups and selects the row with `default_ == 'Y'` when present.
-- [ ] Missing or failed default-group lookup leaves the group selectable rather than inventing a value.
-- [ ] Create validates code, name, duration integers, Lifetime, and Active before sending.
-- [ ] Warranty Code is limited to 15 legal alphanumeric characters; Warranty Name is limited to 150 characters.
-- [ ] Lifetime zeroes and disables Days, Months, and Years; non-lifetime values remain discrete.
-- [ ] Create sends the exact verified header contract, closes only after success, reports success, and reloads the list.
-- [ ] Edit reads the item by code before opening the form; the code field is read-only.
-- [ ] Edit can change only the approved mutable fields and never sends Reference IC fields or an unsupported default flag.
-- [ ] Passive Reference IC metadata is shown read-only when supplied and survives a successful update.
-- [ ] Failed reads/saves preserve useful modal context and display the server error.
-- [ ] Read-only users cannot open the dialog or trigger create/update handlers.
-- [ ] Slice-level model, service, and page tests pass.
-
-### T3 — Delete with referential-integrity protection
-
-**Blocked by:** T1.
-
-**What it delivers:** An authorized administrator can deliberately delete an unused Warranty Item and receives the server's explanatory error when the item is referenced.
-
-**Acceptance criteria:**
-
-- [ ] RED tests demonstrate missing confirmation, delete request, server-error, guard, and reload behavior before implementation.
-- [ ] Confirmation explicitly names Warranty Code and Warranty Name.
-- [ ] Cancel sends no request.
-- [ ] Delete sends `{ header: { war_code } }` to the verified endpoint.
-- [ ] Server rejection for unit warranty or project area references is displayed without removing the row.
-- [ ] Successful deletion reports completion and reloads the catalog.
-- [ ] Read-only users cannot open confirmation or trigger the delete handler.
-- [ ] No client-side referential-integrity substitute or legacy-page change is added.
-- [ ] Slice-level service and page tests pass.
-
-### T4 — 12-column Master Import
-
-**Blocked by:** T1.
-
-**What it delivers:** An authorized administrator can map, preview, validate, and atomically submit the verified 12-column Master Import.
-
-**Acceptance criteria:**
-
-- [ ] RED tests demonstrate missing parser, mapping, normalization, preview, and submission behavior before implementation.
-- [ ] The Import dialog accepts the verified A–L source shape and provides configurable field mapping.
-- [ ] Preview reflects the mapped rows before submission.
-- [ ] Blank Warranty Codes are skipped.
-- [ ] Active values and numeric duration values are normalized according to verified legacy behavior.
-- [ ] The submitted request is exactly `{ data: [...] }` for the master import endpoint.
-- [ ] Import is one atomic batch request from the page perspective; partial client-side loops are not introduced.
-- [ ] Success reports the processed total and refreshes the catalog.
-- [ ] Parse or server errors preserve useful input/preview context and do not claim success.
-- [ ] Read-only users cannot open or submit Import.
-- [ ] Slice-level parser, service, and page tests pass.
-
-### T5 — Server catalog export
-
-**Blocked by:** T1.
-
-**What it delivers:** An authorized user can download a full server-generated Warranty Item catalog extract safely.
-
-**Acceptance criteria:**
-
-- [ ] RED tests demonstrate missing export request, token handling, access guard, and failure behavior before implementation.
-- [ ] Export calls the verified server export endpoint without paging the currently displayed rows.
-- [ ] A valid token is passed to the existing shared file capability with the download flag.
-- [ ] Missing token, blocked popup, and download failure report an error and do not report false success.
-- [ ] Export does not use the deferred legacy client-side `XLSX.writeFile` fallback.
-- [ ] Read-only/unauthorized users cannot trigger export when the shared capability treats export as a protected action.
-- [ ] Slice-level service and page tests pass.
-
-## 6. File ownership and change map
-
-The following is the intended ownership map. It is a planning constraint, not permission to create extra abstractions.
-
-### New or slice-owned files
-
-- `Nuxt/app/features/warranty-item/warranty-item-access.ts` — `CSM_WEB / 20820` constants and access mapping.
-- `Nuxt/app/features/warranty-item/warranty-item-model.ts` — domain types, normalization, validation, duration/lifetime rules, and pagination.
-- `Nuxt/app/features/warranty-item/warranty-item-service.ts` — Warranty Item endpoint methods.
-- `Nuxt/app/features/warranty-item/warranty-item-texts.ts` — `mas002.*` localized text.
-- `Nuxt/app/features/warranty-item/warranty-item-import.ts` — 12-column parser, mapper, preview rows, and normalization.
-- `Nuxt/app/pages/master/warranty-item/index.vue` — route page and feature composition.
-- `Nuxt/test/warranty-item/warranty-item-access.test.ts` — access behavior.
-- `Nuxt/test/warranty-item/warranty-item-model.test.ts` — model, validation, duration, lifetime, and paging behavior.
-- `Nuxt/test/warranty-item/warranty-item-service.test.ts` — exact endpoint, query, payload, and response-shape contracts.
-- `Nuxt/test/warranty-item/warranty-item-import.test.ts` — mapping and normalization behavior.
-- `Nuxt/test/warranty-item/warranty-item-page.test.ts` — observable route/page workflows.
-
-### Existing files allowed for read-only reuse
-
-- Warranty Group feature service and its tests, specifically the existing `WarrantyGroupService` list operation used for default selection.
-- Shared API, session, access-control, dialog, target-state, localization, and file-capability modules.
-- QCItem and `mas_001` tests as behavioral patterns only.
-
-### Files explicitly not owned by this slice
-
-- `Website/**` legacy implementation, including `v_csm_mas_002.vue`.
-- Backend controllers, DTOs, database schema, migrations, and deployment configuration.
-- Shared infrastructure files, unless a pre-existing defect blocks the slice and receives separate approval.
-- Warranty Group production code, except consuming its existing service contract.
-- Unrelated QCItem or other Master slices.
-
-## 7. Test and verification plan
-
-### 7.1 Required test style
-
-Tests assert externally observable behavior: requests, payloads, response normalization, rendered states, disabled controls, modal transitions, and reload behavior. They must not couple to private component implementation details.
-
-Every ticket follows this order:
-
-1. Add focused RED tests proving the behavior is absent or incorrect before the production change.
-2. Implement the smallest change that turns those tests GREEN.
-3. Run the ticket's focused tests.
-4. Run the complete Warranty Item suite and relevant existing shared/sibling suites.
-5. Perform slice-level static/build verification available in the repository.
-
-A test passing is evidence of the test's stubbed or local behavior only. It is not live backend parity or browser UAT evidence.
-
-### 7.2 Coverage matrix
-
-| Area | Required evidence |
-|---|---|
-| Access | Anonymous redirect, denied, read-only, editable, generation/stale-response guard. |
-| Model | `data_rows` envelope, malformed response, row numbering, page boundaries, code/name validation, duration discreteness, Lifetime zeroing. |
-| Service | Exact list query, single read, create/update/delete headers, import body, export endpoint, and token result. |
-| Import | A–L mapping, preview, blank-code skip, Active normalization, duration coercion, error preservation. |
-| Page | Initial load, search, filter, pager, loading/empty/error/retry, Add/Edit lifecycle, default Warranty Group, immutable code, delete confirmation/FK error, import, export, read-only guards. |
-| Regression | Existing QCItem, Warranty Group, shared adapter, and target-shell suites relevant to touched integration points. |
-
-### 7.3 Deferred verification
-
-Live/browser E2E against seeded multi-tenant staging data is useful follow-up evidence but is not an implementation blocker for these tickets. It must not be represented as completed by unit or component test results.
-
-## 8. Dependencies and stop conditions
-
-### Dependency graph
+1. The selected value is `File | null`; client validation permits `.xls` and `.xlsx` extensions, matching `frontend/app/Components/Center/import-data.vue`. MIME validation is **UNVERIFIED**.
+2. Spreadsheet parsing/preview upload uses `Anywhere/Import/ImportExcel` as multipart form data with field name `file` in the current client. The observed client reads rows from `rsp.data.data` and file metadata from `rsp.data.filepath` / `rsp.data.filename`; the authoritative backend response contract requires confirmation.
+3. The user maps and previews 12 Warranty Item fields. The current client default maps source columns A–H and J–M; column I is unused. A contiguous A–L contract is not verified and must not be asserted.
+4. The mapped fields are `war_code`, `war_des`, `type_code`, `tot_date`, `tot_month`, `tot_year`, `lifetime`, `itemcode`, `vendor`, `war_date_start`, `war_date_end`, and `active`.
+5. Feature submission uses one observed JSON request to `CSM/Master/WarrantyItemImportData_Master` with `{ data: [...] }`.
+6. File selection, upload, preview validation, mapped rows, submission, and server errors have distinct typed states.
+7. Upload and submission controls disable while their respective request is pending; duplicate invocations send no additional request.
+8. Invalid selection, upload failure, invalid preview/mapping, and submit failure preserve useful context and never report success.
+9. On confirmed success, close the import flow and reload the current catalog query.
+10. Blank-code handling, value normalization, transaction atomicity, upsert behavior, validation-error shape, and processed-count semantics are **REQUIRES BACKEND CONFIRMATION**. Do not fabricate a processed count when the response does not provide one.
+
+### 5.5 Server export
+
+1. `frontend/` must own a typed file/download abstraction suitable for Warranty Item. The historical `Nuxt/` file capability is design evidence only and is not imported.
+2. The current clients configure GET `CSM/Master/WarrantyItemExport_Master`; no request parameters are observed.
+3. Current shared form code treats `rsp.data` as the server-minted token and opens `{dataServer}API/File/DownLoad?download=true&id={token}`.
+4. Backend knowledge verifies that download ids are server-minted tokens passed verbatim; the endpoint-specific export response and runtime round trip still require confirmation.
+5. Export pending state prevents duplicate requests. Missing/invalid tokens, request failure, and observable popup/download-open failure produce an error and no success notification.
+6. Export never serializes the currently loaded page and does not use `XLSX.writeFile`.
+
+## 6. Contract registry
+
+Statuses describe current evidence, not desired behavior.
+
+| Contract | Status | Evidence |
+|---|---|---|
+| Target route `/page/master/v_csm_mas_002/` | VERIFIED | `frontend/app/routes/routes.master.js` and target menu link. |
+| Menu/access identity `CSM_WEB / 20820` | VERIFIED | Target route metadata and menu source. |
+| External dependency on route URL | UNVERIFIED | No repository evidence proves third-party use. |
+| List endpoint and query names | VERIFIED | Both current clients call `WarrantyItem_ReadList` with `skip`, `take`, `field`, `text`, and `active`. |
+| List response keys `data_rows` and `total` | VERIFIED | Both clients read these keys; this verifies current client usage, while malformed/runtime variants still need integration tests. |
+| Read-one endpoint | VERIFIED | Both clients call `WarrantyItem_Read?war_code=`. |
+| Create endpoint | VERIFIED | Both clients call `WarrantyItem_Create`. |
+| Update endpoint spelling `WarrantyItem_Update` | VERIFIED | Exact casing appears in both clients; no alternate casing is authoritative. |
+| Create/update minimum accepted payload | REQUIRES BACKEND CONFIRMATION | Current clients send `{ header: formData }`; the server-owned accepted/ignored fields are not proven here. |
+| Read-one metadata round trip during Update | REQUIRES BACKEND CONFIRMATION | Current Edit re-posts `formData`; client source does not prove which metadata must be retained or omitted. |
+| Delete endpoint | VERIFIED | Both clients call `WarrantyItem_Delete`. |
+| Delete minimum payload and referential semantics | REQUIRES BACKEND CONFIRMATION | Current clients send `{ header: row }`; accepted minimum fields and guard behavior require owning backend evidence. |
+| Import parser endpoint, multipart field `file`, and client-read response fields | VERIFIED | Current client usage in `frontend/app/Components/Center/import-data.vue`; backend semantics are classified separately. |
+| Master Import endpoint and `{ data: [...] }` request wrapper | VERIFIED | Current usage in both Warranty Item clients; backend semantics are classified separately. |
+| Import validation, atomicity, upsert, blank-code, and count semantics | REQUIRES BACKEND CONFIRMATION | Not proven by client source. |
+| Export endpoint and token pass-through shape | VERIFIED | Current client usage in the Warranty page and shared form component; endpoint-specific backend semantics are classified separately. |
+| Export token generation and download-id semantics | VERIFIED | `docs/backend/contract-navigation-knowledge.md` E9; endpoint-specific round trip still needs execution. |
+| Reference IC meaning | UNVERIFIED DOMAIN TERM — REQUIRES DOMAIN/BUSINESS CONFIRMATION | UI label/fields are insufficient to define the business term. |
+
+## 7. Implementation ownership
+
+All production code and tests created for this capability live under `frontend/`. Exact feature directories and filenames are deferred to the implementation plan because the target currently has no established typed feature folder or test layout.
+
+The implementation plan must identify the smallest set of:
+
+- Route/component integration files.
+- Capability-owned TypeScript model, service, and state files.
+- Typed Warranty Group lookup seam.
+- Typed API/result and file/download seams.
+- Focused test files and their runner/configuration.
+- Typecheck/build commands.
+
+`Nuxt/app/**`, `Nuxt/test/**`, and `/csm-next/**` may appear only as historical evidence, never as target ownership.
+
+## 8. Test and verification plan
+
+Tests assert observable behavior: requests, exact endpoint names, payloads, normalized responses, rendered access/loading/empty/error states, pending controls, duplicate-mutation prevention, modal lifecycle, page clamp, and reload behavior.
+
+Each feature ticket follows RED → GREEN → focused regression. The future feature PR must run the established `frontend/` build plus the newly approved typecheck and test commands. Local tests do not prove backend parity, browser behavior, authorization in a real tenant, or UAT.
+
+Required integration evidence includes:
+
+- Route/menu navigation and authorization with real target middleware.
+- Endpoint round trips against the owning backend.
+- Create/update accepted payload fields and validation errors.
+- Delete guard response semantics.
+- Import upload and batch-result semantics.
+- Export token/download round trip and popup behavior.
+
+## 9. Dependencies and stop conditions
 
 ```text
-T1 Shell + access + list
-├── T2 Create/Edit
-├── T3 Delete + referential guard
-├── T4 12-column Master Import
-└── T5 Server Export
+Architecture enablement
+└── Ticket 01: shell/access/list
+    ├── Ticket 02: create/edit + typed Warranty Group lookup
+    ├── Ticket 03: delete/guard/page clamp
+    ├── Ticket 04: Master Import
+    └── Ticket 05: server export + typed download abstraction
 ```
 
-T2 additionally depends on the already-existing Warranty Group service contract. It does not depend on a new Warranty Group ticket.
+Stop and request confirmation instead of guessing when:
 
-### Stop conditions
+- Backend source/runtime conflicts with a registry entry.
+- A typed seam requires a broad shared refactor or package change beyond the minimum capability need.
+- Route ownership or deployment would change.
+- Delete, import, export, tenant, audit, or Reference IC semantics remain necessary but unverified.
+- Implementation would require `Website/`, `Nuxt/`, backend, schema, deployment, or unrelated feature changes.
 
-Stop implementation and report an open blocking issue instead of guessing when:
+## 10. Explicitly deferred
 
-- The verified backend endpoint, response envelope, or payload shape conflicts with the specification.
-- The existing shared adapter cannot provide the required behavior without a cross-slice change.
-- A requested behavior requires changing the legacy page or backend, which is outside this slice.
-- The Warranty Group default-selection contract is unavailable or materially different from `default_ == 'Y'`.
-- Referential-integrity behavior cannot be represented through the server response without inventing client-side data rules.
-- A test exposes a migration requirement that changes tenant scoping, authorization, persistence, or audit semantics.
-- A ticket would require another blocking ticket or a wide refactor not listed here.
-- Focused tests fail twice without a new evidence-based hypothesis; preserve the failure and report it rather than retrying randomly.
+- Reference IC toolbar, browsing, linking, mutations, and glossary meaning.
+- `WarrantyRefIC` and receipt/date-difference workflows.
+- 22-field `WarrantyAutoImportData` workflow.
+- Material picker UI.
+- Client-side XLSX export fallback.
+- Broad TypeScript modernization.
+- Warranty Group feature/refactor beyond the required typed lookup seam.
+- Backend/controller/DTO/schema/deployment changes.
+- Production cutover, legacy retirement, and merge approval.
 
-Do not proceed past a stop condition by weakening acceptance criteria, changing verified legacy behavior, or adding an unapproved ticket.
+## 11. Rollback and completion definition
 
-## 9. Explicitly deferred
+The implementation must preserve the registered `/page/master/v_csm_mas_002/` route and provide a route-level rollback strategy before replacing the current component. The untouched `Website/` implementation remains the behavioral fallback until parity and owner sign-off are complete.
 
-The following are not part of the Warranty Item Core Slice and must not be implemented as hidden prerequisites:
-
-- Reference IC toolbar or workflows.
-- `WarrantyRefIC` dialog and goods-receipt browsing.
-- ERP receipt batch linking and receipt-date difference calculations.
-- The 22-column `WarrantyAutoImportData` multi-table import across Project and Unit.
-- Material Master picker UI (`vue-itemcode-list`); Material Code remains manual text input.
-- Legacy client-side export fallback, including `XLSX.writeFile`.
-- Backend controller, DTO, database schema, migration, stored procedure, or deployment changes.
-- Changes to legacy `/page/master/v_csm_mas_002/` or `v_csm_mas_002.vue`.
-- Shared pager, CRUD, importer, access, or file abstractions.
-- New Warranty Group ticket or Warranty Group refactor.
-- Production cutover, legacy retirement, seeded staging verification, and browser/live E2E.
-- Unrelated legacy bug fixes, including defects outside the target route.
-
-## 10. Rollback and completion definition
-
-Rollback is route-level: stop publishing or disable `/csm-next/master/warranty-item/`; the untouched legacy screen remains available and no database rollback is required.
-
-The specification is complete when all five tickets satisfy their acceptance criteria, focused and relevant regression tests have known results, no deferred item has been pulled into scope, and the final diff contains only approved Warranty Item slice files and tests. Live/browser E2E remains explicitly deferred rather than implied by local test success.
+This specification is complete for Supervisor review when it remains consistent with the Epic and tickets, leaves uncertain contracts explicitly classified, and keeps implementation/configuration changes outside this documentation PR.
