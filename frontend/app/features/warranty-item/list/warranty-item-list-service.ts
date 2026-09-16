@@ -111,7 +111,9 @@ function normalizeResponse(rawResponse: unknown): WarrantyItemListResult {
   if (!isRecord(rawResponse.data)
     || !Array.isArray(rawResponse.data.data_rows)
     || typeof rawResponse.data.total !== 'number'
-    || !Number.isFinite(rawResponse.data.total)) {
+    || !Number.isFinite(rawResponse.data.total)
+    || !Number.isInteger(rawResponse.data.total)
+    || rawResponse.data.total < 0) {
     throw new TypeError(MALFORMED_RESPONSE_MESSAGE)
   }
 

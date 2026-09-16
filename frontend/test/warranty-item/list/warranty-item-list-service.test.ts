@@ -130,6 +130,16 @@ describe('createWarrantyItemListService', () => {
       error: '',
       data: { data_rows: [], total: '31' },
     }],
+    ['a successful envelope with a negative total', {
+      success: true,
+      error: '',
+      data: { data_rows: [], total: -1 },
+    }],
+    ['a successful envelope with a fractional total', {
+      success: true,
+      error: '',
+      data: { data_rows: [], total: 1.5 },
+    }],
   ])('rejects %s', async (_name, response) => {
     const service = createWarrantyItemListService(createTransport(response))
 
