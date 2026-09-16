@@ -301,7 +301,6 @@
   import PhotoSwipe from 'photoswipe';
   import 'photoswipe/style.css';
 
-  import { platform } from 'chart.js'
 
   export default {
     component() {

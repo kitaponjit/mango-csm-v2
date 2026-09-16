@@ -353,6 +353,47 @@ instance and the click handler attached, and the tooltip initialises.
   in `Website/` and registered nowhere there either, so they were **already broken before the
   port**. Mapping them to a component would be a guess that could switch on a dead code path.
 
+### chart.js: investigated, left on v2 (2026-09-16)
+
+**chart.js v2 is not broken.** It is framework-agnostic — not a Vue plugin — so it runs unchanged
+under Vue 3 and Vite. Verified by constructing a pie, a `horizontalBar` and an outlabels pie in the
+running app: all three instantiated, and `Chart.instances` showed the right type, data and size for
+each. They first appeared blank only because `requestAnimationFrame` is throttled in a background
+tab; a forced render painted immediately. So this was a modernization item on the list, not a fault.
+
+Smaller than the list implied, too. Of the 5 files importing chart.js, only **3 actually create
+charts** (5 instances):
+
+| File | `new Chart()` |
+| --- | --- |
+| `v_csm_dashboard1.vue` | 3 |
+| `v_csm_dashboard2.vue` | 1 |
+| `v_csm_most_defect.vue` | 1 |
+| `v_csm_dashboard.vue` | 0 — but **keep its imports** (see below) |
+| `v_csm_trn_003.vue` | 0 — import removed |
+
+Only one import was genuinely dead: `import { platform } from 'chart.js'` in `v_csm_trn_003.vue`,
+which nothing referenced (every other `platform` in that file is a data property). Removed.
+
+`v_csm_dashboard.vue` creates no charts but its imports are **load-bearing** and must stay: it sets
+`Chart.defaults.global` font family/colour/size, and Chart is a singleton, so those defaults apply
+to the charts other components create. Its `chartjs-plugin-piechart-outlabels` import is likewise a
+global side-effect registration other files may depend on.
+
+**What a v4 upgrade would actually cost**, if it is ever wanted:
+
+- `chartjs-plugin-labels` and `chartjs-plugin-piechart-outlabels` are both v2-only. Community v3/v4
+  forks exist (`chartjs-plugin-labels-dv`, `@energiency/chartjs-plugin-piechart-outlabels`), so the
+  path is not blocked — but adopting third-party forks is a dependency decision.
+- `type: 'horizontalBar'` was removed in v3; it becomes `type: 'bar'` with `indexAxis: 'y'`.
+- The `scales: { xAxes: [...], yAxes: [...] }` array shape (used in 2 files) becomes
+  `scales: { x: {}, y: {} }`, and `legend` / `title` / `tooltips` move under `options.plugins`.
+- The visible result is pie-slice percentage labels and outside labels on dashboard charts, which
+  cannot be checked without a logged-in session on those screens. Upgrading blind risks a silent
+  visual regression on exactly the screens people look at most.
+
+There are no security advisories against the pinned chart.js version.
+
 ### Verified working end-to-end
 
 Login page renders with the company list from SQL Server via the .NET 8 backend;
@@ -372,7 +413,8 @@ Login page renders with the company list from SQL Server via the .NET 8 backend;
 - ~~`slot="extra"` in the CustomerConfigCenter screens~~ **done** - converted with the rest of
   the Vue 2 slot syntax; no `slot=` or `slot-scope=` remains anywhere in the tree.
 - ~~Template audit~~ **done 2026-09-16** - see below.
-- `chart.js` is still pinned to v2 with two v2-only plugins.
+- `chart.js` stays on v2 — **verified working, not broken**. See the chart.js note below; the
+  upgrade is a decision, not a defect.
 - `<thai-address-input>` (3 uses, 1 file) is still unresolved - see below, it needs a decision.
 - `<ModalEMP>` and `<worker-ref-action>` resolve to nothing, but they did in the **legacy Vue 2
   app too** - pre-existing bugs, not port regressions. Do not guess a mapping.
