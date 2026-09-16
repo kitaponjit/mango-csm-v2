@@ -55,8 +55,8 @@ function asError(reason: unknown): Error {
   return reason instanceof Error ? reason : new Error('Warranty Item list request failed.')
 }
 
-export function createWarrantyItemListController(service: WarrantyItemListService): WarrantyItemListController {
-  const state: WarrantyItemListState = {
+export function createWarrantyItemListState(): WarrantyItemListState {
+  return {
     query: { ...warrantyItemListDefaultQuery },
     items: [],
     total: 0,
@@ -64,6 +64,12 @@ export function createWarrantyItemListController(service: WarrantyItemListServic
     status: 'idle',
     error: null,
   }
+}
+
+export function createWarrantyItemListController(
+  service: WarrantyItemListService,
+  state: WarrantyItemListState = createWarrantyItemListState(),
+): WarrantyItemListController {
   let generation = 0
   let hasLoaded = false
 
@@ -81,9 +87,18 @@ export function createWarrantyItemListController(service: WarrantyItemListServic
         return
       }
 
+      const resultMaxPage = maxPageFor(result.total, state.query.pageSize)
+      if (state.query.page > resultMaxPage) {
+        state.query = {
+          ...state.query,
+          page: resultMaxPage,
+        }
+        return loadCurrentQuery()
+      }
+
       state.items = result.items
       state.total = result.total
-      state.maxPage = maxPageFor(result.total, state.query.pageSize)
+      state.maxPage = resultMaxPage
       state.status = 'loaded'
       state.error = null
       hasLoaded = true

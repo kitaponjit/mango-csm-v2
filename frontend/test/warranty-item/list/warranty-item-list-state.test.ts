@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { reactive, watch } from 'vue'
 
 import {
   createWarrantyItemListController,
+  createWarrantyItemListState,
   type WarrantyItemListState,
 } from '../../../app/features/warranty-item/list/warranty-item-list-state'
 import type {
@@ -71,6 +73,26 @@ function createQueuedService(): {
 }
 
 describe('createWarrantyItemListController', () => {
+  it('notifies a Vue watcher when it mutates an injected reactive state target', async () => {
+    const queued = createQueuedService()
+    const state = reactive(createWarrantyItemListState())
+    const statuses: string[] = []
+    const stop = watch(
+      () => state.status,
+      (status) => statuses.push(status),
+      { flush: 'sync' },
+    )
+    const controller = createWarrantyItemListController(queued.service, state)
+
+    const loading = controller.loadInitial()
+    expect(statuses).toEqual(['initial-loading'])
+    queued.pending[0]?.resolve(result(1))
+    await loading
+    stop()
+
+    expect(statuses).toEqual(['initial-loading', 'loaded'])
+  })
+
   it('loads the initial page with the typed default query', async () => {
     const queued = createQueuedService()
     const controller = createWarrantyItemListController(queued.service)
@@ -117,6 +139,36 @@ describe('createWarrantyItemListController', () => {
     expect(queued.requests[2]).toMatchObject({ page: 3 })
     queued.pending[2]?.resolve(result(1_001))
     await aboveLastPage
+  })
+
+  it('reloads a clamped page without publishing items when a response shrinks the total', async () => {
+    const queued = createQueuedService()
+    const controller = createWarrantyItemListController(queued.service)
+
+    const initial = controller.loadInitial()
+    queued.pending[0]?.resolve(result(1_500, [{ ...item, code: 'WAR-INITIAL' }]))
+    await initial
+
+    const pageThree = controller.goToPage(3)
+    queued.pending[1]?.resolve(result(100, [{ ...item, code: 'WAR-STALE-PAGE' }]))
+    await Promise.resolve()
+
+    expect(controller.state).toMatchObject({
+      query: expect.objectContaining({ page: 1 }),
+      status: 'refreshing',
+      items: [expect.objectContaining({ code: 'WAR-INITIAL' })],
+    })
+    expect(queued.requests[2]).toMatchObject({ page: 1, pageSize: 500 })
+
+    queued.pending[2]?.resolve(result(100, [{ ...item, code: 'WAR-PAGE-ONE' }]))
+    await pageThree
+
+    expect(controller.state).toMatchObject({
+      query: expect.objectContaining({ page: 1 }),
+      maxPage: 1,
+      status: 'loaded',
+      items: [expect.objectContaining({ code: 'WAR-PAGE-ONE' })],
+    })
   })
 
   it('exposes total rows, computes the maximum page, and handles an empty result', async () => {
