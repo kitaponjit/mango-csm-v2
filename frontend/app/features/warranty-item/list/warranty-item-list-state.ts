@@ -7,6 +7,7 @@ import type {
 } from './warranty-item-list-service'
 
 export type WarrantyItemListStatus = 'idle' | 'initial-loading' | 'refreshing' | 'loaded' | 'error'
+export type WarrantyItemListLoadResult = 'loaded' | 'error' | 'superseded'
 
 export interface WarrantyItemListState {
   query: WarrantyItemListRequest
@@ -29,6 +30,7 @@ export interface WarrantyItemListController {
   goToPage(page: number): Promise<void>
   updateFilters(filters: WarrantyItemListFilters): Promise<void>
   retry(): Promise<void>
+  retryWithResult(): Promise<WarrantyItemListLoadResult>
 }
 
 export const warrantyItemListDefaultQuery: WarrantyItemListRequest = {
@@ -78,7 +80,7 @@ export function createWarrantyItemListController(
   let generation = 0
   let hasLoaded = false
 
-  async function loadCurrentQuery(): Promise<void> {
+  async function loadCurrentQuery(): Promise<WarrantyItemListLoadResult> {
     generation += 1
     const requestGeneration = generation
     const request = { ...state.query }
@@ -89,7 +91,7 @@ export function createWarrantyItemListController(
     try {
       const result = await service.read(request)
       if (requestGeneration !== generation) {
-        return
+        return 'superseded'
       }
 
       const resultMaxPage = maxPageFor(result.total, state.query.pageSize)
@@ -107,34 +109,51 @@ export function createWarrantyItemListController(
       state.status = 'loaded'
       state.error = null
       hasLoaded = true
+      return 'loaded'
     } catch (reason: unknown) {
       if (requestGeneration !== generation) {
-        return
+        return 'superseded'
       }
 
       state.status = 'error'
       state.error = asError(reason)
+      return 'error'
     }
   }
 
   return {
     state,
-    loadInitial: loadCurrentQuery,
-    goToPage(page) {
+    async loadInitial() {
+      await loadCurrentQuery()
+    },
+    async goToPage(page) {
       state.query = {
         ...state.query,
         page: clampPage(page, state.maxPage),
       }
-      return loadCurrentQuery()
+      await loadCurrentQuery()
     },
-    updateFilters(filters) {
+    async updateFilters(filters) {
       state.query = {
         ...state.query,
         ...filters,
         page: 1,
       }
-      return loadCurrentQuery()
+      await loadCurrentQuery()
     },
-    retry: loadCurrentQuery,
+    async retry() {
+      await loadCurrentQuery()
+    },
+    retryWithResult: loadCurrentQuery,
+  }
+}
+
+export async function refreshWarrantyItemList(controller: WarrantyItemListController): Promise<void> {
+  const result = await controller.retryWithResult()
+  if (result === 'superseded') {
+    throw new Error('Warranty Item list refresh was superseded.')
+  }
+  if (result === 'error') {
+    throw controller.state.error ?? new Error('Warranty Item list refresh failed.')
   }
 }

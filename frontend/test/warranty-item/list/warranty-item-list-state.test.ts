@@ -4,6 +4,7 @@ import { reactive, watch } from 'vue'
 import {
   createWarrantyItemListController,
   createWarrantyItemListState,
+  refreshWarrantyItemList,
   type WarrantyItemListState,
 } from '../../../app/features/warranty-item/list/warranty-item-list-state'
 import type {
@@ -303,5 +304,52 @@ describe('createWarrantyItemListController', () => {
       error: null,
       items: [expect.objectContaining({ code: 'WAR-RETRIED' })],
     })
+  })
+
+  it('resolves the refresh adapter only after a successful retry', async () => {
+    const queued = createQueuedService()
+    const controller = createWarrantyItemListController(queued.service)
+    const initial = controller.loadInitial()
+    queued.pending[0]?.resolve(result(1))
+    await initial
+
+    const refresh = refreshWarrantyItemList(controller)
+    expect(controller.state.status).toBe('refreshing')
+    queued.pending[1]?.resolve(result(1, [{ ...item, code: 'WAR-REFRESHED' }]))
+
+    await expect(refresh).resolves.toBeUndefined()
+    expect(controller.state.items).toEqual([{ ...item, code: 'WAR-REFRESHED' }])
+  })
+
+  it('propagates a refresh error from the list controller', async () => {
+    const queued = createQueuedService()
+    const controller = createWarrantyItemListController(queued.service)
+    const initial = controller.loadInitial()
+    queued.pending[0]?.resolve(result(1))
+    await initial
+
+    const refresh = refreshWarrantyItemList(controller)
+    queued.pending[1]?.reject(new Error('Refresh adapter failure'))
+
+    await expect(refresh).rejects.toMatchObject({ message: 'Refresh adapter failure' })
+    expect(controller.state.status).toBe('error')
+  })
+
+  it('rejects a superseded refresh while the newer refresh is still pending', async () => {
+    const queued = createQueuedService()
+    const controller = createWarrantyItemListController(queued.service)
+    const initial = controller.loadInitial()
+    queued.pending[0]?.resolve(result(1))
+    await initial
+
+    const olderRefresh = refreshWarrantyItemList(controller)
+    const newerRefresh = refreshWarrantyItemList(controller)
+    queued.pending[1]?.resolve(result(1, [{ ...item, code: 'WAR-OLDER' }]))
+    await expect(olderRefresh).rejects.toThrow('superseded')
+    expect(controller.state.status).toBe('refreshing')
+
+    queued.pending[2]?.resolve(result(1, [{ ...item, code: 'WAR-NEWER' }]))
+    await expect(newerRefresh).resolves.toBeUndefined()
+    expect(controller.state.items).toEqual([{ ...item, code: 'WAR-NEWER' }])
   })
 })

@@ -129,7 +129,7 @@ When `pre_event2` is present, create can also insert project/location area recor
 
 ## Update Boundary
 
-The legacy and current target port call `POST CSM/MASTER/WarrantyItem_Update` (`Website/.../v_csm_mas_002.vue:751-764`; `frontend/app/Components/Pages/Master/v_csm_mas_002.vue` equivalent). The .NET action method is declared `Warrantyitem_Update` (`MasterController.cs:161-170`). ASP.NET routing is normally case-insensitive, but Gate 4 has not run an integration request; retain the established client spelling and verify it during T2.
+The legacy and current target port call `POST CSM/MASTER/WarrantyItem_Update` (`Website/.../v_csm_mas_002.vue:751-764`; `frontend/app/Components/Pages/Master/v_csm_mas_002.vue` equivalent). T2 verified the owning .NET 8 source: the action method is declared `Warrantyitem_Update` (`Mango.Web/Areas/CSM/Controllers/MasterController.cs:183-193`) and the application maps the conventional area route `{area:exists}/{controller}/{action=Index}/{id?}` (`Mango.Web/Program.cs:434-445`). ASP.NET Core routing is case-insensitive by framework contract ([Microsoft controller-based Web API documentation](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-8.0)). Therefore the established `WarrantyItem_Update` client spelling is **VERIFIED against the owning route mapping**. A deployed-environment mutation smoke test was intentionally not performed and remains UAT/release evidence, not a reason to change the client endpoint.
 
 External body remains `{ header: ... }`. The backend uses only:
 
@@ -234,4 +234,4 @@ T2 may begin with separate `DetailDto`, `WarrantyItemDraft`, `CreateDto`, and `U
 - round-trip receipt/project/location fields through generic object spreading;
 - reuse query filter `active=N` as entity inactive semantics.
 
-Before T2 completion, verify Warranty Code rules, duration null/range/lifetime behavior, group/material edit behavior, TRN0001/admin policy, and update-route casing in an integration-capable environment.
+After T2, canonical Warranty Code rules, duration ranges/lifetime invariants, group/material optionality, and TRN0001/admin intent still require domain confirmation. Update-route casing is verified against the owning .NET 8 route mapping; a deployed-environment smoke test remains UAT/release evidence.

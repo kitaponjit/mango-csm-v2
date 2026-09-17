@@ -243,13 +243,13 @@ Legacy `permission()` additionally hides edit/delete columns when configuration 
 
 **T2 CAN START.**
 
-The owning implementation identifies the detail endpoint, tenant-scoped identity, editable fields, create/update envelopes, server-authored audit fields, group lookup, and update behavior. T2 must not be declared complete until it resolves or explicitly accepts:
+The owning implementation identifies the detail endpoint, tenant-scoped identity, editable fields, create/update envelopes, server-authored audit fields, group lookup, and update behavior. Before T2 completion, each item below must be resolved or explicitly classified and accepted:
 
 1. Warranty Code maximum length and character rule;
 2. null versus zero and permitted ranges for duration;
 3. lifetime/duration interaction;
 4. TRN0001/admin behavior relative to target access rights;
 5. nullable/inactive/missing Warranty Group and Material Reference behavior;
-6. client spelling/casing for `WarrantyItem_Update` through an integration-level check.
+6. update route casing — **RESOLVED** against the owning .NET 8 conventional route and case-insensitive framework behavior; deployed smoke confirmation is UAT/release evidence and does not block T2 supervisor review.
 
 Reference IC, T4 import-contract conflict, and T5 download mechanics do not block beginning Ticket 02.

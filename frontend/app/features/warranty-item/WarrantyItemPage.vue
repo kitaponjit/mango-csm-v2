@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
+import { createWarrantyItemFormController, createWarrantyItemFormState, type WarrantyItemFormController, type WarrantyItemFormControllerOptions, type WarrantyItemSaveResult } from './edit/warranty-item-form-state'
+import { LEGACY_UI_WARRANTY_CODE_MAX, LEGACY_UI_WARRANTY_NAME_MAX } from './edit/warranty-item-draft'
+import { createWarrantyItemEditService } from './edit/warranty-item-service'
 import { createWarrantyItemListService } from './list/warranty-item-list-service'
 import {
   createWarrantyItemListController,
   createWarrantyItemListState,
   getWarrantyItemPageNumbers,
+  refreshWarrantyItemList,
   type WarrantyItemListController,
 } from './list/warranty-item-list-state'
 import { getWarrantyItemPagePolicy } from './page-policy'
 import { readWarrantyItemAccessSnapshot } from './runtime/access-snapshot'
+import { getWarrantyItemEditCompatibilityPolicy, readWarrantyItemEditCompatibilitySnapshot, type WarrantyItemEditCompatibilitySnapshot } from './runtime/edit-compatibility'
 import { createLegacyXtoolsTransport } from './runtime/legacy-xtools-transport'
 
 const title = 'Master : รายการสินค้าประกัน'
@@ -22,37 +27,150 @@ const filters = reactive({
   active: state.query.active,
 })
 const controller = shallowRef<WarrantyItemListController | null>(null)
+const formState = reactive(createWarrantyItemFormState())
+const formController = shallowRef<WarrantyItemFormController | null>(null)
+const materialSearchText = ref('')
+const setupError = ref<Error | null>(null)
 const busy = computed(() => state.status === 'initial-loading' || state.status === 'refreshing')
 const displayedPage = ref(1)
 const pageNumbers = computed(() => getWarrantyItemPageNumbers(state.maxPage))
+const formOpen = computed(() => formState.mode !== 'closed' && Boolean(formState.draft))
+const formPending = computed(() => formState.detailPending
+  || formState.groupsPending
+  || formState.materialsPending
+  || formState.savePending)
+
+interface WarrantyItemRuntimeGlobals {
+  auth?: unknown
+  store?: { state?: { configData?: unknown } }
+}
+
+function readCurrentEditCompatibility(): WarrantyItemEditCompatibilitySnapshot {
+  const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+  return readWarrantyItemEditCompatibilitySnapshot({
+    configData: globals.store?.state?.configData,
+    auth: globals.auth,
+  })
+}
+
+const editCompatibility = ref<WarrantyItemEditCompatibilitySnapshot>(readCurrentEditCompatibility())
+const canEditNow = computed(() => access.canCreate
+  && getWarrantyItemEditCompatibilityPolicy(editCompatibility.value).canEdit)
+
+async function refreshList(): Promise<void> {
+  if (!controller.value) {
+    throw new Error('Warranty Item list service is unavailable.')
+  }
+  await refreshWarrantyItemList(controller.value)
+}
+
+let formOptions: WarrantyItemFormControllerOptions | null = null
+
+function connectController(): void {
+  if (!access.canReadList) return
+  try {
+    const transport = createLegacyXtoolsTransport()
+    const listService = createWarrantyItemListService(transport)
+    const editService = createWarrantyItemEditService(transport)
+    controller.value = createWarrantyItemListController(listService, state)
+    formOptions = access.canCreate
+      ? {
+          service: editService,
+          access: readWarrantyItemAccessSnapshot(),
+          editCompatibility: editCompatibility.value,
+          refreshList,
+        }
+      : null
+    if (formOptions) {
+      formController.value = createWarrantyItemFormController(formOptions, formState)
+    } else {
+      formController.value = null
+    }
+    setupError.value = null
+    state.error = null
+    formState.error = null
+  } catch (reason: unknown) {
+    setupError.value = reason instanceof Error ? reason : new Error('Warranty Item service is unavailable.')
+    state.status = 'error'
+    state.error = setupError.value
+    formState.error = setupError.value
+  }
+}
+
+connectController()
 
 // Retained rows still belong to the last successful page if a later request fails.
 watch(() => state.status, status => {
   if (status === 'loaded') displayedPage.value = state.query.page
 }, { flush: 'sync' })
 
-function connectController(): void {
-  if (!access.canReadList) return
-  try {
-    const service = createWarrantyItemListService(createLegacyXtoolsTransport())
-    controller.value = createWarrantyItemListController(service, state)
-  } catch (reason: unknown) {
-    state.status = 'error'
-    state.error = reason instanceof Error ? reason : new Error('Warranty Item service is unavailable.')
-  }
-}
-
-connectController()
-
 function retry(): void {
   if (!controller.value) connectController()
   void controller.value?.retry()
 }
 
+function refreshEditCompatibility(): void {
+  const snapshot = readCurrentEditCompatibility()
+  editCompatibility.value = snapshot
+  if (formOptions) formOptions.editCompatibility = snapshot
+}
+
+function startCreate(): void {
+  void formController.value?.startCreate()
+}
+
+async function startEdit(code: string): Promise<boolean> {
+  refreshEditCompatibility()
+  return formController.value?.startEdit(code) ?? false
+}
+
+function cancelForm(): void {
+  materialSearchText.value = ''
+  formController.value?.cancel()
+}
+
+async function saveForm(): Promise<WarrantyItemSaveResult> {
+  refreshEditCompatibility()
+  return formController.value?.save() ?? {
+    status: 'mutation-failed',
+    error: new Error('Warranty Item form is unavailable.'),
+  }
+}
+
+async function searchMaterialOptions(): Promise<boolean> {
+  return formController.value?.searchMaterials(materialSearchText.value) ?? false
+}
+
+function selectMaterialByCode(event: Event): void {
+  const code = (event.target as HTMLSelectElement).value
+  if (!code) {
+    formController.value?.clearMaterial()
+    return
+  }
+  const material = formState.materials.find(candidate => candidate.code === code)
+  if (material) formController.value?.selectMaterial(material)
+}
+
+function selectGroupByCode(event: Event): void {
+  formController.value?.setGroup((event.target as HTMLSelectElement).value)
+}
+
+function toggleLifetime(event: Event): void {
+  formController.value?.setLifetime((event.target as HTMLInputElement).checked)
+}
+
 onMounted(() => {
   if (page.value) page.value.pageTitle = title
   document.title = title
+  refreshEditCompatibility()
+  if (typeof window !== 'undefined') window.addEventListener('focus', refreshEditCompatibility)
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', refreshEditCompatibility)
   void controller.value?.loadInitial()
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') window.removeEventListener('focus', refreshEditCompatibility)
+  if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', refreshEditCompatibility)
 })
 </script>
 
@@ -72,26 +190,90 @@ onMounted(() => {
             You do not have permission to view Warranty Items.
           </p>
           <template v-else-if="access.canReadList">
+            <p v-if="formState.error && !formOpen" class="alert alert-danger" role="alert">{{ formState.error.message }}</p>
+            <div v-if="formOpen" class="warranty-item-form-panel" aria-labelledby="warranty-item-form-title">
+              <h2 id="warranty-item-form-title">{{ formState.mode === 'create' ? 'Create Warranty Item' : 'Edit Warranty Item' }}</h2>
+              <p v-if="formState.error" class="alert alert-danger" role="alert">{{ formState.error.message }}</p>
+              <ul v-if="formState.validationErrors.length" class="alert alert-danger" role="alert">
+                <li v-for="validationError in formState.validationErrors" :key="`${validationError.field}-${validationError.code}`">
+                  {{ validationError.message }}
+                </li>
+              </ul>
+              <form v-if="formState.draft" class="warranty-item-form" @submit.prevent="saveForm">
+                <div class="form-group">
+                  <label for="warranty-item-code">Warranty Code</label>
+                  <input id="warranty-item-code" name="warranty-item-code" v-model="formState.draft.code" class="form-control input-sm" :maxlength="LEGACY_UI_WARRANTY_CODE_MAX" :readonly="formState.mode === 'edit'" :disabled="formPending">
+                </div>
+                <div class="form-group">
+                  <label for="warranty-item-name">Warranty Name</label>
+                  <input id="warranty-item-name" v-model="formState.draft.name" class="form-control input-sm" :maxlength="LEGACY_UI_WARRANTY_NAME_MAX" :disabled="formPending">
+                </div>
+                <div class="form-group">
+                  <label for="warranty-item-group">Group</label>
+                  <select id="warranty-item-group" :value="formState.draft.groupCode" class="form-control input-sm" :disabled="formPending || formState.groupsPending" @change="selectGroupByCode">
+                    <option value="">Select Group</option>
+                    <option v-for="group in formState.groups" :key="group.code" :value="group.code" :disabled="group.currentOnly">
+                      {{ group.name }}{{ group.currentOnly ? ' (current, inactive)' : '' }}
+                    </option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="warranty-item-material-search">Material search</label>
+                  <div class="warranty-item-inline-controls">
+                    <input id="warranty-item-material-search" v-model="materialSearchText" class="form-control input-sm" :disabled="formPending">
+                    <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="searchMaterialOptions">Search</button>
+                  </div>
+                  <select id="warranty-item-material" class="form-control input-sm" :value="formState.draft.materialCode" :disabled="formPending || formState.materialsPending" @change="selectMaterialByCode">
+                    <option value="">No Material</option>
+                    <option v-if="formState.draft.materialCode && !formState.materials.some(material => material.code === formState.draft?.materialCode)" :value="formState.draft.materialCode">
+                      {{ formState.draft.materialName }} (current)
+                    </option>
+                    <option v-for="material in formState.materials" :key="material.code" :value="material.code">{{ material.name }}</option>
+                  </select>
+                  <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="formController?.clearMaterial()">Clear Material</button>
+                </div>
+                <fieldset class="warranty-item-duration">
+                  <legend>Warranty duration</legend>
+                  <label><input type="number" min="0" v-model.number="formState.draft.duration.years" :disabled="formPending || formState.draft.lifetime"> Years</label>
+                  <label><input type="number" min="0" v-model.number="formState.draft.duration.months" :disabled="formPending || formState.draft.lifetime"> Months</label>
+                  <label><input type="number" min="0" v-model.number="formState.draft.duration.days" :disabled="formPending || formState.draft.lifetime"> Days</label>
+                </fieldset>
+                <div class="checkbox">
+                  <label><input type="checkbox" :checked="formState.draft.lifetime" :disabled="formPending" @change="toggleLifetime"> Lifetime</label>
+                </div>
+                <div class="checkbox">
+                  <label><input type="checkbox" v-model="formState.draft.active" :disabled="formPending"> Active</label>
+                </div>
+                <div class="warranty-item-form-actions">
+                  <button type="submit" class="btn btn-sm bg-navy" :disabled="formPending">Save</button>
+                  <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="cancelForm">Cancel</button>
+                </div>
+              </form>
+            </div>
+
+            <div v-if="access.canCreate" class="warranty-item-list-actions">
+              <button type="button" class="btn btn-sm bg-navy" :disabled="busy || formPending" @click="startCreate">Create</button>
+            </div>
             <form class="warranty-item-filters" @submit.prevent="controller?.updateFilters(filters)">
               <div class="form-group">
                 <label for="warranty-item-field">Search by</label>
-                <select id="warranty-item-field" v-model="filters.field" class="form-control input-sm">
+                <select id="warranty-item-field" v-model="filters.field" class="form-control input-sm" :disabled="formPending">
                   <option value="war_code">Warranty Code</option>
                   <option value="war_des">Warranty Name</option>
                 </select>
               </div>
               <div class="form-group">
                 <label for="warranty-item-text">Search</label>
-                <input id="warranty-item-text" v-model="filters.text" type="search" class="form-control input-sm">
+                <input id="warranty-item-text" v-model="filters.text" type="search" class="form-control input-sm" :disabled="formPending">
               </div>
               <div class="form-group">
                 <label for="warranty-item-active">Status</label>
-                <select id="warranty-item-active" v-model="filters.active" class="form-control input-sm">
+                <select id="warranty-item-active" v-model="filters.active" class="form-control input-sm" :disabled="formPending">
                   <option value="Y">Active only</option>
                   <option value="N">All statuses</option>
                 </select>
               </div>
-              <button type="submit" class="btn btn-sm bg-navy" :disabled="busy || !controller">Search</button>
+              <button type="submit" class="btn btn-sm bg-navy" :disabled="busy || formPending || !controller">Search</button>
             </form>
 
             <p v-if="state.status === 'initial-loading'" role="status">Loading Warranty Items…</p>
@@ -99,7 +281,7 @@ onMounted(() => {
             <div v-else-if="state.status === 'error'" class="alert alert-danger" role="alert">
               <p>{{ state.error?.message || 'Unable to load Warranty Items.' }}</p>
               <p v-if="state.items.length">Showing previous results from page {{ displayedPage }}.</p>
-              <button type="button" class="btn btn-sm btn-default" @click="retry">Retry</button>
+              <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending" @click="retry">Retry</button>
             </div>
             <p v-else-if="state.status === 'loaded' && !state.items.length" role="status">No Warranty Items found.</p>
 
@@ -119,6 +301,7 @@ onMounted(() => {
                     <th scope="col">Added at</th>
                     <th scope="col">Edited by</th>
                     <th scope="col">Edited at</th>
+                    <th v-if="canEditNow" scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,50 +317,20 @@ onMounted(() => {
                     <td>{{ item.addedAt ?? '—' }}</td>
                     <td>{{ item.editedBy ?? '—' }}</td>
                     <td>{{ item.editedAt ?? '—' }}</td>
+                    <td v-if="canEditNow">
+                      <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending" @click="startEdit(item.code)">Edit</button>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <nav class="warranty-item-paging" aria-label="Warranty Item pages">
-              <button
-                type="button"
-                class="btn btn-sm btn-default"
-                :disabled="busy || !controller || state.query.page <= 1"
-                aria-label="First page"
-                @click="controller?.goToPage(1)"
-              >First</button>
-              <button
-                type="button"
-                class="btn btn-sm btn-default"
-                :disabled="busy || !controller || state.query.page <= 1"
-                aria-label="Previous page"
-                @click="controller?.goToPage(state.query.page - 1)"
-              >Previous</button>
-              <button
-                v-for="pageNumber in pageNumbers"
-                :key="pageNumber"
-                type="button"
-                class="btn btn-sm btn-default"
-                :disabled="busy || !controller || pageNumber === state.query.page"
-                :aria-current="pageNumber === state.query.page ? 'page' : undefined"
-                :aria-label="`Page ${pageNumber}`"
-                @click="controller?.goToPage(pageNumber)"
-              >{{ pageNumber }}</button>
+              <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending || !controller || state.query.page <= 1" aria-label="First page" @click="controller?.goToPage(1)">First</button>
+              <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending || !controller || state.query.page <= 1" aria-label="Previous page" @click="controller?.goToPage(state.query.page - 1)">Previous</button>
+              <button v-for="pageNumber in pageNumbers" :key="pageNumber" type="button" class="btn btn-sm btn-default" :disabled="busy || formPending || !controller || pageNumber === state.query.page" :aria-current="pageNumber === state.query.page ? 'page' : undefined" :aria-label="`Page ${pageNumber}`" @click="controller?.goToPage(pageNumber)">{{ pageNumber }}</button>
               <span>Page {{ state.query.page }} of {{ state.maxPage }} · {{ state.total }} total rows</span>
-              <button
-                type="button"
-                class="btn btn-sm btn-default"
-                :disabled="busy || !controller || state.query.page >= state.maxPage"
-                aria-label="Next page"
-                @click="controller?.goToPage(state.query.page + 1)"
-              >Next</button>
-              <button
-                type="button"
-                class="btn btn-sm btn-default"
-                :disabled="busy || !controller || state.query.page >= state.maxPage"
-                aria-label="Last page"
-                @click="controller?.goToPage(state.maxPage)"
-              >Last</button>
+              <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending || !controller || state.query.page >= state.maxPage" aria-label="Next page" @click="controller?.goToPage(state.query.page + 1)">Next</button>
+              <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending || !controller || state.query.page >= state.maxPage" aria-label="Last page" @click="controller?.goToPage(state.maxPage)">Last</button>
             </nav>
           </template>
         </div>
@@ -188,7 +341,16 @@ onMounted(() => {
 
 <style scoped>
 .access-label { margin: 8px 0 0; }
+.warranty-item-list-actions { margin-bottom: 12px; }
 .warranty-item-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 16px; }
 .warranty-item-filters .form-group { margin-bottom: 0; }
+.warranty-item-form-panel { border: 1px solid #ddd; padding: 12px; margin-bottom: 16px; }
+.warranty-item-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; align-items: end; }
+.warranty-item-form .form-group { margin-bottom: 0; }
+.warranty-item-form-actions, .warranty-item-inline-controls, .warranty-item-duration { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.warranty-item-form-actions { grid-column: 1 / -1; }
+.warranty-item-duration { border: 0; padding: 0; margin: 0; }
+.warranty-item-duration legend { width: auto; margin: 0 8px 0 0; font-size: inherit; }
+.warranty-item-duration input { width: 72px; }
 .warranty-item-paging { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 </style>

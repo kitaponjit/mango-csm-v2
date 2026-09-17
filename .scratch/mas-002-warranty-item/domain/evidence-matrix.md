@@ -47,7 +47,7 @@ Evidence was evaluated in this order:
 | `loccode` | OBSERVED location integration metadata; REQUIRES DOMAIN CONFIRMATION | Used with project fields in Reference IC query/create side effect (`WarrentyItem.cs:210-269,872-945`). | Ignored. | Exclude from generic manual edit. | May be present in legacy delete row. | All-warranty/reference flow only. | None. |
 | Create payload | VERIFIED broad envelope; whitelist INFERRED from behavior | Controller binds `{header: rd_mas_warranty2}`; legacy manual form sends current form (`MasterController.cs:149-159`; UI `:751-764`). | No mutations. | Create mapper should send only confirmed manual fields; server owns tenant/audit. | None. | Import is a separate contract. | None. |
 | Update payload | VERIFIED used fields | Same broad header binder; backend updates name/status/duration/lifetime/group/material and server audit (`MasterController.cs:161-170`; `WarrentyItem.cs:276-310`). | No mutations. | Separate typed Update DTO; immutable code lookup. | None. | None. | None. |
-| Update endpoint spelling | OBSERVED client contract; integration verification required | Clients use `WarrantyItem_Update`; backend method is `Warrantyitem_Update` (`v_csm_mas_002.vue:758-764`; controller `:161-170`). | None. | Use established client spelling and run integration check. | None. | None. | None. |
+| Update endpoint spelling | VERIFIED owning route contract; deployed smoke test not run | Clients use `WarrantyItem_Update`; backend method is `Warrantyitem_Update` (`v_csm_mas_002.vue:758-764`; controller `:183-193`); the .NET 8 conventional area route is mapped at `Program.cs:434-445`; ASP.NET Core routing is case-insensitive. | None. | Use established client spelling; deployed smoke test is UAT/release evidence. | None. | None. | None. |
 | Delete guard | VERIFIED owning behavior | Backend rejects area/project references before remove (`WarrentyItem.cs:312-354`). | No mutations. | None. | Model command/result, duplicate prevention, backend error, reload, page clamp. | None. | None. |
 | Delete minimum payload | UNVERIFIED | Legacy sends full row; backend primarily uses code but one conditional guard reads passive fields (`v_csm_mas_002.vue:785-809`; `WarrentyItem.cs:318-344`). | None. | None. | Requires focused backend/integration confirmation. | None. | None. |
 | Import endpoint/request | REQUIRES BACKEND CONFIRMATION | Frontend JSON `*ImportData*` routes are absent from confirmed backend; backend exposes multipart `WarrantyItemImport_Master(IUploadedFile file)`; conflict is registered below (`v_csm_mas_002.vue:878-920`; controller `:185-190`). | None. | Does not block. | None. | Blocking contract choice for T4. | None. |
@@ -111,15 +111,15 @@ Evidence was evaluated in this order:
 - Recommended interpretation: backend remains authority; seek domain confirmation and add UX validation only when confirmed.
 - Supervisor decision required: before adding stricter T2 validation.
 
-### DOMAIN EVIDENCE CONFLICT — Update route casing
+### RESOLVED CONTRACT EVIDENCE — Update route casing
 
 - Concept: canonical client endpoint spelling.
 - Source A: Website/current target clients call `WarrantyItem_Update` (`v_csm_mas_002.vue:758-764`).
-- Source B: backend action method is spelled `Warrantyitem_Update` (`MasterController.cs:161-170`).
-- Likely reason: case-insensitive ASP.NET action routing plus inconsistent source naming.
-- Impact: unit-only tests could lock the wrong string relative to established callers.
-- Recommended interpretation: use `WarrantyItem_Update` in the client contract and verify against the running backend during T2.
-- Supervisor decision required: no architecture decision; integration confirmation required.
+- Source B: the owning .NET 8 backend action is spelled `Warrantyitem_Update` (`MasterController.cs:183-193`) and is exposed through conventional `{area}/{controller}/{action}` routing (`Program.cs:434-445`).
+- Framework contract: ASP.NET Core routing is case-insensitive ([Microsoft documentation](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-8.0)).
+- Resolution: retain `WarrantyItem_Update`; it resolves to the owning `Warrantyitem_Update` action under the verified route mapping.
+- Remaining evidence: no deployed mutation request was sent. Treat that as UAT/release smoke-test evidence, not an unresolved T2 endpoint choice.
+- Supervisor decision required: no.
 
 ### DOMAIN EVIDENCE CONFLICT — Import transport
 
@@ -180,7 +180,7 @@ Evidence was evaluated in this order:
 - code rule, duration null/range rule, and lifetime behavior;
 - save pending/duplicate-submit/error/success-refresh state;
 - TRN0001/admin relationship to T1 access policy;
-- running-backend confirmation for `WarrantyItem_Update`.
+- deployed-environment smoke confirmation for `WarrantyItem_Update` (UAT/release evidence; owning route contract is verified).
 
 ### MODEL DURING T3
 
