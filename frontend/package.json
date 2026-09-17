@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev --host localhost --port 3000",
+    "predev": "npm run sync:vendor",
     "build": "nuxt generate",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
