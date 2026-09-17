@@ -4,6 +4,9 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch 
 import { createWarrantyItemFormController, createWarrantyItemFormState, type WarrantyItemFormController, type WarrantyItemFormControllerOptions, type WarrantyItemSaveResult } from './edit/warranty-item-form-state'
 import { LEGACY_UI_WARRANTY_CODE_MAX, LEGACY_UI_WARRANTY_NAME_MAX } from './edit/warranty-item-draft'
 import { createWarrantyItemEditService } from './edit/warranty-item-service'
+import { createWarrantyItemDeleteController, createWarrantyItemDeleteState, type WarrantyItemDeleteController, type WarrantyItemDeleteControllerOptions } from './delete/warranty-item-delete-state'
+import { formatWarrantyItemDeleteConfirmation } from './delete/warranty-item-delete-confirmation'
+import { createWarrantyItemDeleteService } from './delete/warranty-item-delete-service'
 import { createWarrantyItemListService } from './list/warranty-item-list-service'
 import {
   createWarrantyItemListController,
@@ -12,6 +15,7 @@ import {
   refreshWarrantyItemList,
   type WarrantyItemListController,
 } from './list/warranty-item-list-state'
+import type { WarrantyItemListItem } from './list/warranty-item-list-service'
 import { getWarrantyItemPagePolicy } from './page-policy'
 import { readWarrantyItemAccessSnapshot } from './runtime/access-snapshot'
 import { getWarrantyItemEditCompatibilityPolicy, readWarrantyItemEditCompatibilitySnapshot, type WarrantyItemEditCompatibilitySnapshot } from './runtime/edit-compatibility'
@@ -27,6 +31,8 @@ const filters = reactive({
   active: state.query.active,
 })
 const controller = shallowRef<WarrantyItemListController | null>(null)
+const deleteState = reactive(createWarrantyItemDeleteState())
+const deleteController = shallowRef<WarrantyItemDeleteController | null>(null)
 const formState = reactive(createWarrantyItemFormState())
 const formController = shallowRef<WarrantyItemFormController | null>(null)
 const materialSearchText = ref('')
@@ -35,14 +41,17 @@ const busy = computed(() => state.status === 'initial-loading' || state.status =
 const displayedPage = ref(1)
 const pageNumbers = computed(() => getWarrantyItemPageNumbers(state.maxPage))
 const formOpen = computed(() => formState.mode !== 'closed' && Boolean(formState.draft))
+const deletePending = computed(() => deleteState.pending)
 const formPending = computed(() => formState.detailPending
   || formState.groupsPending
   || formState.materialsPending
-  || formState.savePending)
+  || formState.savePending
+  || deletePending.value)
 
 interface WarrantyItemRuntimeGlobals {
   auth?: unknown
   store?: { state?: { configData?: unknown } }
+  $msg?: { confirm?: (message: string) => Promise<unknown> | unknown }
 }
 
 function readCurrentEditCompatibility(): WarrantyItemEditCompatibilitySnapshot {
@@ -55,6 +64,9 @@ function readCurrentEditCompatibility(): WarrantyItemEditCompatibilitySnapshot {
 
 const editCompatibility = ref<WarrantyItemEditCompatibilitySnapshot>(readCurrentEditCompatibility())
 const canEditNow = computed(() => access.canCreate
+  && editCompatibility.value.status === 'allowed'
+  && (editCompatibility.value.trn0001 === 'Y' || editCompatibility.value.trn0001 === 'N')
+  && typeof editCompatibility.value.isAdmin === 'boolean'
   && getWarrantyItemEditCompatibilityPolicy(editCompatibility.value).canEdit)
 
 async function refreshList(): Promise<void> {
@@ -65,6 +77,15 @@ async function refreshList(): Promise<void> {
 }
 
 let formOptions: WarrantyItemFormControllerOptions | null = null
+let deleteOptions: WarrantyItemDeleteControllerOptions | null = null
+
+async function confirmDelete(target: { code: string, name: string }): Promise<boolean> {
+  const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+  if (typeof globals.$msg?.confirm !== 'function') {
+    return false
+  }
+  return Boolean(await globals.$msg.confirm(formatWarrantyItemDeleteConfirmation(target)))
+}
 
 function connectController(): void {
   if (!access.canReadList) return
@@ -72,15 +93,26 @@ function connectController(): void {
     const transport = createLegacyXtoolsTransport()
     const listService = createWarrantyItemListService(transport)
     const editService = createWarrantyItemEditService(transport)
+    const deleteService = createWarrantyItemDeleteService(transport)
+    const accessSnapshot = readWarrantyItemAccessSnapshot()
     controller.value = createWarrantyItemListController(listService, state)
     formOptions = access.canCreate
       ? {
           service: editService,
-          access: readWarrantyItemAccessSnapshot(),
+          access: accessSnapshot,
           editCompatibility: editCompatibility.value,
           refreshList,
         }
       : null
+    const createdDeleteOptions: WarrantyItemDeleteControllerOptions = {
+      service: deleteService,
+      access: accessSnapshot,
+      editCompatibility: editCompatibility.value,
+      confirm: confirmDelete,
+      refreshList,
+    }
+    deleteOptions = createdDeleteOptions
+    deleteController.value = createWarrantyItemDeleteController(createdDeleteOptions, deleteState)
     if (formOptions) {
       formController.value = createWarrantyItemFormController(formOptions, formState)
     } else {
@@ -113,6 +145,7 @@ function refreshEditCompatibility(): void {
   const snapshot = readCurrentEditCompatibility()
   editCompatibility.value = snapshot
   if (formOptions) formOptions.editCompatibility = snapshot
+  if (deleteOptions) deleteOptions.editCompatibility = snapshot
 }
 
 function startCreate(): void {
@@ -135,6 +168,23 @@ async function saveForm(): Promise<WarrantyItemSaveResult> {
     status: 'mutation-failed',
     error: new Error('Warranty Item form is unavailable.'),
   }
+}
+
+function deleteItem(item: WarrantyItemListItem): void {
+  refreshEditCompatibility()
+  void deleteController.value?.delete({
+    code: item.code,
+    name: item.name,
+    deleteContext: item.deleteContext,
+  })
+}
+
+function isDeleteBlocked(code: string): boolean {
+  return deleteController.value?.isBlocked(code) ?? false
+}
+
+function retryDeleteRefresh(): void {
+  void deleteController.value?.retryRefresh()
 }
 
 async function searchMaterialOptions(): Promise<boolean> {
@@ -191,6 +241,10 @@ onBeforeUnmount(() => {
           </p>
           <template v-else-if="access.canReadList">
             <p v-if="formState.error && !formOpen" class="alert alert-danger" role="alert">{{ formState.error.message }}</p>
+            <p v-if="deleteState.status === 'deleted'" class="alert alert-success" role="status">Warranty Item deleted.</p>
+            <p v-else-if="deleteState.status === 'superseded' && deleteState.lastDeletedCode" class="alert alert-success" role="status">Warranty Item deletion completed; the newer list result is shown.</p>
+            <p v-if="deleteState.error" class="alert alert-danger" role="alert">{{ deleteState.error.message }}</p>
+            <button v-if="deleteState.status === 'refresh-failed-after-delete'" type="button" class="btn btn-sm btn-default" :disabled="busy || formPending" @click="retryDeleteRefresh">Retry list refresh</button>
             <div v-if="formOpen" class="warranty-item-form-panel" aria-labelledby="warranty-item-form-title">
               <h2 id="warranty-item-form-title">{{ formState.mode === 'create' ? 'Create Warranty Item' : 'Edit Warranty Item' }}</h2>
               <p v-if="formState.error" class="alert alert-danger" role="alert">{{ formState.error.message }}</p>
@@ -319,6 +373,7 @@ onBeforeUnmount(() => {
                     <td>{{ item.editedAt ?? '—' }}</td>
                     <td v-if="canEditNow">
                       <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending" @click="startEdit(item.code)">Edit</button>
+                      <button type="button" class="btn btn-sm btn-danger" :disabled="busy || formPending || !item.deleteContext || isDeleteBlocked(item.code)" @click="deleteItem(item)">Delete</button>
                     </td>
                   </tr>
                 </tbody>

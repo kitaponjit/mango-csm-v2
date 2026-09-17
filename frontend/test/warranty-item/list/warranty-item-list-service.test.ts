@@ -22,6 +22,10 @@ const responseRow = {
   add_dt: '2026-09-16T09:30:00',
   edit_user: 'editor',
   edit_dt: '2026-09-16T10:15:00',
+  acct_no: 'ACCT-001',
+  pre_event: 'PRE-001',
+  pre_event2: null,
+  loccode: 'LOC-001',
 }
 
 function successfulResponse(row: unknown = responseRow): unknown {
@@ -76,6 +80,12 @@ describe('createWarrantyItemListService', () => {
         addedAt: '2026-09-16T09:30:00',
         editedBy: 'editor',
         editedAt: '2026-09-16T10:15:00',
+        deleteContext: {
+          accountNumber: 'ACCT-001',
+          preEvent: 'PRE-001',
+          preEvent2: null,
+          locationCode: 'LOC-001',
+        },
       }],
     })
   })
@@ -103,6 +113,54 @@ describe('createWarrantyItemListService', () => {
         editedAt: null,
       }],
     })
+  })
+
+  it('keeps Delete context separate from the presentational list projection', async () => {
+    const service = createWarrantyItemListService(createTransport(successfulResponse()))
+
+    await expect(service.read({
+      page: 1,
+      pageSize: 25,
+      field: 'war_code',
+      text: '',
+      active: 'Y',
+    })).resolves.toMatchObject({
+      items: [{
+        deleteContext: {
+          accountNumber: 'ACCT-001',
+          preEvent: 'PRE-001',
+          preEvent2: null,
+          locationCode: 'LOC-001',
+        },
+      }],
+    })
+
+    const result = await service.read({
+      page: 1,
+      pageSize: 25,
+      field: 'war_code',
+      text: '',
+      active: 'Y',
+    })
+    expect(result.items[0]).not.toHaveProperty('acct_no')
+    expect(result.items[0]).not.toHaveProperty('pre_event')
+    expect(result.items[0]).not.toHaveProperty('pre_event2')
+    expect(result.items[0]).not.toHaveProperty('loccode')
+  })
+
+  it('fails closed for malformed Delete context without coercing defaults', async () => {
+    const service = createWarrantyItemListService(createTransport(successfulResponse({
+      ...responseRow,
+      loccode: undefined,
+    })))
+
+    await expect(service.read({
+      page: 1,
+      pageSize: 25,
+      field: 'war_code',
+      text: '',
+      active: 'Y',
+    })).resolves.toMatchObject({ items: [{ deleteContext: null }] })
   })
 
   it('propagates the backend error when the response is unsuccessful', async () => {

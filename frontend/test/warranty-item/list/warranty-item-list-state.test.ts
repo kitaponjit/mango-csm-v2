@@ -24,6 +24,12 @@ const item: WarrantyItemListItem = {
   addedAt: null,
   editedBy: null,
   editedAt: null,
+  deleteContext: {
+    accountNumber: 'ACCT-001',
+    preEvent: 'PRE-001',
+    preEvent2: null,
+    locationCode: 'LOC-001',
+  },
 }
 
 function result(total: number, items: WarrantyItemListItem[] = [item]): WarrantyItemListResult {

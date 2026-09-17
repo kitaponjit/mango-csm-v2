@@ -12,6 +12,13 @@ export interface WarrantyItemListRequest {
   active: WarrantyItemListActiveFilter
 }
 
+export interface WarrantyItemDeleteContext {
+  accountNumber: string | null
+  preEvent: string | null
+  preEvent2: string | null
+  locationCode: string | null
+}
+
 export interface WarrantyItemListItem {
   code: string
   name: string
@@ -23,6 +30,8 @@ export interface WarrantyItemListItem {
   addedAt: string | null
   editedBy: string | null
   editedAt: string | null
+  /** Non-presentational context retained only for the guarded Delete integration. */
+  deleteContext: WarrantyItemDeleteContext | null
 }
 
 export interface WarrantyItemListResult {
@@ -45,6 +54,10 @@ interface RawWarrantyItemRow {
   add_dt: string | null
   edit_user: string | null
   edit_dt: string | null
+  acct_no?: string | null
+  pre_event?: string | null
+  pre_event2?: string | null
+  loccode?: string | null
 }
 
 const MALFORMED_RESPONSE_MESSAGE = 'Warranty Item list response is malformed.'
@@ -60,6 +73,27 @@ function isFlag(value: unknown): value is 'Y' | 'N' {
 
 function isNullableString(value: unknown): value is string | null {
   return typeof value === 'string' || value === null
+}
+
+function normalizeDeleteContext(rawRow: unknown): WarrantyItemDeleteContext | null {
+  if (!isRecord(rawRow)
+    || !Object.prototype.hasOwnProperty.call(rawRow, 'acct_no')
+    || !Object.prototype.hasOwnProperty.call(rawRow, 'pre_event')
+    || !Object.prototype.hasOwnProperty.call(rawRow, 'pre_event2')
+    || !Object.prototype.hasOwnProperty.call(rawRow, 'loccode')
+    || !isNullableString(rawRow.acct_no)
+    || !isNullableString(rawRow.pre_event)
+    || !isNullableString(rawRow.pre_event2)
+    || !isNullableString(rawRow.loccode)) {
+    return null
+  }
+
+  return {
+    accountNumber: rawRow.acct_no,
+    preEvent: rawRow.pre_event,
+    preEvent2: rawRow.pre_event2,
+    locationCode: rawRow.loccode,
+  }
 }
 
 function isWarrantyItemRow(value: unknown): value is RawWarrantyItemRow {
@@ -95,6 +129,7 @@ function normalizeRow(rawRow: unknown): WarrantyItemListItem {
     addedAt: rawRow.add_dt,
     editedBy: rawRow.edit_user,
     editedAt: rawRow.edit_dt,
+    deleteContext: normalizeDeleteContext(rawRow),
   }
 }
 

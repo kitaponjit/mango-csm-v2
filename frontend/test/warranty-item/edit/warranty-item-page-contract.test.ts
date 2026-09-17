@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 const pagePath = new URL('../../../app/features/warranty-item/WarrantyItemPage.vue', import.meta.url)
 const source = readFileSync(pagePath, 'utf8')
 
-describe('WarrantyItemPage Create/Edit source contract', () => {
+describe('WarrantyItemPage Create/Edit/Delete source contract', () => {
   it('renders Create only for editable access and wires list-row Edit by code through detail loading', () => {
     expect(source).toContain('v-if="access.canCreate"')
     expect(source).toContain('@click="startCreate"')
@@ -46,11 +46,21 @@ describe('WarrantyItemPage Create/Edit source contract', () => {
     expect(source).toContain('@click="retry"')
     expect(source).toMatch(/<button[^>]+:disabled="busy \|\| formPending[^"]*"[^>]+@click="retry"/s)
     expect(source).not.toContain(':disabled="busy || formPending || !controller" @click="retry"')
-    expect(source).not.toContain('Delete')
     expect(source).not.toContain('Import')
     expect(source).not.toContain('Export')
     expect(source).not.toContain('Reference IC')
-    expect(source).not.toContain('WarrantyItem_Delete')
+  })
+
+  it('renders a guarded Delete action with explicit context and confirmation', () => {
+    expect(source).toContain('createWarrantyItemDeleteService')
+    expect(source).toContain('createWarrantyItemDeleteController')
+    expect(source).toContain('deleteContext')
+    expect(source).toContain('@click="deleteItem(item)"')
+    expect(source).toContain('$msg.confirm')
+    expect(source).toContain('formatWarrantyItemDeleteConfirmation')
+    expect(source).toContain('retryDeleteRefresh')
+    expect(source).not.toContain('{ header: item }')
+    expect(source).not.toContain('{ header: row }')
   })
 
   it('refreshes compatibility globals at action time instead of freezing setup-time state', () => {
