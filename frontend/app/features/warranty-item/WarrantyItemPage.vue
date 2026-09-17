@@ -26,6 +26,13 @@ import {
   type WarrantyItemImportController,
 } from './import/warranty-item-import-state'
 import { createWarrantyItemImportService, type WarrantyItemImportColumn } from './import/warranty-item-import-service'
+import { createWarrantyItemExportService } from './export/warranty-item-export-service'
+import { createWarrantyItemDownloadCapability } from './export/warranty-item-download-capability'
+import {
+  createWarrantyItemExportController,
+  createWarrantyItemExportState,
+  type WarrantyItemExportController,
+} from './export/warranty-item-export-state'
 
 const title = 'Master : รายการสินค้าประกัน'
 const page = ref<{ pageTitle: string } | null>(null)
@@ -43,6 +50,8 @@ const formState = reactive(createWarrantyItemFormState())
 const formController = shallowRef<WarrantyItemFormController | null>(null)
 const importState = reactive(createWarrantyItemImportState())
 const importController = shallowRef<WarrantyItemImportController | null>(null)
+const exportState = reactive(createWarrantyItemExportState())
+const exportController = shallowRef<WarrantyItemExportController | null>(null)
 const importFileInput = ref<HTMLInputElement | null>(null)
 const importOpen = ref(false)
 const materialSearchText = ref('')
@@ -53,12 +62,14 @@ const pageNumbers = computed(() => getWarrantyItemPageNumbers(state.maxPage))
 const formOpen = computed(() => formState.mode !== 'closed' && Boolean(formState.draft))
 const deletePending = computed(() => deleteState.pending)
 const importPending = computed(() => importState.uploadPending || importState.importPending || importState.refreshPending)
+const exportPending = computed(() => exportState.pending)
 const formPending = computed(() => formState.detailPending
   || formState.groupsPending
   || formState.materialsPending
   || formState.savePending
   || deletePending.value
-  || importPending.value)
+  || importPending.value
+  || exportPending.value)
 
 const importPreviewColumns: ReadonlyArray<{ key: WarrantyItemImportColumn, label: string }> = [
   { key: 'A', label: 'Warranty Code' },
@@ -115,6 +126,14 @@ async function confirmDelete(target: { code: string, name: string }): Promise<bo
   return Boolean(await globals.$msg.confirm(formatWarrantyItemDeleteConfirmation(target)))
 }
 
+async function confirmExport(): Promise<boolean> {
+  const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+  if (typeof globals.$msg?.confirm !== 'function') {
+    return false
+  }
+  return Boolean(await globals.$msg.confirm('Exporting data may take a long time if there is a large amount of data. Please confirm to proceed with the operation.'))
+}
+
 function connectController(): void {
   if (!access.canReadList) return
   try {
@@ -123,6 +142,8 @@ function connectController(): void {
     const editService = createWarrantyItemEditService(transport)
     const deleteService = createWarrantyItemDeleteService(transport)
     const importService = createWarrantyItemImportService(transport)
+    const exportService = createWarrantyItemExportService(transport)
+    const exportDownload = createWarrantyItemDownloadCapability()
     const accessSnapshot = readWarrantyItemAccessSnapshot()
     controller.value = createWarrantyItemListController(listService, state)
     formOptions = access.canCreate
@@ -152,16 +173,24 @@ function connectController(): void {
       canImport: () => access.canCreate,
       refreshList,
     }, importState)
+    exportController.value = createWarrantyItemExportController({
+      service: exportService,
+      download: exportDownload,
+      canExport: () => access.canCreate,
+      confirm: confirmExport,
+    }, exportState)
     setupError.value = null
     state.error = null
     formState.error = null
     importState.error = null
+    exportState.error = null
   } catch (reason: unknown) {
     setupError.value = reason instanceof Error ? reason : new Error('Warranty Item service is unavailable.')
     state.status = 'error'
     state.error = setupError.value
     formState.error = setupError.value
     importState.error = setupError.value
+    exportState.error = setupError.value
   }
 }
 
@@ -270,6 +299,10 @@ function retryImportRefresh(): void {
   void importController.value?.retryRefresh()
 }
 
+function exportWarrantyItems(): void {
+  void exportController.value?.start()
+}
+
 onMounted(() => {
   if (page.value) page.value.pageTitle = title
   document.title = title
@@ -305,6 +338,9 @@ onBeforeUnmount(() => {
             <p v-if="deleteState.status === 'deleted'" class="alert alert-success" role="status">Warranty Item deleted.</p>
             <p v-else-if="deleteState.status === 'superseded' && deleteState.lastDeletedCode" class="alert alert-success" role="status">Warranty Item deletion completed; the newer list result is shown.</p>
             <p v-if="deleteState.error" class="alert alert-danger" role="alert">{{ deleteState.error.message }}</p>
+            <p v-if="exportState.status === 'generating'" role="status">Preparing Warranty Item Export…</p>
+            <p v-else-if="exportState.status === 'initiated'" class="alert alert-success" role="status">Warranty Item Export initiated.</p>
+            <p v-if="exportState.error" class="alert alert-danger" role="alert">{{ exportState.error.message }}</p>
             <button v-if="deleteState.status === 'refresh-failed-after-delete'" type="button" class="btn btn-sm btn-default" :disabled="busy || formPending" @click="retryDeleteRefresh">Retry list refresh</button>
             <div v-if="formOpen" class="warranty-item-form-panel" aria-labelledby="warranty-item-form-title">
               <h2 id="warranty-item-form-title">{{ formState.mode === 'create' ? 'Create Warranty Item' : 'Edit Warranty Item' }}</h2>
@@ -367,6 +403,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-if="access.canCreate" class="warranty-item-list-actions">
+              <button type="button" class="btn btn-sm btn-instagram" :disabled="busy || formPending || !exportController" @click="exportWarrantyItems">Export</button>
               <button type="button" class="btn btn-sm bg-navy" :disabled="busy || formPending" @click="startCreate">Create</button>
               <button type="button" class="btn btn-sm btn-tumblr" :disabled="busy || formPending" @click="openImport">Import</button>
             </div>

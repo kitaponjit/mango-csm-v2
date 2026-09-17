@@ -46,7 +46,6 @@ describe('WarrantyItemPage Create/Edit/Delete source contract', () => {
     expect(source).toContain('@click="retry"')
     expect(source).toMatch(/<button[^>]+:disabled="busy \|\| formPending[^"]*"[^>]+@click="retry"/s)
     expect(source).not.toContain(':disabled="busy || formPending || !controller" @click="retry"')
-    expect(source).not.toContain('Export')
     expect(source).not.toContain('Reference IC')
   })
 
