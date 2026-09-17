@@ -14,6 +14,25 @@ interface SelectionHarness {
   selectedCount: number
 }
 
+interface Checkbox {
+  data(key: 'jobno' | 'itemno'): string | number
+  is(selector: string): boolean
+}
+
+interface SelectionViewModel {
+  data: ManualListRow[]
+  $set(target: ManualListRow, key: 'isCheckData', value: boolean): void
+}
+
+interface LinqResult {
+  where(predicate: (item: ManualListRow) => boolean): {
+    firstOrDefault(): ManualListRow | undefined
+  }
+}
+
+type JQueryLike = (value: Checkbox) => Checkbox
+type LinqLike = (items: ManualListRow[]) => LinqResult
+
 const here = dirname(fileURLToPath(import.meta.url))
 const repositoryRoot = resolve(here, '../../../..')
 const legacyComponent = readFileSync(
@@ -43,22 +62,22 @@ function invokeCheckboxHandler(handlerBody: string): SelectionHarness {
     itemno: 1,
     isCheckData: false,
   }
-  const self = {
+  const self: SelectionViewModel = {
     data: [row],
-    $set(target: ManualListRow, key: keyof ManualListRow, value: boolean) {
+    $set(target, key, value) {
       target[key] = value
     },
   }
-  const checkbox = {
-    data(key: string) {
+  const checkbox: Checkbox = {
+    data(key: 'jobno' | 'itemno') {
       return key === 'jobno' ? row.job_no : row.itemno
     },
     is(selector: string) {
       return selector === ':checked'
     },
   }
-  const $ = (value: typeof checkbox) => value
-  const $linq = (items: ManualListRow[]) => ({
+  const $: JQueryLike = (value) => value
+  const $linq: LinqLike = (items) => ({
     where(predicate: (item: ManualListRow) => boolean) {
       return {
         firstOrDefault() {
@@ -69,10 +88,10 @@ function invokeCheckboxHandler(handlerBody: string): SelectionHarness {
   })
 
   const handler = new Function('$', '$linq', 'self', handlerBody) as (
-    this: typeof checkbox,
-    $: typeof $,
-    $linq: typeof $linq,
-    self: typeof self,
+    this: Checkbox,
+    $: JQueryLike,
+    $linq: LinqLike,
+    self: SelectionViewModel,
   ) => void
   handler.call(checkbox, $, $linq, self)
 
