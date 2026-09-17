@@ -15,7 +15,9 @@
     "sync:vendor": "node scripts/sync-vendor.mjs",
     "typecheck": "vue-tsc --noEmit",
     "test:query": "node app/services/document-store/query.test.mts",
-    "test:parity": "node app/services/document-store/query.parity.mts"
+    "test:parity": "node app/services/document-store/query.parity.mts",
+    "test": "npm run test:query && npm run test:store && npm run test:parity",
+    "test:store": "node app/services/document-store/store.test.mts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.21",

@@ -18,6 +18,7 @@ import type { Doc, Filter, QueryOptions, StoredDoc } from './query.ts'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..', '..', '..')
 const { runQuery, matches, resolvePath, compare } = await import('./query.ts')
+const { ejsonDate, toClientShape, isEjsonDate } = await import('./ejson.ts')
 
 interface DocumentFile { documents: StoredDoc[] }
 const docs = (JSON.parse(
@@ -54,9 +55,19 @@ t('dotted path through an ARRAY (rows.qty semantics)', n({ 'tasks.result': 'pass
 t('path absent from most docs still filters', n({ satisfaction: 5 }), 1)
 
 // comparison + date-as-string ordering
-t('$gt on ISO date string', n({ created: { $gt: '2026-09-16T13:00:00Z' } }), 4)
+// Dates are Extended JSON. A bare ISO *string* against a date field matches
+// nothing — MongoDB's type bracketing, and the silent failure this guards: the
+// screen used to send exactly that, and a real mongod returns 0 for it.
+t('$gt on Extended JSON date', n({ created: { $gt: { $date: '2026-09-16T13:00:00Z' } } }), 4)
+t('ISO string against a date field matches nothing', n({ created: { $gt: '2026-09-16T13:00:00Z' } }), 0)
+t('$lt string bound matches no number (type bracketing)', n({ duration_ms: { $lt: '100' } }), 0)
+t('$type date matches Extended JSON dates', n({ created: { $type: 'date' } }), 9)
 t('$gte/$lte range on number', n({ duration_ms: { $gte: 400, $lte: 1000 } }), 3)
-t('$lt orders dates, not strings', compare('2026-09-16T09:00:00Z', '2026-09-16T10:00:00Z') < 0, true)
+t('Extended JSON dates compare chronologically', compare({ $date: '2026-09-16T09:00:00Z' }, { $date: '2026-09-16T10:00:00Z' }) < 0, true)
+// '.' sorts before 'Z' as text, so these two are in the wrong order as strings.
+t('mixed precision dates compare as instants', compare({ $date: '2026-01-01T00:00:00.500Z' }, { $date: '2026-01-01T00:00:00Z' }) > 0, true)
+t('two spellings of one instant are equal', n({ created: { $date: '2026-09-16T15:14:22.481+07:00' } }), 1)
+t('ISO-looking strings stay strings (no coercion)', compare('2026-01-01T00:00:00.500Z', '2026-01-01T00:00:00Z') < 0, true)
 
 // set / existence / regex
 t('$in', n({ maincode: { $in: ['SK', 'BKF'] } }), 8)
@@ -90,6 +101,14 @@ t('find({}) returns everything', n({}), 15)
 let threw = false
 try { matches(docs[0], { a: { $nonsense: 1 } }) } catch { threw = true }
 t('unknown operator throws', threw, true)
+
+// Extended JSON helpers
+t('ejsonDate builds the wrapper', ejsonDate(new Date('2026-09-16T00:00:00Z')), { $date: '2026-09-16T00:00:00.000Z' })
+t('isEjsonDate rejects extra keys', isEjsonDate({ $date: '2026-09-16T00:00:00Z', x: 1 }), false)
+t('toClientShape: dates become ISO strings, recursively',
+  toClientShape({ created: { $date: '2026-09-16T08:14:22.481Z' }, rows: [{ at: { $date: 0 } }] }),
+  { created: '2026-09-16T08:14:22.481Z', rows: [{ at: '1970-01-01T00:00:00.000Z' }] })
+t('toClientShape: $oid becomes its hex string', toClientShape({ _id: { $oid: '6716a1f0c2e41a0b3d001001' } }), { _id: '6716a1f0c2e41a0b3d001001' })
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

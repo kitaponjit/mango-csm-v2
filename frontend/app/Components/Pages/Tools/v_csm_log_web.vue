@@ -113,8 +113,8 @@
               <i class="fa fa-exclamation-triangle"></i>
               <strong>{{ pendingCount }}</strong> document<span v-if="pendingCount > 1">s</span>
               inserted this session {{ pendingCount > 1 ? 'are' : 'is' }} held in the browser only.
-              The current source is a JSON file, which a browser cannot write to — they will be gone
-              on reload. Point the store at the backend endpoint to persist them.
+              This screen reads a JSON file and has no server to save to, so they will be gone on
+              reload. Use "show" to copy them first.
               <a href="#" @click.prevent="showPending = !showPending">{{ showPending ? 'hide' : 'show' }}</a>
             </div>
 
@@ -215,18 +215,18 @@
    * documents, every row expands to its raw JSON, and the filter is a real
    * MongoDB query object rather than a fixed set of search boxes.
    *
-   * Data comes through ~/services/document-store, which today reads
-   * public/data/log_web.json in the browser and can be pointed at a backend
-   * endpoint without any change here. See that module for the contract and for
-   * why the frontend does not talk to MongoDB directly.
+   * Data comes through ~/services/document-store, which is frontend-only: it
+   * reads public/data/log_web.json and runs every query in the browser, with no
+   * backend call. See that module for why the frontend does not talk to MongoDB
+   * directly.
    *
    * `LogWebDoc` types only the envelope — the fields the backend always adds.
    * It keeps the index signature it inherits from `Doc`, because typing the
    * rest would mean inventing a schema this collection does not have.
    */
   import { defineComponent } from 'vue'
-  import { collection, invalidate, getConfig } from '~/services/document-store'
-  import type { Doc, Filter, Primitive, StoredDoc } from '~/services/document-store'
+  import { collection, ejsonDate } from '~/services/document-store'
+  import type { Doc, EjsonDate, Filter, Primitive, StoredDoc } from '~/services/document-store'
 
   export interface LogWebDoc extends Doc {
     mainname?: string
@@ -268,7 +268,7 @@
   }, null, 2)
 
   /** A range on a date field, built from the two date inputs. */
-  interface DateRange { $gte?: string; $lte?: string }
+  interface DateRange { $gte?: EjsonDate; $lte?: EjsonDate }
 
   export default defineComponent({
     data() {
@@ -277,7 +277,6 @@
         auth: (window.auth || {}) as Record<string, string>,
         xt: $xt,
         collectionName: COLLECTION,
-        storeDriver: getConfig().driver,
 
         form: EMPTY_FORM(),
         rawMode: false,
@@ -353,9 +352,16 @@
 
         // `created` and `updated` are mutually exclusive on a document, so a
         // date range has to consider both or it silently drops half the log.
+        //
+        // The bounds are Extended JSON dates: the collection stores BSON dates and
+        // MongoDB never matches a string against one, so ISO strings here returned
+        // nothing against real data. The inputs are calendar days in the user's
+        // own timezone, so they are read as LOCAL start and end of day (no offset
+        // in the string) — reading them as UTC shifted a Bangkok user's range by
+        // seven hours.
         const range: DateRange = {}
-        if (this.form.from) range.$gte = `${this.form.from}T00:00:00.000Z`
-        if (this.form.to) range.$lte = `${this.form.to}T23:59:59.999Z`
+        if (this.form.from) range.$gte = ejsonDate(`${this.form.from}T00:00:00.000`)
+        if (this.form.to) range.$lte = ejsonDate(`${this.form.to}T23:59:59.999`)
         if (Object.keys(range).length) {
           const dateClause: Filter = { $or: [{ created: range }, { updated: range }] }
           if (filter.$or) {
@@ -476,8 +482,11 @@
       },
 
       /*
-       * Stamps the envelope the backend gateway adds (Gateway.cs:118-123) so a
-       * document written here has the same shape as one written by the server.
+       * Stamps the envelope the backend gateway adds to real log_web documents
+       * (Gateway.cs:118-123), so a document inserted here has the same shape —
+       * including the date as an Extended JSON date, which is what `DateTime.Now`
+       * becomes in the real collection. The document stays in this browser
+       * session only; nothing is sent to a server.
        */
       async insert(): Promise<void> {
         this.insertError = ''
@@ -494,7 +503,9 @@
           return
         }
 
-        const stamped: LogWebDoc = {
+        // Typed as the write shape (`Doc`): the stamp is an Extended JSON date,
+        // while `LogWebDoc` describes the ISO strings callers read back.
+        const stamped: Doc = {
           ...document,
           mainname: this.auth.mainname || window.baseCompany || '',
           maincode: this.auth.maincode || window.baseCompany || '',
@@ -502,19 +513,13 @@
           empno: this.auth.empno || '',
           type: document.type || 'created'
         }
-        stamped[stamped.type === 'created' ? 'created' : 'updated'] = new Date().toISOString()
+        stamped[stamped.type === 'created' ? 'created' : 'updated'] = ejsonDate(new Date())
 
         page.loadingBox.show()
         try {
-          const result = await collection<LogWebDoc>(COLLECTION).insertOne(stamped)
+          await collection<LogWebDoc>(COLLECTION).insertOne(stamped)
           this.newDocument = TEMPLATE_DOC
-
-          if (result.pending) {
-            $notify.warning('Saved in this browser session only — not persisted.')
-          } else {
-            $notify.success(this.ui.erp_save_success || 'Saved.')
-            invalidate(COLLECTION)
-          }
+          $notify.warning('Saved in this browser session only — not persisted.')
           await this.search(true)
         } catch (err) {
           this.insertError = (err as Error).message || String(err)
