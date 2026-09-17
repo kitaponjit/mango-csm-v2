@@ -104,6 +104,10 @@ test-results/
 *.tsbuildinfo
 vite.config.*.timestamp-*
 
+# Local agent artifacts
+.scratch/
+.superpower/
+
 # ===========================
 # OS
 # ===========================
