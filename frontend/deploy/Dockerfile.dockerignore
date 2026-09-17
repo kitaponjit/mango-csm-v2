@@ -1,0 +1,19 @@
+# Build context for deploy/Dockerfile is the repository root. BuildKit reads this
+# file because it sits next to the Dockerfile with the same name.
+#
+# Allowlist: send only what the image needs. Without it the upload includes .git,
+# Nuxt/, Website/node_modules, and frontend/node_modules installed for Windows,
+# which `COPY frontend ./` would copy over the Linux install.
+*
+
+!frontend/
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/
+frontend/.data/
+frontend/dist
+frontend/public/vendor/
+frontend/**/*.log
+
+!Website/Content/
+!Website/Scripts/Others/
