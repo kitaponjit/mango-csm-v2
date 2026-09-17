@@ -1,6 +1,3 @@
-// The source-contract test runs in Vitest's Node environment; the scoped
-// application typecheck intentionally does not include Node ambient types.
-// @ts-expect-error Node's fs types are supplied by the Vitest runtime.
 import { readFileSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'

@@ -25,7 +25,7 @@ export type WarrantyItemDeleteServiceErrorCategory = 'backend' | 'authorization'
 
 export class WarrantyItemDeleteServiceError extends Error {
   readonly category: WarrantyItemDeleteServiceErrorCategory
-  readonly cause: unknown
+  override readonly cause: unknown
 
   constructor(category: WarrantyItemDeleteServiceErrorCategory, message: string, cause?: unknown) {
     super(message)

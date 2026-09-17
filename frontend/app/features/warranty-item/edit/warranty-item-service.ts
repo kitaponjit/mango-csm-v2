@@ -13,7 +13,7 @@ export type WarrantyItemServiceErrorCategory = 'validation' | 'backend' | 'autho
 
 export class WarrantyItemServiceError extends Error {
   readonly category: WarrantyItemServiceErrorCategory
-  readonly cause: unknown
+  override readonly cause: unknown
 
   constructor(category: WarrantyItemServiceErrorCategory, message: string, cause?: unknown) {
     super(message)

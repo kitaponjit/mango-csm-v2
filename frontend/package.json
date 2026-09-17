@@ -13,8 +13,13 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "sync:vendor": "node scripts/sync-vendor.mjs",
-    "test:warranty-item": "vitest run",
-    "typecheck:warranty-item": "nuxt prepare && vue-tsc -p tsconfig.warranty-item.json --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "typecheck:warranty-item": "nuxt prepare && vue-tsc -p tsconfig.warranty-item.json --noEmit",
+    "test:query": "node app/services/document-store/query.test.mts",
+    "test:parity": "node app/services/document-store/query.parity.mts",
+    "test": "npm run test:query && npm run test:store && npm run test:parity",
+    "test:store": "node app/services/document-store/store.test.mts",
+    "test:warranty-item": "vitest run"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.21",
@@ -58,6 +63,9 @@
     "xlsx": "^0.16.9"
   },
   "devDependencies": {
+    "@types/node": "^22.20.3",
+    "mongodb": "^7.6.0",
+    "mongodb-memory-server": "^11.2.0",
     "sass": "^1.77.4",
     "typescript": "5.9.3",
     "vitest": "4.1.11",

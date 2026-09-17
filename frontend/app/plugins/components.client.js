@@ -10,6 +10,7 @@ import docPreview from '~/Components/Center/doc-preview.vue'
 import eCharts from '~/Components/Center/ECharts.vue'
 import vIcon from '~/Components/Center/v-icon.vue'
 import colorPanel from '~/Components/Center/color-panel.vue'
+import thaiAddressInput from '~/Components/Center/thai-address-input.vue'
 import datepicker from '~/Components/Center/datepicker.vue'
 import timepicker from '~/Components/Center/timepicker.vue'
 import inumber from '~/Components/Center/number.vue'
@@ -132,4 +133,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   app.component('ECharts', eCharts)
   app.component('v-icon', vIcon)
   app.component('color-panel', colorPanel)
+  app.component('thai-address-input', thaiAddressInput)
 })

@@ -1,0 +1,29 @@
+# Runs the Nuxt frontend (frontend/) in Docker:
+#
+#   docker compose up --build        ->  http://localhost:8080
+#
+# Frontend only. The .NET 8 backend (MangoServiceNetCore) is a separate
+# repository and is not started here. Pages that need it (sign-in, menus, most
+# screens) work once it is reachable at API_UPSTREAM; until then /service/
+# calls return 502 and the site itself still loads.
+#
+# Optional overrides, in the shell or a .env file next to this one:
+#   FRONTEND_PORT  host port                 (default 8080)
+#   API_UPSTREAM   backend origin, no path   (default http://host.docker.internal:5075,
+#                                             the backend's dev port on this machine)
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/deploy/Dockerfile
+    image: mango-csm-frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    environment:
+      # The browser calls /service/ on this origin and nginx forwards it to
+      # API_UPSTREAM, so no CORS entry is needed for this port.
+      DATA_SERVER: /service/
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:5075}
+    extra_hosts:
+      # Docker Desktop resolves this name already; Linux engines need the mapping.
+      - "host.docker.internal:host-gateway"

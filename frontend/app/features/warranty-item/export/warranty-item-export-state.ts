@@ -39,7 +39,7 @@ export type WarrantyItemExportControllerErrorCategory =
 
 export class WarrantyItemExportControllerError extends Error {
   readonly category: WarrantyItemExportControllerErrorCategory
-  readonly cause: unknown
+  override readonly cause: unknown
 
   constructor(category: WarrantyItemExportControllerErrorCategory, message: string, cause?: unknown) {
     super(message)

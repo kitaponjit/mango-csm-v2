@@ -76,7 +76,9 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
       link: [
         { rel: 'icon', type: 'image/x-icon', href: `${baseURL}vendor/Content/Images/Logo/mango_icon.ico` },
-        ...vendorStyles.map(href => ({ rel: 'stylesheet', href: `${baseURL}vendor/${href}` }))
+        // `as const` keeps the literal type: inside .map() TypeScript widens it to
+        // `string`, which Nuxt's typed head rejects.
+        ...vendorStyles.map(href => ({ rel: 'stylesheet' as const, href: `${baseURL}vendor/${href}` }))
       ],
       script: [
         { src: `${baseURL}config.js` },
@@ -87,7 +89,12 @@ export default defineNuxtConfig({
     }
   },
 
-  css: ['~/assets/css/app.css'],
+  // `pretty-checkbox` is the CSS half of the legacy `pretty-checkbox-vue` pairing
+  // (`main.js` imported 'pretty-checkbox/dist/pretty-checkbox.min.css'). The port
+  // carried the component over as Components/Center/p-check.vue but dropped this
+  // stylesheet, so the control rendered as a bare browser checkbox. Vendored into
+  // assets/ rather than public/vendor/, which scripts/sync-vendor.mjs wipes.
+  css: ['~/assets/css/pretty-checkbox.min.css', '~/assets/css/app.css'],
 
   vite: {
     server: {

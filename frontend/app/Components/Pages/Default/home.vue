@@ -1373,11 +1373,15 @@
         return this.is_mango() || this.is_csm_all();
       },
       notificationDeveloper() {
-        this.$swal({
-          type: 'info',
-          title: this.ui.csm_v2_notification||'แจ้งเตือน',
-          text: `${this.ui.hello||'สวัสดี'} ${this.auth.empname} ${this.ui.csm_home_pending_task_count}`,
-        })
+        // `$swal` came from `Vue.use(VueSweetalert2)` in the legacy main.js.
+        // vue-sweetalert2 v4 is Vue 2 only and was never ported, so this threw.
+        // Routed to `$msg.alert`, the modal this app already uses in 778 other
+        // places; it takes (title, message, type) and supports 'info' natively.
+        $msg.alert(
+          this.ui.csm_v2_notification||'แจ้งเตือน',
+          `${this.ui.hello||'สวัสดี'} ${this.auth.empname} ${this.ui.csm_home_pending_task_count}`,
+          'info'
+        )
       },
       /* Method : Center */
       async loadCenter() {

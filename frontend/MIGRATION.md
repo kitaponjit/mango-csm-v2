@@ -212,9 +212,10 @@ round-trips `v-model` both ways, `p-check` flips `N`→`Y` on click, the calenda
 receives the right day's events, and the spinner/PDF/doc-preview render. The probe route was
 removed afterwards.
 
-**Known gap:** only a subset of pretty-checkbox's CSS ships in `Content/Site.css`, so `p-check`
-renders as a standard browser checkbox rather than the decorated control. It is functionally
-correct and correctly bound; restoring the full look needs the upstream stylesheet.
+~~**Known gap:** only a subset of pretty-checkbox's CSS ships in `Content/Site.css`~~
+**Resolved 2026-09-16** - see the second sweep below. The four `.pretty` rules in `Content/Site.css`
+are CSM's *overrides*; the library stylesheet itself came from `main.js`'s
+`import 'pretty-checkbox/dist/pretty-checkbox.min.css'`, which the port dropped.
 
 ### SignalR realtime ported to ASP.NET Core SignalR (2026-09-15)
 
@@ -255,7 +256,10 @@ Two deliberate differences from the 2.x stack:
 Still unverified: the realtime **features** themselves (live comments, case-status pushes) need
 a logged-in session on the screens that use them - group-scoped broadcasts such as
 `SendNewCase` go to the `CSM_PC` group, which nothing currently joins. `JoinGroup` exists on
-the hub but has no caller in the frontend.
+the hub but has no caller in the frontend. **Re-checked 2026-09-16: `Website/` has no caller
+either** - neither `JoinGroup` nor `CSM_PC` appears anywhere in the legacy tree - so those
+broadcasts never reached the Vue 2 app. This is a pre-existing gap, not a port regression, and
+wiring it up would add behaviour the product never had.
 
 ### Broken images and AdminLTE layout (2026-09-15)
 
@@ -316,7 +320,7 @@ error, not a warning - a build that exits 0 proves there are none. The 6 were ke
 including the deliberate `:key="'agrArea' + idx + agTableKey"` remount pattern on `<ag-table>`.
 Moving those would have broken intentional behaviour.
 
-**Transition class renames - nothing to fix.** Zero custom `v-enter*` / `v-leave*` CSS in the tree.
+**Transition class renames - this check was wrong; see the 2026-09-16 regression sweep below.** It scanned only for the literal default prefix `v-` and so missed all nine *named* transitions, every one of which still carried the Vue 2 class.
 
 Still open from the original list: `chart.js` remains pinned to v2 with two v2-only plugins.
 
@@ -345,10 +349,10 @@ instance and the click handler attached, and the tooltip initialises.
 
 **Still unresolved, and why each is a decision rather than a task:**
 
-- `<thai-address-input>` (3 uses, 1 file). `vue-thai-address-input` is Vue 2 and has no successor.
-  Replacing it means vendoring its **3.8 MB bundled Thai address database** and rebuilding the
-  autocomplete (`type` = subdistrict/district/province, `v-model`, `@selected` filling the sibling
-  fields). That bundling decision is not one to make silently.
+- ~~`<thai-address-input>` (3 uses, 1 file)~~ **done 2026-09-16** - and the premise here was wrong.
+  The "3.8 MB bundled database" figure was never checked: the actual database the package ships is
+  **190 KB (~56 KB gzipped)**, and the package does not bundle it at all - it fetches it at runtime.
+  See the second sweep below.
 - `<ModalEMP>` and `<worker-ref-action>`. These resolve to nothing - but they are used identically
   in `Website/` and registered nowhere there either, so they were **already broken before the
   port**. Mapping them to a component would be a guess that could switch on a dead code path.
@@ -415,10 +419,353 @@ Login page renders with the company list from SQL Server via the .NET 8 backend;
 - ~~Template audit~~ **done 2026-09-16** - see below.
 - `chart.js` stays on v2 — **verified working, not broken**. See the chart.js note below; the
   upgrade is a decision, not a defect.
-- `<thai-address-input>` (3 uses, 1 file) is still unresolved - see below, it needs a decision.
+- ~~`<thai-address-input>` (3 uses, 1 file)~~ **done 2026-09-16** - ported and verified.
 - `<ModalEMP>` and `<worker-ref-action>` resolve to nothing, but they did in the **legacy Vue 2
   app too** - pre-existing bugs, not port regressions. Do not guess a mapping.
-- `$swal` (1 use) - `vue-sweetalert2` was a legacy `Vue.use()` and is not installed.
+- ~~`$swal` (1 use) - `vue-sweetalert2` was a legacy `Vue.use()` and is not installed.~~
+  **done 2026-09-16** - routed to `$msg.alert`, no new dependency.
+
+## Vue 3 runtime regression sweep (2026-09-16)
+
+A re-audit of the ported tree found four classes of Vue 2 code that **compile without error** and
+so survived both the build and the 98-route walk. Two of them do not even throw at runtime, which
+is why they were invisible. All four are fixed.
+
+**1. Transition classes never renamed - 9 names, 8 files.** Vue 3 renamed `.x-enter` to
+`.x-enter-from`. Confirmed against the installed `@vue/runtime-dom`, which only ever emits
+`${name}-enter-from` / `-enter-to` / `-enter-active`, and then live on Vue 3.5.42: an entering
+element receives `rc-filter-enter-from rc-filter-enter-active` and **never** `rc-filter-enter`.
+So the enter half of every transition started at its final state - no fade-in - while the leave
+half kept working, because `-leave-to` was not renamed. Affected: `fade`, `re-snav-fade`,
+`re-snav-slide`, `rc-filter`, `cd-pop`, `ed-pop`, `dropdown-fade`, `phase-slide`, `gm-toast`.
+Only `vel-fade`, written during this port, was already correct.
+
+`gm-toast` lives in `Content/Site.css`, which `scripts/sync-vendor.mjs` **copies wholesale from
+`../Website`** - editing only `public/vendor/` would be erased by the next sync. The source now
+carries `.gm-toast-enter-from` *alongside* the original `.gm-toast-enter`, so the Vue 2 app keeps
+working and the Nuxt app is fixed by the same rule; both the source and the synced copy are updated.
+
+**2. `.sync` - 7 bindings, 3 files.** Removed in Vue 3. Compiled with the project's own
+`@vue/compiler-dom`: **no error and no warning** - the modifier is silently dropped, leaving an
+ordinary one-way prop. All four props (`approveFormCode`, `desc_text`, `selectedPlan`,
+`aiModalTab`) have live `this.$emit('update:...')` in their children, so those emits were landing
+nowhere and the modals could not write back to `v_csm_trn_001`. Converted to `v-model:propName`.
+Verified the camelCase argument survives: the compiler emits
+`"onUpdate:approveFormCode": $event => ((approveFormCode) = $event)`, and a live round-trip
+flipped the child's value through to the parent.
+
+**3. `this.$root.$on` / `$off` - 9 calls, 2 files (AI chat).** `$on`/`$off`/`$once` were removed
+from the Vue 3 instance - they appear nowhere in `@vue/runtime-core` (only `$emit`, `$parent`,
+`$root`). `v_csm_remain_by_customer.vue` called `$root.$on` inside `mounted()`, so it threw a
+TypeError and **aborted the rest of that hook**; the matching `$root.$emit` in `re-layout.vue` had
+nothing listening either. Both ends now use the `$eventBus` mitt shim that
+`plugins/globals.client.js` already provided - these nine were simply never repointed at it.
+Verified the shim matches the Vue 2 bus it replaces: the methods work unbound as the plugin
+extracts them, multiple handlers accumulate, and handler-less `$off(type)` clears all handlers for
+that type, which is what `beforeUnmount` relies on.
+
+**4. Custom directives on Vue 2 hook names - 6 files.** Each defines a local `clickOutside`
+directive using `bind` / `unbind`. Vue 3 accepts only
+`created/beforeMount/mounted/beforeUpdate/updated/beforeUnmount/unmounted`; verified live on
+3.5.42 that a directive declaring `bind` fires **nothing** on mount while `beforeMount` fires. So
+the document listener was never attached and the dropdowns and pickers on those six screens never
+closed on an outside click. Renamed `bind` to `beforeMount` and `unbind` to `unmounted`, the exact
+Vue 2 equivalents.
+
+Post-fix state: `npm run build` exits 0, the built CSS carries all eight renamed classes and
+**zero** remaining Vue 2 `-enter` selectors, and no `.sync`, `$root.$on/$off/$once` or
+`bind`/`inserted`/`unbind`/`componentUpdated` hook remains anywhere in `app/`.
+
+**Not verified:** the affected screens themselves. Confirming the dropdowns close, the modals write
+back and the AI chat streams needs a logged-in session on those screens - the same gap this file
+already records for the route walk.
+
+## Remaining Vue 2 -> Nuxt items closed (2026-09-16)
+
+A second sweep, after the runtime regression fixes above. Three checks were run across the whole
+tree - remaining Vue 2 API patterns, the `v-model` contract on every custom component, and an
+exhaustive unresolved-tag scan - and then everything actionable that surfaced was done.
+
+**The sweep itself came back clean** on: `<transition-group>` (0 uses, so the Vue 3 "no wrapper
+element by default" change is moot), async components, `<keep-alive>`, `mixins`, functional
+components, `$refs` inside `v-for`, numeric keyCode modifiers, `.native`, `inline-template`,
+`$destroy`, and `data` as an object. Every custom component reached by `v-model` accepts
+`modelValue`. The three `this.$el` uses are safe: two are on a single-root component, one is only
+a truthiness guard. `paginate`, `draggable` and `date-picker` looked unregistered but are locally
+imported from `vuejs-paginate-next`, `vuedraggable` 4 and `@vuepic/vue-datepicker`.
+
+**1. `$swal` - 1 call.** `vue-sweetalert2` v4 is Vue 2 only; the legacy `Vue.use(VueSweetalert2)`
+was never ported, so `this.$swal(...)` in `home.vue` threw. Routed to **`$msg.alert`**, the modal
+this app already uses in **778** other places and which supports the same `'info'` type natively.
+No dependency added, which also keeps `package.json` untouched.
+
+**2. `p-check` renders decorated again.** The earlier note blamed "only a subset of pretty-checkbox's
+CSS" shipping in `Content/Site.css`. That was the wrong diagnosis: those four `.pretty` rules are
+CSM's own overrides, and the **library** stylesheet was a separate `main.js` import
+(`pretty-checkbox/dist/pretty-checkbox.min.css`) that the port dropped. Vendored that MIT
+stylesheet to `app/assets/css/` - not `public/vendor/`, which `scripts/sync-vendor.mjs` wipes - and
+added it to `nuxt.config.ts`'s `css` array. Verified in the browser on the exact DOM `p-check.vue`
+emits: the native input is `opacity: 0` and the control draws an 18x18 box with a 1px border and
+20% radius, instead of a bare browser checkbox.
+
+**3. `<thai-address-input>` ported - 3 fields, 1 file.** The previous entry called this a decision
+about vendoring a **3.8 MB** database. That figure was never verified and is wrong on both counts:
+the package ships a **190 KB (~56 KB gzipped)** database, and it does not bundle it - the plugin
+fetches it at runtime, defaulting to the package author's GitHub Pages site,
+`https://tsctao.github.io/vue-thai-address-input/dist/db.json`. Legacy `Vue.use(VueThaiAddressInput)`
+passed no options, so **the Vue 2 app called out to that third-party host on every boot**.
+
+`Components/Center/thai-address-input.vue` ports the component to Vue 3, with the decoder,
+`extractDataFromDb`, `query`, `search` and `suggestionText` taken from the package's dist rather
+than reimplemented (its MIT LICENSE sits beside it). Two deliberate differences: the database is
+**served from this app's own origin** (`public/thai-address-db.json`) instead of the external host,
+and it loads **lazily** on first focus rather than during app boot.
+
+Verified two ways. Ported index vs upstream index, built from the same file: **7,474 rows, byte
+identical**, and `query` for subdistrict/district/province plus `search` all return identical
+results. Then live in the browser on a temporary unauthenticated route: typing `บางแค` returned the
+3 correct suggestions with the right regional prefixes - `แขวงบางแค » เขตบางแค » กรุงเทพมหานคร » 10160`
+for Bangkok against `ตำบลบางแค » อำเภออัมพวา » สมุทรสงคราม » 75110` - clicking one set `v-model` and fired
+`@selected` with the full `{subdistrict, district, province, postalCode}` object that
+`onSelected($event,'2')` consumes, the database was served from `localhost:3000`, and there were
+**zero** requests to `tsctao.github.io`. The probe route was removed afterwards.
+
+**Still unresolved, and deliberately so:** `<ModalEMP>` and `<worker-ref-action>` resolve to
+nothing, but are registered nowhere in `Website/` either - pre-existing bugs, so mapping them would
+be a guess. `chart.js` stays on v2, which is verified working. The SignalR `CSM_PC` group is
+likewise pre-existing, now confirmed against the legacy tree.
+
+## Bootstrap and store parity audit (2026-09-16)
+
+The component tree was known to be a full port; the app *bootstrap* had never been diffed against
+the legacy one. All 18 JS files under `Website/Scripts/App/Application` were accounted for
+line by line.
+
+**One real break found and fixed: `window.jsondiffpatch`.** The vendor `xtools.js` implements
+`$xt.compareObject` as `window.jsondiffpatch.diff(oldObj, newObj)` and the legacy `main.js` built
+that instance. The port kept `jsondiffpatch` in `package.json` but **never created the global**, so
+the six `$xt.compareObject` call sites - all on the **save** paths of the three CustomerConfigCenter
+screens - threw `Cannot read properties of undefined`. `plugins/globals.client.js` now creates it
+with main.js's `objectHash`. Verified live: `$xt.compareObject` returns a correct delta, and the
+objectHash does its job - two reordered rows are reported as one field change plus a move rather
+than as a wholesale rewrite.
+
+**Everything else in the bootstrap checked out**, several of them contradicting what a quick reading
+would suggest:
+
+| Checked | Result |
+| --- | --- |
+| 111 legacy route paths | all present; the only additions are the documented `/` redirect and the Vue Router 4 wildcard rewrite |
+| Vuex store | 10 state keys, 10 actions ported. The 4th getter, `config`, is a pass-through (`state => state.config`) that the `store.getters` facade already satisfies |
+| 58 `Vue.component` + 11 `Vue.use` | all accounted for |
+| `Vue.config.keyCodes.f2 = 113` | removed in Vue 3 - but **zero** `@keyup.f2` call sites in either tree, so nothing to port |
+| `VScrollSync`, `vue-picture-swipe` | registered in main.js, **zero** call sites anywhere - nothing to port |
+| `window.Decimal`, `window.moment` | promoted by Default.aspx but **not** by `globals-bridge.js`. Checked in the running app: both are UMD builds that self-assign, so they are already on `window` and the host page's promotion was redundant |
+| Bootstrap 5 in Default.aspx | both tags are inside `<%--  --%>` comments and the files do not exist on disk - dead references |
+| `databus.js`, `ppn_tasks.js` | ported with identical import graphs |
+| `Nuxt/` scaffold | superseded; its manual and qc-item slices are covered by the full component port |
+
+**Flagged, not adopted:** `Website/Scripts/App/Application/main.js` has **uncommitted** working-tree
+changes that make the router guard tolerate a null `auth` in the `ViewUserAuthentication` response
+(`let auth = window.auth || { is_authen: false }`, then `auth = resp_init.data.auth || auth`).
+`middleware/auth.global.js` still does the unguarded `window.auth = resp_init.data.auth`, matching
+the *committed* legacy code. That is someone else's work in progress, so it was deliberately not
+pulled into this branch - but it is exactly the divergence the ordering note below warns about, and
+it should be mirrored if it is kept.
+
+## One more `v-if` + `v-for` collision (2026-09-16)
+
+The template audit above reported 19 found and 18 fixed. A 20th existed and was missed:
+
+    <li :class="{ active: x.id === tabActive }"v-for="x in tabField"v-if="x.show">
+
+in `Pages/Tools/v_csm_passcode.vue`. Note there is **no whitespace** between the attributes -
+`..."v-for=` and `..."v-if=` run straight on from the preceding quote - so a scan anchored on a
+space before the directive skips it. Re-scanning for both attribute orders *without* requiring
+leading whitespace found it; the tree is now clean on that pattern.
+
+It fails the same way as the other 18. `@vue/compiler-dom` accepts it silently and emits the
+condition as `(x.show)` **hoisted outside** `_renderList`, where `x` does not exist. Fixed by
+lifting `v-for` onto a wrapping `<template>` with the `:key`, leaving `v-if` on the `<li>`.
+
+## Document store (2026-09-16)
+
+`app/services/document-store/` is new, and is not migration work - it is the frontend half of
+MongoDB-backed, schema-less collections, added on request. It keeps the document model (free-form
+documents, MongoDB filter syntax) while going through an HTTP boundary, because a browser cannot
+speak Mongo's TCP wire protocol and `AGENTS.md` forbids direct database access from the frontend
+regardless.
+
+- `query.ts` - a MongoDB-compatible query engine evaluated in the browser: `$eq $ne $gt $gte $lt
+  $lte $in $nin $regex $exists $type $all $size $not $and $or $nor`, dotted paths, array
+  descent, cross-type ordering, sort/skip/limit/projection. 25 assertions in `query.test.mts`
+  (`node app/services/document-store/query.test.mts`; no test runner was added).
+- `index.ts` - two drivers behind one interface. `json` reads `public/data/<collection>.json`
+  today; `http` posts the same filter to a backend endpoint. Moving between them is one
+  `configure({ driver: 'http' })` call and no call-site change.
+- `Pages/Tools/v_csm_log_web.vue` - a browser for the `log_web` collection the backend gateway
+  already writes. Columns are derived from the returned documents, because only 7 of 21 top-level
+  fields appear in every document.
+
+Writes are honest about their limits: a browser cannot write to a static JSON file, so `insertOne`
+holds the document in the session, merges it into later reads and returns `pending: true`, which
+the screen surfaces as a standing warning. Inventing a write endpoint would be the "do not invent
+backend endpoints" case.
+
+The endpoint contract for the backend side is `docs/integration/document-store-contract.md`.
+
+### Verified against real MongoDB (2026-09-16)
+
+The design's central claim — that a filter built in the browser is *also* valid input to
+MongoDB's own `find()`, so switching the store from the `json` driver to `http` cannot change
+what a query means — was previously unverified. `query.test.mts` checked the engine against
+*my reading* of MongoDB's semantics, which is exactly the assumption that needed independent
+confirmation.
+
+`query.parity.mts` now runs the identical documents and filters through both the engine and a
+real `mongod` (`mongodb-memory-server`, so no Docker and no running service) and compares the
+matched `_id` sets. **49 cases, all passing** — `npm run test:parity`.
+
+**It found three real bugs.** Everything before the adversarial cases passed, which is the point:
+a test that only confirms what you expect proves very little.
+
+| Divergence | What MongoDB does | Impact |
+| --- | --- | --- |
+| **`{ field: null }` did not match documents missing the field** | An absent path *is* null for the equality family, so `{ a: null }` matches documents with no `a`, and `{ a: { $ne: null } }` correspondingly does **not** match them | The common "null or missing" idiom returned the wrong set. The engine matched 1 document where Mongo matched 15. |
+| **Sorting by an array field compared the arrays wholesale** | Orders by the **minimum** element ascending and the **maximum** descending | Wrong row order whenever a sort touched an array field or a dotted path through one |
+| **`compare()` returned garbage for two objects** | Compares field by field — key name first, then value, then field count | `{} < {}` is `false` for any pair, so `compare(a,b)` and `compare(b,a)` both returned `1`. The comparator was not even antisymmetric, making sort order arbitrary. |
+
+All three are fixed and have dedicated regression cases. The 25 original unit tests still pass.
+
+~~**One deliberate deviation remains.**~~ **Superseded 2026-09-17** — see *Dates as Extended
+JSON* below. The engine used to coerce ISO-8601 strings to dates, on the belief that the collection
+held dates as strings. It holds BSON dates, so the coercion was a patch over a wrong assumption and
+has been removed; with dates carried as `{ $date }` the engine's ordering now matches MongoDB's,
+including for mixed date-like and plain strings.
+
+Cost: `mongodb-memory-server` and `mongodb` as devDependencies, on request. It downloads a real
+mongod binary on first run and caches it.
+
+### TypeScript
+
+This code is TypeScript and **is type-checked**: `npm run typecheck` (`vue-tsc --noEmit`)
+exits 0. `typescript` (pinned to the 5.x line), `vue-tsc` and `@types/node` were installed for
+it, on request. Two notes for whoever touches this next:
+
+- **Pin `typescript` to 5.x.** `vue-tsc` 3.3 declares the peer as `>=5.0.0`, so npm happily
+  installs TypeScript 7 — the native Go rewrite, whose package exports no longer include
+  `./lib/tsc`. vue-tsc then dies with `ERR_PACKAGE_PATH_NOT_EXPORTED` before checking anything.
+- A harmless `[Vue] Resolve plugin path failed: vue-router/volar/sfc-route-blocks` warning is
+  printed twice per run. It comes from Nuxt's generated tsconfig referencing a Volar plugin this
+  vue-router version does not export; it does not affect the exit code.
+
+Turning the check on found four real defects, none of which the build had caught:
+
+| Found | Why it mattered |
+| --- | --- |
+| `toggle(doc._id)` could be passed `undefined` | `Doc._id` was optional, so every row click was a potential crash. Fixed at the source by splitting `Doc` (what you may *write*) from `StoredDoc` (what you *read*, `_id` guaranteed). |
+| `:key` bound to a `Primitive` | `null`/`boolean` are not valid Vue keys. Coerced with `String(...)`. |
+| `Doc`'s recursive index signature | Made Vue's template checker fail a plain `v-for` with "Type instantiation is excessively deep". The signature is now `unknown`, which costs nothing real — an unknown field must be narrowed before use either way. |
+| `nuxt.config.ts:79` | **Pre-existing.** `.map()` widened `rel: 'stylesheet'` to `string`, which Nuxt's typed head rejects. Never caught because nothing had ever type-checked the config. |
+
+### Dates as Extended JSON, and the `http` driver exercised (2026-09-17)
+
+> **Partly superseded later the same day** — see *Document store made frontend-only* below. The
+> date and query-engine fixes here stand. The `http` driver, the backend stand-in, `test:http` and
+> the `window.documentStore` switch described here were removed.
+
+Continuation of the MongoDB work, **frontend repo only** — the backend was not read or changed.
+
+**The screen's date filter would have returned nothing on real data.** The gateway sets
+`created`/`updated` from `DateTime.Now`, so the real `log_web` collection stores **BSON dates**. The
+screen, the sample file and the parity harness all used ISO **strings**, and MongoDB never matches a
+string against a date. Measured against a real mongod:
+
+    { created: { $gte: "2026-09-16T00:00:00Z" } }             -> 0 matches
+    { created: { $gte: { $date: "2026-09-16T00:00:00Z" } } }  -> 1 match
+
+No error, just an empty table. The parity harness had passed because it *also* stored dates as
+strings — it was testing a shape the collection does not have.
+
+Fix: dates are MongoDB **Extended JSON** in both directions (`app/services/document-store/ejson.ts`).
+Filters and inserted documents carry `{ $date: "<ISO>" }`; responses are Relaxed Extended JSON; the
+store converts results with `toClientShape`, so screens still receive ISO strings from either driver.
+The sample file, the screen's date range and its insert stamp all use `{ $date }` now, and the parity
+harness loads real BSON dates.
+
+**Three more divergences from MongoDB surfaced while re-testing, all fixed:**
+
+| Divergence | MongoDB | Engine before |
+| --- | --- | --- |
+| **Type bracketing** in `$gt`/`$gte`/`$lt`/`$lte` | a range operator only matches values of the operand's type — `$lt: "100"` matches no number | compared by type rank, so a date field matched *every* string `$gt`, and `$lt: "100"` would have matched every number. The earlier `$gt: "100"` case passed by coincidence. |
+| **String order** | code point (binary), no collation — Latin before Thai | `localeCompare(['th','en'])` put Thai names first, so the two drivers sorted differently |
+| **ISO strings coerced to dates** | strings are strings | promoted, which is gone with Extended JSON |
+
+**The screen's date range was also off by seven hours** for Bangkok users: the From/To dates were
+read as UTC midnight. They are now local start/end of day.
+
+**The `http` driver has now actually run.** `contract-stub.mts` is a test-only stand-in for the
+backend's `CSM/Document/*` endpoints — never imported by the app, never deployed — implementing every
+server obligation in `docs/integration/document-store-contract.md` on top of a real mongod.
+`http-driver.test.mts` drives the public store API through `$xt.postServerJson` → HTTP → the
+stand-in, and checks that the `http` driver returns exactly what the `json` driver returns (same
+documents, order, totals and client shape), plus each obligation: session scoping that a client filter
+cannot widen, collection allow-list, `$where` / `$function` (even nested in `$expr`) refused, limit
+cap, identity stamped from the session on insert, dates stored as real BSON dates, 401 on a dead
+session.
+
+Switching a deployment to the real endpoints is now **configuration**: `window.documentStore =
+{ driver: 'http' }` in `public/config.js`, no rebuild.
+
+| Command | Result |
+| --- | --- |
+| `npm run typecheck` | exit 0 |
+| `npm run test:query` | 35/35 |
+| `npm run test:parity` | 64/64 against a real mongod |
+| `npm run test:http` | 52/52 |
+| `npm run build` | exit 0 |
+
+**Still not done, and why:** the backend endpoints do not exist (backend is out of scope); the C#
+side's parsing of `{ $date }` (`BsonDocument.Parse`) is expected but unverified; which company should
+scope `log_web` is an open question (the gateway stores the company a call was made *for*, not the
+viewer's).
+
+**Access control added:** `v_csm_log_web` now requires menu right `60000` (Customer Config Center),
+the same right as the system-setup screens; without it the auth middleware redirects to
+`access_denied`. Previously any logged-in user could open it by URL.
+
+### Document store made frontend-only (2026-09-17)
+
+Decision: **"don't connect backend, just query frontend only."** The store now has no path to the
+backend at all.
+
+- **Removed:** the `http` driver (`$xt.postServerJson` calls to `CSM/Document/*`), the per-deployment
+  `window.documentStore` switch in `public/config.js` and its type, the backend stand-in
+  `contract-stub.mts` and its end-to-end test `http-driver.test.mts` (`npm run test:http`). The two
+  test files were uncommitted, so they are kept in `git stash` as
+  *"document-store backend stand-in + http test (removed: frontend-only, 2026-09-17)"* rather than
+  lost.
+- **Kept:** the in-browser MongoDB-compatible engine, Extended JSON dates, every semantics fix, the
+  parity test against a throwaway local mongod (test tooling only, never the app's backend), and the
+  menu-right gate on the screen.
+- **Added:** `store.test.mts` (`npm run test:store`, 28 checks) exercising the public API over the real
+  sample file with **no server at all**. It fails the run if the store touches `$xt`, and checks that the
+  only thing fetched is `/data/*.json`.
+- The screen's insert now always reports session-only (it cannot be anything else) and its warning no
+  longer suggests pointing the store at a backend.
+- `docs/integration/document-store-contract.md` is rewritten for the frontend-only design; the endpoint
+  contract is gone from it.
+
+| Command | Result |
+| --- | --- |
+| `npm run typecheck` | exit 0 |
+| `npm run test:query` | 35/35 |
+| `npm run test:store` | 28/28 |
+| `npm run test:parity` | 64/64 against a real mongod |
+| `npm run build` | exit 0 |
+
+Consequence to be aware of: **inserted documents are lost on reload.** Keeping them without a backend
+would mean the browser's own storage (IndexedDB), per browser and per device — not implemented.
 
 ## Ordering note
 

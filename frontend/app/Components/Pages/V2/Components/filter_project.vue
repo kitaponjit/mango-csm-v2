@@ -86,7 +86,7 @@ export default {
 
   directives: {
     clickOutside: {
-      bind(el, binding) {
+      beforeMount(el, binding) {
         el._clickOutsideHandler = (event) => {
           if (!el.contains(event.target)) {
             binding.value()
@@ -94,7 +94,7 @@ export default {
         }
         document.addEventListener('click', el._clickOutsideHandler)
       },
-      unbind(el) {
+      unmounted(el) {
         document.removeEventListener('click', el._clickOutsideHandler)
       }
     }
@@ -365,7 +365,7 @@ export default {
 .dropdown-fade-leave-active {
   transition: opacity 0.15s, transform 0.15s;
 }
-.dropdown-fade-enter,
+.dropdown-fade-enter-from,
 .dropdown-fade-leave-to {
   opacity: 0;
   transform: translateY(-4px);
@@ -377,7 +377,7 @@ export default {
   max-height: 1000px;
   overflow: hidden;
 }
-.phase-slide-enter,
+.phase-slide-enter-from,
 .phase-slide-leave-to {
   opacity: 0;
   max-height: 0;

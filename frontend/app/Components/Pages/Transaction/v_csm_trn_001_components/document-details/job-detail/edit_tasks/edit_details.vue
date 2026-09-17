@@ -1423,7 +1423,7 @@
                            :aiAnalysisLoading="aiAnalysisLoading"
                            :runAiAnalysis="runAiAnalysis"
                            :editDetailData="editDetailData"
-                           :aiModalTab.sync="aiModalTab"
+                           v-model:aiModalTab="aiModalTab"
                            :onClickCompareSpecTab="onClickCompareSpecTab"
                            :aiAnalysisModalDifficultyLevel="aiAnalysisModalDifficultyLevel"
                            :difficultyStyle="difficultyStyle"

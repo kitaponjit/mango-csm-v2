@@ -1,0 +1,307 @@
+{
+  "_comment": "Sample documents for the `log_web` collection, in MongoDB Relaxed Extended JSON — the form the CSM/Document/Find endpoint returns. Shape mirrors what the backend writes: DataContext.MongoInsertOne is called from Areas/CSM/Models/Gateway/Gateway.cs:124 with every field of GatewayRequest.Log (declared `public object Log` — arbitrary JSON) plus mainname, maincode, username, empno, type, and created OR updated set from DateTime.Now. Those are BSON dates in the real collection, hence {\"$date\": ...} here: a bare ISO string would not match a date filter in MongoDB. Documents deliberately do NOT share a field set; that is the point of the collection.",
+  "documents": [
+    {
+      "_id": "6716a1f0c2e41a0b3d001001",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T08:14:22.481Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "สมชาย ใจดี",
+      "empno": "EMP-0142",
+      "action": "case.create",
+      "prno": "CSM-2026-004417",
+      "route": "/api/csm/Transaction/CreateCase",
+      "payload": {
+        "serv_code": "SV-INSTALL",
+        "priority": "urgent",
+        "customer": {
+          "code": "C-00871",
+          "name": "บริษัท ไทยเจริญ จำกัด"
+        }
+      },
+      "duration_ms": 412
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001002",
+      "type": "updated",
+      "updated": {
+        "$date": "2026-09-16T08:41:07.902Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "สมชาย ใจดี",
+      "empno": "EMP-0142",
+      "action": "case.assign",
+      "prno": "CSM-2026-004417",
+      "changed": {
+        "assignee": [
+          "EMP-0142",
+          "EMP-0233"
+        ],
+        "status": [
+          "open",
+          "in_progress"
+        ]
+      },
+      "duration_ms": 188
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001003",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T09:02:55.113Z"
+      },
+      "mainname": "Siam Kitchen",
+      "maincode": "SK",
+      "username": "Naruemon P.",
+      "empno": "EMP-0455",
+      "action": "gateway.forward",
+      "route": "/api/public/LoginCompanies",
+      "status_code": 200,
+      "duration_ms": 76
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001004",
+      "type": "updated",
+      "updated": {
+        "$date": "2026-09-16T09:30:41.007Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "ปิยะ วงศ์ทอง",
+      "empno": "EMP-0233",
+      "action": "task.complete",
+      "prno": "CSM-2026-004417",
+      "tasks": [
+        {
+          "itemno": "T-1",
+          "title": "ตรวจสอบหน้างาน",
+          "hours": 2.5,
+          "result": "pass"
+        },
+        {
+          "itemno": "T-2",
+          "title": "ติดตั้งอุปกรณ์",
+          "hours": 4,
+          "result": "pass"
+        }
+      ],
+      "duration_ms": 934
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001005",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T10:11:19.660Z"
+      },
+      "mainname": "Bangkok Foods",
+      "maincode": "BKF",
+      "username": "Weerapong S.",
+      "empno": "EMP-0781",
+      "action": "attachment.upload",
+      "prno": "CSM-2026-004512",
+      "files": [
+        {
+          "name": "site-photo-1.jpg",
+          "bytes": 1841204,
+          "mime": "image/jpeg"
+        }
+      ],
+      "duration_ms": 2210
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001006",
+      "type": "updated",
+      "updated": {
+        "$date": "2026-09-16T10:44:03.318Z"
+      },
+      "mainname": "Bangkok Foods",
+      "maincode": "BKF",
+      "username": "Weerapong S.",
+      "empno": "EMP-0781",
+      "action": "case.comment",
+      "prno": "CSM-2026-004512",
+      "comment": {
+        "body": "ลูกค้าขอเลื่อนนัดเป็นวันศุกร์",
+        "visibility": "internal"
+      }
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001007",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T11:05:48.229Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "สมชาย ใจดี",
+      "empno": "EMP-0142",
+      "action": "gateway.forward",
+      "route": "/api/csm/Report/Export",
+      "status_code": 500,
+      "error": "Target error: 500 Internal Server Error",
+      "duration_ms": 5013
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001008",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T11:52:30.870Z"
+      },
+      "mainname": "Siam Kitchen",
+      "maincode": "SK",
+      "username": "Naruemon P.",
+      "empno": "EMP-0455",
+      "action": "case.create",
+      "prno": "CSM-2026-004533",
+      "payload": {
+        "serv_code": "SV-REPAIR",
+        "priority": "normal",
+        "customer": {
+          "code": "C-01204",
+          "name": "ร้านอาหารสยาม"
+        }
+      },
+      "duration_ms": 355
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d001009",
+      "type": "updated",
+      "updated": {
+        "$date": "2026-09-16T12:20:14.544Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "ปิยะ วงศ์ทอง",
+      "empno": "EMP-0233",
+      "action": "case.close",
+      "prno": "CSM-2026-004417",
+      "changed": {
+        "status": [
+          "in_progress",
+          "closed"
+        ]
+      },
+      "satisfaction": 5,
+      "duration_ms": 267
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d00100a",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T13:03:59.101Z"
+      },
+      "mainname": "Bangkok Foods",
+      "maincode": "BKF",
+      "username": "Kanya T.",
+      "empno": "EMP-0902",
+      "action": "master.update",
+      "entity": "employee_team",
+      "changed": {
+        "team_code": [
+          "TM-02",
+          "TM-05"
+        ]
+      }
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d00100b",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T13:47:22.775Z"
+      },
+      "mainname": "Siam Kitchen",
+      "maincode": "SK",
+      "username": "Naruemon P.",
+      "empno": "EMP-0455",
+      "action": "gateway.forward",
+      "route": "/api/csm/Center/GetConfigByUser",
+      "status_code": 200,
+      "duration_ms": 41
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d00100c",
+      "type": "updated",
+      "updated": {
+        "$date": "2026-09-16T14:15:06.482Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "สมชาย ใจดี",
+      "empno": "EMP-0142",
+      "action": "task.complete",
+      "prno": "CSM-2026-004533",
+      "tasks": [
+        {
+          "itemno": "T-1",
+          "title": "ประเมินราคา",
+          "hours": 1,
+          "result": "pass"
+        }
+      ],
+      "duration_ms": 512
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d00100d",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T15:01:44.930Z"
+      },
+      "mainname": "Bangkok Foods",
+      "maincode": "BKF",
+      "username": "Kanya T.",
+      "empno": "EMP-0902",
+      "action": "attachment.upload",
+      "prno": "CSM-2026-004512",
+      "files": [
+        {
+          "name": "quote.pdf",
+          "bytes": 244118,
+          "mime": "application/pdf"
+        },
+        {
+          "name": "spec.xlsx",
+          "bytes": 88210,
+          "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+      ],
+      "duration_ms": 3104
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d00100e",
+      "type": "created",
+      "created": {
+        "$date": "2026-09-16T15:38:11.006Z"
+      },
+      "mainname": "Mango Consultant",
+      "maincode": "MG",
+      "username": "ปิยะ วงศ์ทอง",
+      "empno": "EMP-0233",
+      "action": "gateway.forward",
+      "route": "/api/csm/Transaction/UpdateCase",
+      "status_code": 401,
+      "error": "Session expired or invalid",
+      "duration_ms": 22
+    },
+    {
+      "_id": "6716a1f0c2e41a0b3d00100f",
+      "type": "updated",
+      "updated": {
+        "$date": "2026-09-16T16:12:37.444Z"
+      },
+      "mainname": "Siam Kitchen",
+      "maincode": "SK",
+      "username": "Naruemon P.",
+      "empno": "EMP-0455",
+      "action": "case.comment",
+      "prno": "CSM-2026-004533",
+      "comment": {
+        "body": "Confirmed schedule with the customer.",
+        "visibility": "public"
+      }
+    }
+  ]
+}

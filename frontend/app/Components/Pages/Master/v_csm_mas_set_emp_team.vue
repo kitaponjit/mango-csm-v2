@@ -438,11 +438,11 @@
   let cpn = {
     directives: {
       clickOutside: {
-        bind(el, binding) {
+        beforeMount(el, binding) {
           el._clickOutsideHandler = (e) => { if (!el.contains(e.target)) binding.value(e); };
           document.addEventListener("click", el._clickOutsideHandler);
         },
-        unbind(el) { document.removeEventListener("click", el._clickOutsideHandler); }
+        unmounted(el) { document.removeEventListener("click", el._clickOutsideHandler); }
       }
     },
     data() {

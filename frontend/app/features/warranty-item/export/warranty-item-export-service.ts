@@ -4,7 +4,7 @@ export type WarrantyItemExportErrorCategory = 'backend' | 'authorization' | 'tra
 
 export class WarrantyItemExportServiceError extends Error {
   readonly category: WarrantyItemExportErrorCategory
-  readonly cause: unknown
+  override readonly cause: unknown
 
   constructor(category: WarrantyItemExportErrorCategory, message: string, cause?: unknown) {
     super(message)

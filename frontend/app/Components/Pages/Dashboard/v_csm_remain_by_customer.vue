@@ -760,11 +760,11 @@
     },
     directives: {
       clickOutside: {
-        bind(el, binding) {
+        beforeMount(el, binding) {
           el._clickOutsideHandler = (e) => { if (!el.contains(e.target)) binding.value(e); };
           document.addEventListener("click", el._clickOutsideHandler);
         },
-        unbind(el) { document.removeEventListener("click", el._clickOutsideHandler); }
+        unmounted(el) { document.removeEventListener("click", el._clickOutsideHandler); }
       }
     },
     methods: {
@@ -2172,7 +2172,7 @@
         }
       });
 
-      this.$root.$on('AiChatChunk', (data) => {
+      this.$eventBus.$on('AiChatChunk', (data) => {
         if (this.aiStreamIdx < 0) {
           this.aiStreamIdx = this.chatMessages.length;
           this.chatMessages.push({ role: 'assistant', content: data.chunk || '', streaming: true });
@@ -2182,7 +2182,7 @@
         }
         this.$nextTick(() => this.scrollChatToBottom());
       });
-      this.$root.$on('AiChatDone', (data) => {
+      this.$eventBus.$on('AiChatDone', (data) => {
         const tokens = (data.input_tokens != null || data.output_tokens != null)
           ? { input: data.input_tokens, output: data.output_tokens, elapsed: data.elapsed_seconds }
           : null;
@@ -2196,7 +2196,7 @@
         this.chatLoading = false;
         this.$nextTick(() => this.scrollChatToBottom());
       });
-      this.$root.$on('AiChatError', (data) => {
+      this.$eventBus.$on('AiChatError', (data) => {
         if (this.aiStreamIdx >= 0) {
           this.chatMessages[this.aiStreamIdx] = { role: 'assistant', content: '⚠️ ' + (data.error || this.ui.erp_error) };
         } else {
@@ -2208,9 +2208,9 @@
       });
     },
     beforeUnmount() {
-      this.$root.$off('AiChatChunk');
-      this.$root.$off('AiChatDone');
-      this.$root.$off('AiChatError');
+      this.$eventBus.$off('AiChatChunk');
+      this.$eventBus.$off('AiChatDone');
+      this.$eventBus.$off('AiChatError');
     }
   };
   export default cpn;

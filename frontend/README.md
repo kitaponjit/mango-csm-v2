@@ -65,19 +65,47 @@ Re-run it whenever those files change.
 
 The site needs no ASP.NET; an application pool set to **No Managed Code** is enough.
 
-## Deploy — Linux
+## Deploy — Docker
+
+From the **repository root** (not `frontend/`):
 
 ```bash
-docker build -f deploy/Dockerfile -t mango-csm-frontend .
-docker run -p 8080:80 \
-  -v /etc/mango/config.js:/usr/share/nginx/html/config.js:ro \
-  mango-csm-frontend
+docker compose up --build
 ```
 
-Or without Docker: `npm run generate`, copy `.output/public` to `/usr/share/nginx/html`, and use
-`deploy/linux/nginx.conf`.
+Open http://localhost:8080. This runs the frontend only; the .NET 8 backend is a separate
+repository and is not started. Until the backend is reachable, `/service/` calls return 502 but
+the site itself loads.
 
-Mount `config.js` read-only so one image serves every environment.
+- **Build context is the repo root.** The image runs `sync:vendor` itself, which needs
+  `Website/Content` and `Website/Scripts/Others`; `public/vendor` is gitignored, so a fresh clone
+  has nothing to copy otherwise. `deploy/Dockerfile.dockerignore` limits the upload to those
+  folders and `frontend/` (minus `node_modules`, `.nuxt`, `.output`).
+- **Backend calls go through nginx.** Compose sets `DATA_SERVER=/service/`, so `config.js` points
+  the browser at the container's own origin and nginx forwards `/service/` to `API_UPSTREAM`
+  (default `http://host.docker.internal:5075`, the backend's dev port on the host). Same origin
+  means the backend's CORS list does not need the container's port.
+- **Overrides:** `FRONTEND_PORT` (default `8080`) and `API_UPSTREAM`, in the shell or a `.env`
+  next to `compose.yaml`.
+
+Without compose:
+
+```bash
+docker build -f frontend/deploy/Dockerfile -t mango-csm-frontend .
+docker run -p 8080:80 --add-host host.docker.internal:host-gateway \
+  -e DATA_SERVER=/service/ mango-csm-frontend
+```
+
+To configure an environment with a whole file instead, mount it read-only:
+`-v /etc/mango/config.js:/usr/share/nginx/html/config.js:ro` (then `DATA_SERVER` is ignored).
+
+Files: `deploy/Dockerfile`, `deploy/Dockerfile.dockerignore`, `deploy/docker/default.conf.template`
+(nginx site), `deploy/docker/40-mango-config.sh` (applies `DATA_SERVER` at startup).
+
+## Deploy — Linux without Docker
+
+`npm run sync:vendor && npm run generate`, copy `.output/public` to `/usr/share/nginx/html`, and
+use `deploy/linux/nginx.conf`.
 
 ### Cross-origin note
 
