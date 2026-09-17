@@ -10,10 +10,14 @@
  * `created` / `updated`. So a relational "columns" model does not fit, and the
  * filter language has to work on paths that may be absent from most documents.
  *
- * The operator subset is deliberately the one MongoDB's own find() supports, so
- * a filter written against this engine keeps its meaning when the same filter is
- * eventually sent to a real Mongo query on the server. See ./index.ts — the
- * drivers share the filter shape precisely so call sites survive that move.
+ * The operator subset is deliberately the one MongoDB's own find() supports, and
+ * its semantics are checked against a real mongod (query.parity.mts), so a filter
+ * means here exactly what it would mean to MongoDB. It runs entirely in the
+ * browser — see ./index.ts.
+ *
+ * DATES are MongoDB Extended JSON, `{ $date: "<ISO>" }` — see ./ejson.ts for
+ * why. The engine treats that wrapper (and a JS `Date`) as the date type and
+ * nothing else: an ISO-looking *string* is a string, exactly as in MongoDB.
  *
  * A NOTE ON THE TYPES. They describe the document model, not a particular
  * collection: `Doc` is deliberately open (an index signature) because a
@@ -21,6 +25,9 @@
  * the shape, `Doc` is generic — `find<LogWebDoc>(...)` narrows the result
  * without forcing every document through the same interface.
  */
+
+import { dateMillis, isEjsonDate } from './ejson.ts'
+import type { EjsonDate } from './ejson.ts'
 
 // ---------------------------------------------------------------------------
 // Document model
@@ -40,6 +47,7 @@ export interface DocObject { [key: string]: DocValue }
 export type DocValue =
   | Primitive
   | Date
+  | EjsonDate
   | DocValue[]
   | DocObject
 
@@ -61,8 +69,8 @@ export interface Doc {
 
 /*
  * A document as it comes back from the store, where `_id` is guaranteed: the
- * json driver synthesises one for any source document that lacks it, and the
- * http driver gets Mongo's. Keeping this separate from `Doc` matters — `Doc` is
+ * store synthesises one for any source document that lacks it, and for every
+ * insert. Keeping this separate from `Doc` matters — `Doc` is
  * what you may *write* (no id yet), `StoredDoc` is what you *read*. Without the
  * distinction every `doc._id` use is `string | undefined` and each call site
  * has to re-assert it.
@@ -178,45 +186,29 @@ const TYPE_RANK: Record<ValueType, number> = {
 export function typeOf(v: unknown): ValueType {
   if (v === null || v === undefined) return 'null'
   if (Array.isArray(v)) return 'array'
-  if (v instanceof Date) return 'date'
+  if (v instanceof Date || isEjsonDate(v)) return 'date'
   const t = typeof v
   if (t === 'number' || t === 'string' || t === 'boolean' || t === 'object') return t as ValueType
   return 'string'
 }
 
 /*
- * ISO-8601 strings are compared as dates, because that is how the backend
- * serialises the `created` / `updated` fields — as JSON there is no BSON date
- * type to preserve, so a date arrives as a string and must still sort and
- * range-filter correctly. Plain text ordering gets mixed precision wrong:
- * '…00:00:00.500Z' sorts BEFORE '…00:00:00Z' lexicographically ('.' < 'Z')
- * although it is half a second later.
+ * Dates are a JS `Date` or an Extended JSON `{ $date }`; both compare by epoch
+ * milliseconds. Strings are never promoted to dates.
  *
- * THIS IS THE ONE DELIBERATE DEVIATION FROM MONGODB, and it is measured, not
- * assumed. MongoDB has no such rule — to it these are strings — so on a field
- * mixing date-like and other strings the two disagree. Confirmed against a real
- * mongod with ['2026-01-02T00:00:00Z', 'apple', '2026-01-01T00:00:00.500Z',
- * '2026-01-01T00:00:00Z']:
- *
- *     engine : apple, …01T00:00:00Z, …01T00:00:00.500Z, …02T00:00:00Z
- *     mongo  : …01T00:00:00.500Z, …01T00:00:00Z, …02T00:00:00Z, apple
- *
- * Mongo's order there is exactly lexicographic, and chronologically wrong for
- * the first two. `log_web` is unaffected: created/updated hold only stamps, all
- * written by the same serialiser, so both systems agree on real data. But if a
- * collection ever mixes the two kinds of string in one field, sorting by it
- * will differ between the `json` and `http` drivers.
+ * This used to coerce ISO-8601 *strings* to dates, on the assumption that the
+ * backend delivers `created` / `updated` as strings. That assumption was wrong:
+ * the collection stores BSON dates, and MongoDB never matches a string against
+ * a date, so the coercion made the in-browser engine accept filters that return
+ * nothing against the real collection. It was also the engine's one deviation
+ * from MongoDB (mixed date-like and plain strings sorted differently). With
+ * dates carried as Extended JSON the coercion has no job left, so it is gone and
+ * the engine's ordering matches MongoDB's.
  */
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/
-
 interface Coerced { rank: number; value: unknown }
 
 function coerce(v: unknown): Coerced {
-  if (v instanceof Date) return { rank: TYPE_RANK.date, value: v.getTime() }
-  if (typeof v === 'string' && ISO_DATE.test(v)) {
-    const t = Date.parse(v)
-    if (!Number.isNaN(t)) return { rank: TYPE_RANK.date, value: t }
-  }
+  if (v instanceof Date || isEjsonDate(v)) return { rank: TYPE_RANK.date, value: dateMillis(v) }
   return { rank: TYPE_RANK[typeOf(v)], value: v }
 }
 
@@ -231,11 +223,7 @@ export function compare(a: unknown, b: unknown): number {
   if (x === null || x === undefined) return -1
   if (y === null || y === undefined) return 1
 
-  if (typeof x === 'string' && typeof y === 'string') {
-    // Thai and English sort side by side in this data, so use locale collation
-    // rather than UTF-16 code-unit order.
-    return x.localeCompare(y, ['th', 'en'])
-  }
+  if (typeof x === 'string' && typeof y === 'string') return compareCodePoints(x, y)
 
   /*
    * Arrays compare element by element, then by length — and objects field by
@@ -271,10 +259,38 @@ export function compare(a: unknown, b: unknown): number {
   return (x as never) < (y as never) ? -1 : 1
 }
 
+/*
+ * Strings compare by Unicode code point, which is MongoDB's default (binary
+ * UTF-8 order, no collation). This used `localeCompare(['th', 'en'])`, which
+ * sorts Thai names before Latin ones; MongoDB puts Latin first (U+0041… before
+ * U+0E00…), so the engine sorted differently from MongoDB — caught by
+ * query.parity.mts. If Thai-aware ordering is wanted, add it as an explicit
+ * option modelled on MongoDB's `collation`, not as a silent default.
+ *
+ * `Array.from` splits by code point rather than UTF-16 unit, so characters
+ * outside the BMP order correctly too.
+ */
+function compareCodePoints(x: string, y: string): number {
+  const a = Array.from(x)
+  const b = Array.from(y)
+  const len = Math.min(a.length, b.length)
+  for (let i = 0; i < len; i += 1) {
+    const ca = (a[i] as string).codePointAt(0) as number
+    const cb = (b[i] as string).codePointAt(0) as number
+    if (ca !== cb) return ca < cb ? -1 : 1
+  }
+  return a.length === b.length ? 0 : (a.length < b.length ? -1 : 1)
+}
+
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)
 
+const isDateLike = (v: unknown): boolean => v instanceof Date || isEjsonDate(v)
+
 function equals(a: unknown, b: unknown): boolean {
+  // Two spellings of the same instant ('…00Z' vs '…00.000Z') are equal dates;
+  // comparing the wrappers key by key would say otherwise.
+  if (isDateLike(a) || isDateLike(b)) return compare(a, b) === 0
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((v, i) => equals(v, b[i]))
   }
@@ -320,14 +336,32 @@ const eqMatch = (vals: DocValue[], operand: DocValue): boolean =>
 const inMatch = (vals: DocValue[], operand: DocValue | DocValue[]): boolean =>
   toArray<DocValue>(operand).some(o => eqMatch(vals, o))
 
+/*
+ * Range operators only compare values of the SAME type as the operand. MongoDB
+ * calls this type bracketing: the cross-type order in `compare` is for sorting,
+ * and a query never uses it, so `{ created: { $gt: "2026-09-16" } }` matches no
+ * document whose `created` is a date, and `{ n: { $lt: "100" } }` matches no
+ * number. Without the bracket check the engine matched on type rank alone — a
+ * date outranks a string, so every dated document satisfied a string `$gt`.
+ *
+ * `$gte` / `$lte` against null are the exception: they include equality, and
+ * null equality also matches a missing field (see eqMatch).
+ */
+const inBracket = (v: DocValue, operand: DocValue): boolean => typeOf(v) === typeOf(operand)
+
+const rangeMatch = (vals: DocValue[], operand: DocValue, test: (c: number) => boolean, inclusive: boolean): boolean => {
+  if (operand === null) return inclusive ? eqMatch(vals, null) : false
+  return vals.some(v => inBracket(v, operand) && test(compare(v, operand)))
+}
+
 /* Each takes the values found at the path and the operand. */
 const OPERATORS: Record<string, OperatorFn> = {
   $eq:    (vals, operand) => eqMatch(vals, operand),
   $ne:    (vals, operand) => !eqMatch(vals, operand),
-  $gt:    (vals, operand) => vals.some(v => compare(v, operand) > 0),
-  $gte:   (vals, operand) => vals.some(v => compare(v, operand) >= 0),
-  $lt:    (vals, operand) => vals.some(v => compare(v, operand) < 0),
-  $lte:   (vals, operand) => vals.some(v => compare(v, operand) <= 0),
+  $gt:    (vals, operand) => rangeMatch(vals, operand, c => c > 0, false),
+  $gte:   (vals, operand) => rangeMatch(vals, operand, c => c >= 0, true),
+  $lt:    (vals, operand) => rangeMatch(vals, operand, c => c < 0, false),
+  $lte:   (vals, operand) => rangeMatch(vals, operand, c => c <= 0, true),
   $in:    (vals, operand) => inMatch(vals, operand),
   $nin:   (vals, operand) => !inMatch(vals, operand),
   $regex: (vals, operand, sibling) => {
@@ -340,9 +374,10 @@ const OPERATORS: Record<string, OperatorFn> = {
   $not:   (vals, operand, _sibling, doc, path) => !matchPath(doc, path, operand as FilterOperators)
 }
 
+// `{ $date: ... }` starts with `$` but is a value, not an operator object.
 const isOperatorObject = (v: unknown): v is FilterOperators =>
   v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) &&
-  Object.keys(v as object).some(k => k.startsWith('$'))
+  !isEjsonDate(v) && Object.keys(v as object).some(k => k.startsWith('$'))
 
 function matchPath(doc: unknown, path: string, predicate: FieldPredicate): boolean {
   // $exists is handled first: it is the one operator that must see an absent

@@ -637,19 +637,11 @@ a test that only confirms what you expect proves very little.
 
 All three are fixed and have dedicated regression cases. The 25 original unit tests still pass.
 
-**One deliberate deviation remains, and it is measured rather than assumed.** The engine coerces
-ISO-8601 *strings* to dates before comparing, because JSON carries no BSON date type and plain
-text ordering gets mixed precision wrong — `…00:00:00.500Z` sorts before `…00:00:00Z`
-lexicographically though it is half a second later. MongoDB has no such rule. Confirmed against a
-real mongod:
-
-    engine : apple, …01T00:00:00Z, …01T00:00:00.500Z, …02T00:00:00Z
-    mongo  : …01T00:00:00.500Z, …01T00:00:00Z, …02T00:00:00Z, apple
-
-Mongo's order there is exactly lexicographic, and chronologically wrong for the first two.
-`log_web` is unaffected — `created`/`updated` hold only stamps from one serialiser — but if a
-collection ever mixes date-like and other strings in one field, sorting by it will differ between
-the two drivers. Recorded in `query.ts` beside the code that causes it.
+~~**One deliberate deviation remains.**~~ **Superseded 2026-09-17** — see *Dates as Extended
+JSON* below. The engine used to coerce ISO-8601 strings to dates, on the belief that the collection
+held dates as strings. It holds BSON dates, so the coercion was a patch over a wrong assumption and
+has been removed; with dates carried as `{ $date }` the engine's ordering now matches MongoDB's,
+including for mixed date-like and plain strings.
 
 Cost: `mongodb-memory-server` and `mongodb` as devDependencies, on request. It downloads a real
 mongod binary on first run and caches it.
@@ -675,6 +667,105 @@ Turning the check on found four real defects, none of which the build had caught
 | `:key` bound to a `Primitive` | `null`/`boolean` are not valid Vue keys. Coerced with `String(...)`. |
 | `Doc`'s recursive index signature | Made Vue's template checker fail a plain `v-for` with "Type instantiation is excessively deep". The signature is now `unknown`, which costs nothing real — an unknown field must be narrowed before use either way. |
 | `nuxt.config.ts:79` | **Pre-existing.** `.map()` widened `rel: 'stylesheet'` to `string`, which Nuxt's typed head rejects. Never caught because nothing had ever type-checked the config. |
+
+### Dates as Extended JSON, and the `http` driver exercised (2026-09-17)
+
+> **Partly superseded later the same day** — see *Document store made frontend-only* below. The
+> date and query-engine fixes here stand. The `http` driver, the backend stand-in, `test:http` and
+> the `window.documentStore` switch described here were removed.
+
+Continuation of the MongoDB work, **frontend repo only** — the backend was not read or changed.
+
+**The screen's date filter would have returned nothing on real data.** The gateway sets
+`created`/`updated` from `DateTime.Now`, so the real `log_web` collection stores **BSON dates**. The
+screen, the sample file and the parity harness all used ISO **strings**, and MongoDB never matches a
+string against a date. Measured against a real mongod:
+
+    { created: { $gte: "2026-09-16T00:00:00Z" } }             -> 0 matches
+    { created: { $gte: { $date: "2026-09-16T00:00:00Z" } } }  -> 1 match
+
+No error, just an empty table. The parity harness had passed because it *also* stored dates as
+strings — it was testing a shape the collection does not have.
+
+Fix: dates are MongoDB **Extended JSON** in both directions (`app/services/document-store/ejson.ts`).
+Filters and inserted documents carry `{ $date: "<ISO>" }`; responses are Relaxed Extended JSON; the
+store converts results with `toClientShape`, so screens still receive ISO strings from either driver.
+The sample file, the screen's date range and its insert stamp all use `{ $date }` now, and the parity
+harness loads real BSON dates.
+
+**Three more divergences from MongoDB surfaced while re-testing, all fixed:**
+
+| Divergence | MongoDB | Engine before |
+| --- | --- | --- |
+| **Type bracketing** in `$gt`/`$gte`/`$lt`/`$lte` | a range operator only matches values of the operand's type — `$lt: "100"` matches no number | compared by type rank, so a date field matched *every* string `$gt`, and `$lt: "100"` would have matched every number. The earlier `$gt: "100"` case passed by coincidence. |
+| **String order** | code point (binary), no collation — Latin before Thai | `localeCompare(['th','en'])` put Thai names first, so the two drivers sorted differently |
+| **ISO strings coerced to dates** | strings are strings | promoted, which is gone with Extended JSON |
+
+**The screen's date range was also off by seven hours** for Bangkok users: the From/To dates were
+read as UTC midnight. They are now local start/end of day.
+
+**The `http` driver has now actually run.** `contract-stub.mts` is a test-only stand-in for the
+backend's `CSM/Document/*` endpoints — never imported by the app, never deployed — implementing every
+server obligation in `docs/integration/document-store-contract.md` on top of a real mongod.
+`http-driver.test.mts` drives the public store API through `$xt.postServerJson` → HTTP → the
+stand-in, and checks that the `http` driver returns exactly what the `json` driver returns (same
+documents, order, totals and client shape), plus each obligation: session scoping that a client filter
+cannot widen, collection allow-list, `$where` / `$function` (even nested in `$expr`) refused, limit
+cap, identity stamped from the session on insert, dates stored as real BSON dates, 401 on a dead
+session.
+
+Switching a deployment to the real endpoints is now **configuration**: `window.documentStore =
+{ driver: 'http' }` in `public/config.js`, no rebuild.
+
+| Command | Result |
+| --- | --- |
+| `npm run typecheck` | exit 0 |
+| `npm run test:query` | 35/35 |
+| `npm run test:parity` | 64/64 against a real mongod |
+| `npm run test:http` | 52/52 |
+| `npm run build` | exit 0 |
+
+**Still not done, and why:** the backend endpoints do not exist (backend is out of scope); the C#
+side's parsing of `{ $date }` (`BsonDocument.Parse`) is expected but unverified; which company should
+scope `log_web` is an open question (the gateway stores the company a call was made *for*, not the
+viewer's).
+
+**Access control added:** `v_csm_log_web` now requires menu right `60000` (Customer Config Center),
+the same right as the system-setup screens; without it the auth middleware redirects to
+`access_denied`. Previously any logged-in user could open it by URL.
+
+### Document store made frontend-only (2026-09-17)
+
+Decision: **"don't connect backend, just query frontend only."** The store now has no path to the
+backend at all.
+
+- **Removed:** the `http` driver (`$xt.postServerJson` calls to `CSM/Document/*`), the per-deployment
+  `window.documentStore` switch in `public/config.js` and its type, the backend stand-in
+  `contract-stub.mts` and its end-to-end test `http-driver.test.mts` (`npm run test:http`). The two
+  test files were uncommitted, so they are kept in `git stash` as
+  *"document-store backend stand-in + http test (removed: frontend-only, 2026-09-17)"* rather than
+  lost.
+- **Kept:** the in-browser MongoDB-compatible engine, Extended JSON dates, every semantics fix, the
+  parity test against a throwaway local mongod (test tooling only, never the app's backend), and the
+  menu-right gate on the screen.
+- **Added:** `store.test.mts` (`npm run test:store`, 28 checks) exercising the public API over the real
+  sample file with **no server at all**. It fails the run if the store touches `$xt`, and checks that the
+  only thing fetched is `/data/*.json`.
+- The screen's insert now always reports session-only (it cannot be anything else) and its warning no
+  longer suggests pointing the store at a backend.
+- `docs/integration/document-store-contract.md` is rewritten for the frontend-only design; the endpoint
+  contract is gone from it.
+
+| Command | Result |
+| --- | --- |
+| `npm run typecheck` | exit 0 |
+| `npm run test:query` | 35/35 |
+| `npm run test:store` | 28/28 |
+| `npm run test:parity` | 64/64 against a real mongod |
+| `npm run build` | exit 0 |
+
+Consequence to be aware of: **inserted documents are lost on reload.** Keeping them without a backend
+would mean the browser's own storage (IndexedDB), per browser and per device — not implemented.
 
 ## Ordering note
 
