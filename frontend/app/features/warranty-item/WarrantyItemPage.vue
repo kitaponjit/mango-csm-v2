@@ -20,6 +20,12 @@ import { getWarrantyItemPagePolicy } from './page-policy'
 import { readWarrantyItemAccessSnapshot } from './runtime/access-snapshot'
 import { getWarrantyItemEditCompatibilityPolicy, readWarrantyItemEditCompatibilitySnapshot, type WarrantyItemEditCompatibilitySnapshot } from './runtime/edit-compatibility'
 import { createLegacyXtoolsTransport } from './runtime/legacy-xtools-transport'
+import {
+  createWarrantyItemImportController,
+  createWarrantyItemImportState,
+  type WarrantyItemImportController,
+} from './import/warranty-item-import-state'
+import { createWarrantyItemImportService, type WarrantyItemImportColumn } from './import/warranty-item-import-service'
 
 const title = 'Master : รายการสินค้าประกัน'
 const page = ref<{ pageTitle: string } | null>(null)
@@ -35,6 +41,10 @@ const deleteState = reactive(createWarrantyItemDeleteState())
 const deleteController = shallowRef<WarrantyItemDeleteController | null>(null)
 const formState = reactive(createWarrantyItemFormState())
 const formController = shallowRef<WarrantyItemFormController | null>(null)
+const importState = reactive(createWarrantyItemImportState())
+const importController = shallowRef<WarrantyItemImportController | null>(null)
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importOpen = ref(false)
 const materialSearchText = ref('')
 const setupError = ref<Error | null>(null)
 const busy = computed(() => state.status === 'initial-loading' || state.status === 'refreshing')
@@ -42,11 +52,29 @@ const displayedPage = ref(1)
 const pageNumbers = computed(() => getWarrantyItemPageNumbers(state.maxPage))
 const formOpen = computed(() => formState.mode !== 'closed' && Boolean(formState.draft))
 const deletePending = computed(() => deleteState.pending)
+const importPending = computed(() => importState.uploadPending || importState.importPending || importState.refreshPending)
 const formPending = computed(() => formState.detailPending
   || formState.groupsPending
   || formState.materialsPending
   || formState.savePending
-  || deletePending.value)
+  || deletePending.value
+  || importPending.value)
+
+const importPreviewColumns: ReadonlyArray<{ key: WarrantyItemImportColumn, label: string }> = [
+  { key: 'A', label: 'Warranty Code' },
+  { key: 'B', label: 'Warranty Name' },
+  { key: 'C', label: 'Work Type' },
+  { key: 'D', label: 'Days' },
+  { key: 'E', label: 'Months' },
+  { key: 'F', label: 'Years' },
+  { key: 'G', label: 'Lifetime' },
+  { key: 'H', label: 'Material Code' },
+  { key: 'I', label: 'Ignored' },
+  { key: 'J', label: 'Vendor' },
+  { key: 'K', label: 'Start Date' },
+  { key: 'L', label: 'End Date' },
+  { key: 'M', label: 'Active' },
+]
 
 interface WarrantyItemRuntimeGlobals {
   auth?: unknown
@@ -94,6 +122,7 @@ function connectController(): void {
     const listService = createWarrantyItemListService(transport)
     const editService = createWarrantyItemEditService(transport)
     const deleteService = createWarrantyItemDeleteService(transport)
+    const importService = createWarrantyItemImportService(transport)
     const accessSnapshot = readWarrantyItemAccessSnapshot()
     controller.value = createWarrantyItemListController(listService, state)
     formOptions = access.canCreate
@@ -118,14 +147,21 @@ function connectController(): void {
     } else {
       formController.value = null
     }
+    importController.value = createWarrantyItemImportController({
+      service: importService,
+      canImport: () => access.canCreate,
+      refreshList,
+    }, importState)
     setupError.value = null
     state.error = null
     formState.error = null
+    importState.error = null
   } catch (reason: unknown) {
     setupError.value = reason instanceof Error ? reason : new Error('Warranty Item service is unavailable.')
     state.status = 'error'
     state.error = setupError.value
     formState.error = setupError.value
+    importState.error = setupError.value
   }
 }
 
@@ -207,6 +243,31 @@ function selectGroupByCode(event: Event): void {
 
 function toggleLifetime(event: Event): void {
   formController.value?.setLifetime((event.target as HTMLInputElement).checked)
+}
+
+function openImport(): void {
+  importController.value?.reset()
+  importOpen.value = true
+}
+
+function closeImport(): void {
+  if (importPending.value) return
+  importController.value?.reset()
+  importOpen.value = false
+}
+
+function selectImportFile(event: Event): void {
+  const input = event.target as HTMLInputElement
+  void importController.value?.upload(Array.from(input.files ?? []))
+  input.value = ''
+}
+
+function importRows(): void {
+  void importController.value?.import()
+}
+
+function retryImportRefresh(): void {
+  void importController.value?.retryRefresh()
 }
 
 onMounted(() => {
@@ -307,7 +368,58 @@ onBeforeUnmount(() => {
 
             <div v-if="access.canCreate" class="warranty-item-list-actions">
               <button type="button" class="btn btn-sm bg-navy" :disabled="busy || formPending" @click="startCreate">Create</button>
+              <button type="button" class="btn btn-sm btn-tumblr" :disabled="busy || formPending" @click="openImport">Import</button>
             </div>
+            <section v-if="importOpen" class="warranty-item-import-panel" aria-labelledby="warranty-item-import-title">
+              <div class="warranty-item-import-heading">
+                <div>
+                  <h2 id="warranty-item-import-title">Import Warranty Items</h2>
+                  <p>Select one .xlsx workbook, review the parsed A–M rows, then explicitly import the batch.</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeImport">Close</button>
+              </div>
+              <div class="warranty-item-import-controls">
+                <input
+                  ref="importFileInput"
+                  type="file"
+                  accept=".xlsx"
+                  :disabled="formPending"
+                  @change="selectImportFile"
+                >
+                <span v-if="importState.fileName">{{ importState.fileName }}</span>
+              </div>
+              <p v-if="importState.status === 'uploading'" role="status">Uploading and parsing workbook…</p>
+              <p v-else-if="importState.status === 'ready-to-import'" role="status">Preview ready. Review the rows before importing.</p>
+              <p v-else-if="importState.status === 'importing' || importState.status === 'refreshing-after-import'" role="status">{{ importState.status === 'importing' ? 'Importing Warranty Items…' : 'Refreshing Warranty Items…' }}</p>
+              <p v-else-if="importState.status === 'imported'" class="alert alert-success" role="status">Warranty Item Import completed.</p>
+              <p v-if="importState.error" class="alert alert-danger" role="alert">{{ importState.error.message }}</p>
+              <p v-if="importState.status === 'refresh-failed-after-import'" class="alert alert-warning" role="status">
+                Import succeeded, but the list refresh failed. Retry refresh without importing the batch again.
+              </p>
+              <button v-if="importState.status === 'refresh-failed-after-import'" type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="retryImportRefresh">Retry list refresh</button>
+              <div v-if="importState.rows.length" class="table-responsive warranty-item-import-preview">
+                <p>Column I is ignored and is not sent to the persistence endpoint.</p>
+                <table class="table table-bordered table-striped">
+                  <caption>Import preview — {{ importState.rows.length }} parsed row(s)</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Row</th>
+                      <th v-for="column in importPreviewColumns" :key="column.key" scope="col">{{ column.key }} · {{ column.label }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in importState.rows" :key="row.rowNumber">
+                      <td>{{ row.rowNumber }}</td>
+                      <td v-for="column in importPreviewColumns" :key="column.key">{{ row.columns[column.key] ?? '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="warranty-item-import-actions">
+                <button type="button" class="btn btn-sm bg-olive" :disabled="formPending || importState.status !== 'ready-to-import' || !importState.rows.length" @click="importRows">Import</button>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeImport">Cancel</button>
+              </div>
+            </section>
             <form class="warranty-item-filters" @submit.prevent="controller?.updateFilters(filters)">
               <div class="form-group">
                 <label for="warranty-item-field">Search by</label>
@@ -396,7 +508,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .access-label { margin: 8px 0 0; }
-.warranty-item-list-actions { margin-bottom: 12px; }
+.warranty-item-list-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.warranty-item-import-panel { border: 1px solid #ddd; padding: 12px; margin-bottom: 16px; }
+.warranty-item-import-heading, .warranty-item-import-controls, .warranty-item-import-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.warranty-item-import-heading { justify-content: space-between; }
+.warranty-item-import-heading h2 { margin-top: 0; }
+.warranty-item-import-preview { margin-top: 12px; }
 .warranty-item-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 16px; }
 .warranty-item-filters .form-group { margin-bottom: 0; }
 .warranty-item-form-panel { border: 1px solid #ddd; padding: 12px; margin-bottom: 16px; }
