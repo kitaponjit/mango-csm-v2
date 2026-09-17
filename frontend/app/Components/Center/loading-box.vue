@@ -933,7 +933,7 @@ body.dark-mode .loading-overlay {
 /* ── Fade ── */
 .fade-enter-active,
 .fade-leave-active { transition: opacity 0.25s ease; }
-.fade-enter,
+.fade-enter-from,
 .fade-leave-to     { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,6 @@
+{
+  // Nuxt generates the real configuration (paths, auto-imports, Vue's JSX
+  // settings) into .nuxt/tsconfig.json on `nuxt prepare`. Extending it is the
+  // documented setup and keeps editors in step with the build.
+  "extends": "./.nuxt/tsconfig.json"
+}

@@ -12,7 +12,10 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "sync:vendor": "node scripts/sync-vendor.mjs"
+    "sync:vendor": "node scripts/sync-vendor.mjs",
+    "typecheck": "vue-tsc --noEmit",
+    "test:query": "node app/services/document-store/query.test.mts",
+    "test:parity": "node app/services/document-store/query.parity.mts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.21",
@@ -56,7 +59,12 @@
     "xlsx": "^0.16.9"
   },
   "devDependencies": {
-    "sass": "^1.77.4"
+    "@types/node": "^22.20.3",
+    "mongodb": "^7.6.0",
+    "mongodb-memory-server": "^11.2.0",
+    "sass": "^1.77.4",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.11"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
