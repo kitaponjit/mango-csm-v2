@@ -1471,10 +1471,10 @@
             let item = filteredWarranty[row];
             if (item.active === 'Y' && item._justStarted) {
               // Undo start (กลับเป็นยังไม่ start เพราะยังไม่ได้ save)
-              self.item.active = 'N';
-              self.item._justStarted = false;
-              self.item.startdate = null;
-              self.item.enddate = null;
+              item.active = 'N';
+              item._justStarted = false;
+              item.startdate = null;
+              item.enddate = null;
               self.refreshAreaTable(idx);
             } else if (item.active !== 'Y') {
               self.startWarrantybyItem(item);

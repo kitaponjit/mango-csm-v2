@@ -8,16 +8,19 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev --host localhost --port 3000",
+    "predev": "npm run sync:vendor",
     "build": "nuxt generate",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "sync:vendor": "node scripts/sync-vendor.mjs",
     "typecheck": "vue-tsc --noEmit",
+    "typecheck:warranty-item": "nuxt prepare && vue-tsc -p tsconfig.warranty-item.json --noEmit",
     "test:query": "node app/services/document-store/query.test.mts",
     "test:parity": "node app/services/document-store/query.parity.mts",
     "test": "npm run test:query && npm run test:store && npm run test:parity",
-    "test:store": "node app/services/document-store/store.test.mts"
+    "test:store": "node app/services/document-store/store.test.mts",
+    "test:warranty-item": "vitest run"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.21",
@@ -65,8 +68,9 @@
     "mongodb": "^7.6.0",
     "mongodb-memory-server": "^11.2.0",
     "sass": "^1.77.4",
-    "typescript": "^5.9.3",
-    "vue-tsc": "^3.3.11"
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "vue-tsc": "3.3.11"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

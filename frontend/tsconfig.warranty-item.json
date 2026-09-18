@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "checkJs": false,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "preserve",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "~": ["app"],
+      "~/*": ["app/*"],
+      "@": ["app"],
+      "@/*": ["app/*"],
+      "#app": ["node_modules/nuxt/dist/app"],
+      "#app/*": ["node_modules/nuxt/dist/app/*"],
+      "#imports": [".nuxt/imports"]
+    },
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ESNext",
+    "types": ["vite/client"],
+    "verbatimModuleSyntax": true
+  },
+  "include": [
+    ".nuxt/imports.d.ts",
+    ".nuxt/types/imports.d.ts",
+    "app/features/warranty-item/**/*",
+    "test/warranty-item/**/*.ts"
+  ]
+}

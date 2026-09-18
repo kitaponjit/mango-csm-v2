@@ -255,7 +255,7 @@
             let itemno = $(this).data('itemno');
             let rowData = $linq(self.data).where(x => x.job_no == jobno && x.itemno == itemno).firstOrDefault();
             if (rowData) {
-              self.rowData.isCheckData = $(this).is(':checked');
+              self.$set(rowData, 'isCheckData', $(this).is(':checked'));
             }
           });
         });

@@ -16,7 +16,7 @@ const masterRoutes = [
   {
     name: "v_csm_mas_002",
     path: "/page/master/v_csm_mas_002/",
-    component: () => import(`../Components/Pages/Master/v_csm_mas_002.vue`),
+    component: () => import(`../features/warranty-item/WarrantyItemPage.vue`),
     meta: {
       auth: true,
       mangoMenu: {
