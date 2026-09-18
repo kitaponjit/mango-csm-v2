@@ -298,7 +298,20 @@
           url += `&${key}=${encodeURIComponent(this.retrieveSearch[key])}`
         }
 
-        let rsp = await $xt.getServer(url)
+        // If the list request fails (the .NET 8 backend answers 500 here as of
+        // 2026-09-18, whatever the query), close the loading box and say so,
+        // with the backend's correlation id, instead of leaving the spinner up
+        // and the error uncaught.
+        let rsp
+        try {
+          rsp = await $xt.getServer(url)
+        } catch (ex) {
+          page.loadingBox.hide()
+          const body = (ex && ex.response && ex.response.data) || {}
+          const ref = body.correlationId ? ` (ref ${body.correlationId})` : ''
+          $msg.alert('System Error', `${body.error || ex}${ref}`, 'danger')
+          return
+        }
         this.data = rsp.data
         this.total = rsp.total
 

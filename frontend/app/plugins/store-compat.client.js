@@ -21,7 +21,17 @@ export default defineNuxtPlugin((nuxtApp) => {
   const vuexCompat = {
     get state() { return store },
     get getters() { return store },
-    dispatch: (name, payload) => store[name](payload)
+    /* Vuex logged an unknown action and returned undefined; it did not throw.
+       Three screens dispatch `findDataType`, which the legacy store never had
+       either (v_csm_rpt_001, v_csm_rpt_005, empty_o): harmless there, but
+       `store[name](...)` threw "store[name] is not a function" and broke them. */
+    dispatch: (name, payload) => {
+      if (typeof store[name] !== 'function') {
+        console.error(`[store] unknown action type: ${name}`)
+        return undefined
+      }
+      return store[name](payload)
+    }
   }
 
   nuxtApp.vueApp.config.globalProperties.$store = vuexCompat

@@ -3,7 +3,7 @@
     <vue-element-loading :active="state.loading" spinner="spinner" color="#02234e" text="ระบบกำลังทำรายการของท่าน กรุณารอสักครู่.." />
     <div class="content-body" ref="ag_grid_content">
       <div class="ag-flex">
-        <ag-grid-vue class="ag-theme-alpine"
+        <ag-grid-vue ref="topGrid" class="ag-theme-alpine"
                      :gridOptions="topGridOptions"
                      :columnDefs="columnDefs"
                      :rowData="display"
@@ -18,7 +18,7 @@
                      @sortChanged="onSortChanged"
                      style="height: 100%; width:100%; flex: 1 1 auto;">
         </ag-grid-vue>
-        <ag-grid-vue v-if="showFooter" class="ag-theme-alpine"
+        <ag-grid-vue v-if="showFooter" ref="bottomGrid" class="ag-theme-alpine"
                      :gridOptions="bottomGridOptions"
                      :columnDefs="bottomDefs"
                      :headerHeight="0"
@@ -133,7 +133,7 @@
 </style>
 
 <script>
-  import { reactive, computed, onBeforeMount, onMounted, ref } from 'vue'
+  import { reactive, computed, onBeforeMount, onMounted, ref, shallowRef, toRaw } from 'vue'
 
   import "ag-grid-community/styles/ag-grid.css"
   import "ag-grid-community/styles/ag-theme-alpine.css"
@@ -174,8 +174,39 @@
 
       const columnDefs = ref([])
       const bottomDefs = ref([])
-      const topGridOptions = ref({})
-      const bottomGridOptions = ref({})
+      /* AG Grid 31 removed `gridOptions.api` and `gridOptions.columnApi` (the
+         column methods moved onto the grid API) and `api.setRowData`. This
+         component was written for v27, and so were the screens that reach in
+         with `agr.topGridOptions.api` — several use it as their "grid is ready"
+         test — so on v33 every one of those calls failed: `setDisplay` threw
+         "Cannot read properties of undefined (reading 'setRowData')" and the grid
+         stayed empty, however much data the screen had loaded.
+
+         attachGridApi() puts the v33 grid API back on the options object once
+         the grid exists, which restores that contract for this file and for the
+         screens. shallowRef, and toRaw on the way in, keep Vue from wrapping the
+         grid API in a reactive proxy. */
+      const topGridOptions = shallowRef({})
+      const bottomGridOptions = shallowRef({})
+      const topGrid = ref(null)
+      const bottomGrid = ref(null)
+
+      const attachGridApi = (options, grid) => {
+        const api = grid && grid.api ? toRaw(grid.api) : null
+        if (options && api) options.api = api
+      }
+
+      // Aligned grids are resolved by the grid on demand; returning only APIs
+      // that exist avoids "alignedGrids - No api found on the linked grid" (#19)
+      // while the footer grid is being created, or when there is no footer.
+      const alignedApis = (other) => (other.value && other.value.api ? [other.value.api] : [])
+
+      // What getSortModel() returned before AG Grid removed it: the sorted
+      // columns, in sort order.
+      const sortModelOf = (api) => (api ? api.getColumnState() : [])
+        .filter(c => c.sort)
+        .sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0))
+        .map(c => ({ colId: c.colId, sort: c.sort }))
       const display = ref([])
       const bottomData = ref([])
       const showFoolter = ref(false)
@@ -453,12 +484,19 @@
         return header
       }
 
+      // setGridOption from the API always reloads the rows, even for the same
+      // array, as setRowData did. Before the grid exists the rows go to the
+      // bound :rowData instead, which the grid reads when it is created.
       const setDisplay = (data) => {
-        topGridOptions.value.api.setRowData(data)
+        const api = topGridOptions.value.api
+        if (api) api.setGridOption('rowData', data)
+        else display.value = data
       }
 
       const setBottomData = (data) => {
-        bottomGridOptions.value.api.setRowData(data)
+        const api = bottomGridOptions.value.api
+        if (api) api.setGridOption('rowData', data)
+        else bottomData.value = data
       }
 
       const createHeaderFromArray = (arr) => {
@@ -513,15 +551,22 @@
       }
 
       const createPdfData = () => {
-        let show = topGridOptions.value?.columnApi.getAllDisplayedColumns()
-        let groupHeader = topGridOptions.value?.columnApi.getAllDisplayedColumnGroups()
+        let api = topGridOptions.value.api
+        let show = api.getAllDisplayedColumns()
+        let groupHeader = api.getAllDisplayedColumnGroups() || []
 
         let headerRows = 1;
         let show0 = [];
 
-        if (groupHeader[0] && groupHeader[0]?.originalColumnGroup && groupHeader[0]?.displayedChildren && groupHeader[0]?.displayedChildren[0]?.colDef) {
+        // v27's group.originalColumnGroup / .displayedChildren are private in v33;
+        // isColumn === false marks a column group.
+        const isGroup = (x) => x && x.isColumn === false
+        if (isGroup(groupHeader[0]) && groupHeader[0].getDisplayedChildren()?.[0]?.colDef) {
           headerRows = 2
-          show0 = groupHeader.map(x => ({ label: x.originalColumnGroup?.colGroupDef?.headerName || '', colspan: x.displayedChildren?.length || 1 }));
+          show0 = groupHeader.map(x => ({
+            label: (isGroup(x) && x.getColGroupDef()?.headerName) || '',
+            colspan: (isGroup(x) && x.getDisplayedChildren()?.length) || 1
+          }));
         }
 
         let header = [show.map(x => ({ label: x.colDef?.headerName || '', colspan: 1 }))]
@@ -530,7 +575,7 @@
           header.reverse();
         }
 
-        let col_width = show.map(x => x.actualWidth)
+        let col_width = show.map(x => x.getActualWidth())
         let newData = []
         topGridOptions.value?.api?.forEachNode((rowNode, index) => {
           if (rowNode.group) {
@@ -591,11 +636,13 @@
       }
 
       const getHiddenColumns = () => {
-        const allColumns = topGridOptions.value?.columnApi.getAllColumns()
+        // columnApi.getAllColumns() is api.getColumns() since AG Grid 31.
+        const api = topGridOptions.value.api
+        const allColumns = api.getColumns() || []
         const hiddenColumns = allColumns.filter(col => !col.isVisible())
 
         const hiddenData = hiddenColumns.map(col => ({
-          header: topGridOptions.value?.columnApi.getDisplayNameForColumn(col, 'header'),
+          header: api.getDisplayNameForColumn(col, 'header'),
           field: col.getColId()
         }))
 
@@ -603,7 +650,7 @@
       }
 
       const getGridState = () => {
-        var colState = topGridOptions.value?.columnApi.getColumnState()
+        var colState = topGridOptions.value.api?.getColumnState()
         var stateJson = JSON.stringify(colState)
         return stateJson
       }
@@ -679,7 +726,8 @@
       }
 
       const onSortChanged = (e) => {
-        console.log(e.api.getSortModel())
+        const model = sortModelOf(e.api)
+        console.log(model)
 
         const sortedData = []
         const rowCount = e.api.getDisplayedRowCount()
@@ -689,7 +737,7 @@
           sortedData.push(rowNode.data)
         }
 
-        emit('on-sort-changed', { data: sortedData, model: e.api.getSortModel() })
+        emit('on-sort-changed', { data: sortedData, model })
       }
 
       const applySelectRow = (e) => {
@@ -702,7 +750,7 @@
 
       const getAllRows = () => {
         let rowData = []
-        topGridOptions?.value?.api.forEachNode(node => rowData.push(node))
+        topGridOptions.value.api?.forEachNode(node => rowData.push(node))
         return rowData
       }
 
@@ -800,7 +848,7 @@
 
       onBeforeMount(() => {
         topGridOptions.value = {
-          alignedGrids: [],
+          alignedGrids: () => alignedApis(bottomGridOptions),
           defaultColDef: {
             editable: false,
             sortable: sorting,
@@ -820,7 +868,7 @@
 
         if (showFooter) {
           bottomGridOptions.value = {
-            alignedGrids: [],
+            alignedGrids: () => alignedApis(topGridOptions),
             defaultColDef: {
               editable: false,
               sortable: false,
@@ -834,9 +882,6 @@
             headerHeight: 0,
             rowHeight: 40
           }
-
-          topGridOptions.value.alignedGrids.push(bottomGridOptions.value)
-          bottomGridOptions.value.alignedGrids.push(topGridOptions.value)
 
           try {
             function refreshRowIndices() {
@@ -853,6 +898,12 @@
       })
 
       onMounted(() => {
+        // The child grids are created in their own onMounted, which runs before
+        // this one, so the APIs are in place before 'ready' tells the screen it
+        // may load data.
+        attachGridApi(topGridOptions.value, topGrid.value)
+        attachGridApi(bottomGridOptions.value, bottomGrid.value)
+
         $(window).resize(() => {
           $(ag_grid_content.value).css({
             'max-height': ($(window).height() - state.scale) + 'px',
@@ -870,6 +921,8 @@
         bottomDefs,
         topGridOptions,
         bottomGridOptions,
+        topGrid,
+        bottomGrid,
         display,
         bottomData,
         showFoolter,

@@ -32,8 +32,17 @@
   import { ref, onMounted, onBeforeUnmount } from 'vue'
   let page = null
   export default {
-    setup(props, { refs }) {
+    setup(props) {
+      // Vue 3's setup context has no `refs` (Vue 2's composition-api plugin had
+      // one), so every `refs.x` below threw "Cannot read properties of undefined".
+      // The template refs are declared here and returned under their template
+      // names; `refs` reads them, so the code below is unchanged.
       const mangoIframe = ref(null)
+      const pageRef = ref(null)
+      const refs = {
+        get page() { return pageRef.value },
+        get mangoIframe() { return mangoIframe.value }
+      }
 
       const iframeUrl = ref('')
       const currentMode = ref('demo')
@@ -111,6 +120,7 @@
       })
 
       return {
+        page: pageRef,
         mangoIframe,
         iframeUrl,
         currentMode,

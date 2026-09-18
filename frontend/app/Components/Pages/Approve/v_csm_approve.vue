@@ -12,11 +12,16 @@
                     <a href="#" @click.prevent="clickTabSelected(x.id, 'main')">&nbsp;<i class="fas" :class="xt.isEmpty(x.icon) ? 'fa-circle' : x.icon"></i>&nbsp;{{x.text}} <span v-if="x.total > 0">({{x.total}})</span></a>
                   </li>
                   <li class="pull-right" style="margin-top:3px;">
-                    <button class="btn btn-sm btn-success" @click="SaveChange()">
+                    <button class="btn btn-sm btn-success" :disabled="serviceUnavailable" @click="SaveChange()">
                       <i class="fas fa-save"></i>Save
                     </button>
                   </li>
                 </ul>
+                <div v-if="serviceUnavailable" class="alert alert-warning" style="margin: 10px 10px 0;">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  The approval service is not available on this server: the .NET 8 backend has no
+                  Approve_App endpoints yet, so documents cannot be listed or approved here.
+                </div>
                 <div class="tab-content">
                   <!-- Approve Document -->
                   <div class="tab-pane animated fadeIn" :class="{'active': mainTabSelected == 'header_tab1'}">
@@ -873,6 +878,7 @@
   let cpn = {
     data() {
       return {
+        serviceUnavailable: false,
         baseUrl,
         baseRoute,
         queryString,
@@ -1005,6 +1011,23 @@
       createFilePath(x) {
         return dataServer + "Api/File/DownLoad?id=" + x;
       },
+      /* MangoServiceNetCore (.NET 8) has no Approve_App area yet, so every call
+         on this screen answers 404, the same as an unknown route (a real route
+         answers 401 without a session). Instead of empty lists and uncaught
+         promise errors, the screen shows a notice and disables Save. Other
+         errors behave as before. */
+      isServiceMissing(err) {
+        return !!(err && err.response && err.response.status === 404)
+      },
+      async getApprove(url) {
+        try {
+          return await $xt.getServer(url)
+        } catch (err) {
+          if (!this.isServiceMissing(err)) throw err
+          this.serviceUnavailable = true
+          return null
+        }
+      },
       async SaveChangeC(xr, prno) {
         try {
           var prno_l = "";
@@ -1049,7 +1072,8 @@
             }
           }
         } catch (ex) {
-          $msg.alert(``, ex.toString(), `danger`);
+          if (this.isServiceMissing(ex)) this.serviceUnavailable = true;
+          else $msg.alert(``, ex.toString(), `danger`);
         } finally {
           process = false;
           //page.loadingBox.hide();
@@ -1095,7 +1119,8 @@
             }
           }
         } catch (ex) {
-          $msg.alert(``, ex.toString(), `danger`);
+          if (this.isServiceMissing(ex)) this.serviceUnavailable = true;
+          else $msg.alert(``, ex.toString(), `danger`);
         } finally {
           process = false;
           //page.loadingBox.hide();
@@ -1139,7 +1164,8 @@
             }
           }
         } catch (ex) {
-          $msg.alert(``, ex.toString(), `danger`);
+          if (this.isServiceMissing(ex)) this.serviceUnavailable = true;
+          else $msg.alert(``, ex.toString(), `danger`);
         } finally {
           process = false;
           //page.loadingBox.hide();
@@ -1168,7 +1194,8 @@
       },
       async loadRetrieveW() {
         let url = `Approve_App/Approve/Approve_waiting_Readlist?searchDocNo=${this.searchDocNo}&searchvender=${this.searchvender}&searchDoctype=${this.searchDoctype}`;
-        let resp = await $xt.getServer(url);
+        let resp = await this.getApprove(url);
+        if (!resp) return;
         this.h_dataW = resp.data;
         pagingW.setTotalItems(resp.total || 1);
         this.pageChange(1, 'Waiting');
@@ -1178,7 +1205,8 @@
       },
       async loadRetrieveU() {
         let url = `Approve_App/Approve/Approve_upper_Readlist?searchDocNo=${this.searchDocNo}&searchvender=${this.searchvender}&searchDoctype=${this.searchDoctype}`;
-        let resp = await $xt.getServer(url);
+        let resp = await this.getApprove(url);
+        if (!resp) return;
         this.h_dataU = resp.data;
         //$linq(this.h_dataU).foreach(x => {
         //  x.docdate = moment(x.docdate).format("DD/MM/YYYY");
@@ -1188,7 +1216,8 @@
       },
       async loadRetrieveC() {
         let url = `Approve_App/Approve/Approve_cancle_Readlist?searchDocNo=${this.searchDocNo}&searchvender=${this.searchvender}&searchDoctype=${this.searchDoctype}`;
-        let resp = await $xt.getServer(url);
+        let resp = await this.getApprove(url);
+        if (!resp) return;
         this.h_dataC = resp.data;
         //$linq(this.h_dataC).foreach(x => {
         //  x.docdate = moment(x.docdate).format("DD/MM/YYYY");
@@ -1259,7 +1288,8 @@
       },
       async showModal(prno) {
         let url = `Approve_App/Approve/approve_loop?docno=${prno}`;
-        let resp = await $xt.getServer(url);
+        let resp = await this.getApprove(url);
+        if (!resp) return;
         this.l_data = resp.data;
         //$linq(this.h_data).foreach(x => {
         //    x.docdate = moment(x.docdate).format("DD/MM/YYYY");
@@ -1270,7 +1300,8 @@
       },
       async showModalFile(x) {
         let url = `Approve_App/Approve/ap_file_Readlist?doctype=${x.doctype}&prno=${x.prno}&itemno=${x.refitemno}`;
-        let resp = await $xt.getServer(url);
+        let resp = await this.getApprove(url);
+        if (!resp) return;
         this.file_upload = resp.data;
         //$linq(this.h_data).foreach(x => {
         //    x.docdate = moment(x.docdate).format("DD/MM/YYYY");
@@ -1281,7 +1312,8 @@
       },
       async loadRetrieve() {
         let url = `Approve_App/Approve/Approve_review_Readlist?searchDocNo=${this.searchDocNo}&searchvender=${this.searchvender}&searchDoctype=${this.searchDoctype}`;
-        let resp = await $xt.getServer(url);
+        let resp = await this.getApprove(url);
+        if (!resp) return;
         this.h_data = resp.data;
         //$linq(this.h_data).foreach(x => {
         //  x.docdate = moment(x.docdate).format("DD/MM/YYYY");
