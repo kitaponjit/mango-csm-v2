@@ -54,7 +54,7 @@ Current checkout evidence:
 | --- | --- | --- |
 | Vue 2 → Nuxt.js | `TRANSITIONAL` | `Website/` retains the Vue 2 runtime. `frontend/` is the target Nuxt 4 SPA: a full port of all 218 components and 111 routes, builds clean, and runs against the .NET 8 backend (dev decision 2026-09-15). `Nuxt/` is the superseded first-slice scaffold. |
 | Webpack 5 → Vite | `TRANSITIONAL` | Legacy Website scripts still use Webpack; the `frontend/` target uses Nuxt's Vite build and separate output ownership. |
-| ASP.NET Framework 4.8 → .NET 8 | `TRANSITIONAL` | Legacy backend remains on Framework/IIS; the dev-confirmed target backend repo `MangoServiceNetCore` (.NET 8; local path is per-machine — `D:\Migrate\MangoServiceNetCore` on the 2026-09-15 dev machine) now exists outside this checkout with all frontend-facing contracts ported and parity-tested (repo scout 2026-09-12). Cutover/topology not yet decided; do not rewrite Framework code incidentally. |
+| ASP.NET Framework 4.8 → .NET 8 | `TRANSITIONAL` | Legacy backend remains on Framework/IIS; the dev-confirmed target `MangoServiceNetCore` (.NET 8) exists in a separate local checkout with all frontend-facing contracts ported and parity-tested (repo scout 2026-09-12). Cutover/topology not yet decided; do not rewrite Framework code incidentally. |
 | IIS-only → IIS + Docker | `LEGACY` | IIS configuration exists and Docker topology is not established; do not assume Docker replaces or embeds IIS. |
 | SQL Server → SQLite | `UNKNOWN` | Backend/data-access code is not in this checkout; determine ownership and relational semantics before selecting SQLite. A read-only survey of the separate backend found EF6 data access alongside extensive interpolated raw SQL in CSM scope (e.g. `SqlFetch2` in `Areas/CSM/Controllers/CenterController.cs`, `APIController.cs:221`); the ownership decision is still required. |
 | MongoDB introduction | `UNKNOWN` | No MongoDB implementation is evidenced; do not assign data to MongoDB without an explicit ownership decision. Append-only logs/chat are the only fit candidate identified; still requires an explicit decision. |
@@ -68,7 +68,22 @@ Current checkout evidence:
 - The legacy host injects runtime configuration and globals consumed by the Vue application. Preserve that host contract until its boundary is explicitly migrated.
 - The backend/API service is maintained separately from this checkout. Locate the actual repository and read its governance before making backend changes; historical paths in Website documentation are not portable facts. The backend folder path differs per dev machine — ask the dev for their local path and verify it per `Website/AGENTS.md` §11; never assume a documented path.
 - Do not invent backend endpoints, database schemas, deployment topology, or target-stack files when the owning repository or target configuration is absent.
-- The frontend target boundary is established for the first slice only. Do not treat that as evidence that the backend, hosting, or persistence targets are implemented.
+- The `frontend/` target boundary is established for the full port. Do not treat that as evidence that the backend, hosting, or persistence targets are fully cut over.
+
+## CSM Behavioral Parity
+
+For CSM migration work, keep the evidence and ownership boundaries explicit:
+
+- `Website/` is the legacy observable-behavior and product-reference source.
+- `frontend/` is the current Nuxt 4/Vue 3 runtime target.
+- `Nuxt/` is historical first-slice evidence only; do not revive it or cross-import runtime code from it.
+- `LEGACY = PRODUCT BEHAVIOR SPECIFICATION`; `TARGET STACK = IMPLEMENTATION CONSTRAINT`; `MIGRATION FEATURE DELTA = 0`.
+- A target-only observable behavior is `EXTRA` until intentionally approved. A missing legacy-observable capability is a migration `GAP`.
+- Establish claims from executable Legacy and Target evidence, not filenames, route names, permissions, payloads, or API names inferred in isolation.
+- For a parity defect, establish Legacy behavior, demonstrate the Target mismatch, add a regression that is `RED`, make the minimal fix, and verify `GREEN`. Keep unrelated refactors out of the change.
+- Run focused checks first, followed by the established repository-wide tests, typechecks, and build gates that apply. Report only actual results using `PASS`, `FAIL`, `NOT RUN — ENVIRONMENT`, or `BLOCKED_EXTERNAL_ENV`.
+- Use the existing local `MangoServiceNetCore` checkout as backend contract evidence when required. Keep machine-specific paths private and refer to it generically in committed documentation.
+- The durable CSM closeout record is [`docs/migrations/csm-stack-migration-closeout.md`](docs/migrations/csm-stack-migration-closeout.md); update it only when verified final-state facts change.
 
 ## Engineering Rules
 
@@ -161,9 +176,9 @@ Current checkout evidence:
 
 The current checkout leaves these decisions unresolved:
 
-- Target state ownership and shared-context policy for routes beyond the first slice. Recommended direction: one slice per route, Master-first; shared primitives centrally gated.
+- Future target-native shared-context policy and ownership refinements remain open for work beyond the verified full port. Preserve the current `frontend/` ownership and establish any new boundary explicitly.
 - Vite/target artifact deployment automation and the retirement criteria for Webpack. Recommended direction: per-route strangler; the dead `Website/webpack.config.js` has been removed.
-- Owning .NET 8 backend project: located and dev-confirmed — `MangoServiceNetCore` (`C:\Users\COM\Projects\MANGOdotNETMigration Proj\MangoServiceNetCore`, .NET 8, Docker default per compose). Remaining question: cutover plan and final IIS/Docker topology; requires a topology sheet from the backend/platform owner.
+- Owning .NET 8 backend project: located and dev-confirmed — `MangoServiceNetCore` (.NET 8, Docker default per compose). Remaining question: cutover plan and final IIS/Docker topology; requires a topology sheet from the backend/platform owner.
 - SQLite/MongoDB ownership, SQL Server feature mapping, cross-store consistency, migration, and rollback. Recommended direction: SQLite-first (configs, then tickets, then reproduced sessions); MongoDB only for append-only logs/chat with explicit sign-off.
 - Legacy endpoint/host retirement criteria after behavioral parity is demonstrated. Recommended direction: per-route checklist plus approvals; retireable today: nothing.
 
@@ -192,5 +207,6 @@ Backend                   : MangoServiceNetCore (.NET 8), separate repo; dev on 
 Backend contracts         : docs/backend/contract-navigation-knowledge.md
 Frontend<->backend wiring : docs/integration/frontend-backend-connection.md
 UI consistency evidence   : docs/migrations/future-ui-consistency.md + docs/ui-consistency/layout-inventory.md
+CSM closeout             : docs/migrations/csm-stack-migration-closeout.md
 Target direction          : Nuxt + Vite + .NET 8 (MangoServiceNetCore) + IIS/Docker + SQLite/MongoDB
 ```

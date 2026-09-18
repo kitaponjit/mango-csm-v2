@@ -4,6 +4,11 @@
 
 `DECIDED`
 
+> **Historical first-slice record.** This ADR describes the former `/csm-next/` Nuxt slice.
+> The current runtime target is `frontend/`; `Nuxt/` is retained as history only. Use the root
+> [`AGENTS.md`](../../AGENTS.md) and the [CSM migration closeout](./csm-stack-migration-closeout.md)
+> for current ownership and parity status.
+
 This ADR closes the first-slice architecture for the Vue 2 to Nuxt and Webpack 5 to Vite boundary. It authorized the boundary and route selection before implementation; implementation status is tracked through repository history and Pull Requests rather than by changing this decision record.
 
 Initial implementation was delivered through PR #2 (Nuxt shell), PR #4 (authentication/API foundation), PR #6 (semantic UI baseline), and PR #8 (manual route). Their current review and merge states must be checked on GitHub; this ADR does not imply deployment or production cutover approval.

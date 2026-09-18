@@ -3,17 +3,17 @@
 Nuxt 4 replacement for the Vue 2 SPA in `../Website`. Generates a **fully static** bundle that
 runs unchanged on **IIS** and on **Linux**.
 
-> **Status: scaffold.** The bootstrap layer, routing hook, and both deployment targets are in
-> place. The 218 page//component files in `../Website/Scripts/App/Application` are **not yet
-> ported** — that work needs Vue 3 and is tracked in `MIGRATION.md`.
+> **Status: current runtime target.** The full 218-component, 111-route port is present in this
+> Nuxt 4/Vue 3 application. PR #32 completed the CSM Warranty Item parity closeout on `main`;
+> `MIGRATION.md` retains detailed evidence and remaining external verification caveats.
 
 ---
 
 ## Why static
 
-The API (`MangoWebPoolService`) is **.NET Framework 4.8 — Windows only**. It cannot move to Linux.
-So "run on Linux" applies to the frontend alone, and the frontend must stop depending on
-ASP.NET to boot.
+The target API is the separate .NET 8 `MangoServiceNetCore` service. The legacy `Website/` host
+remains an ASP.NET Framework application and is the behavioral reference; the target frontend
+does not depend on that host to boot.
 
 `ssr: false` + `nuxt generate` gives a plain folder of HTML/JS/CSS:
 
@@ -130,8 +130,8 @@ On Linux the frontend and API are on different hosts. Either:
 
 - **proxy** — keep the `location /service/` block in `nginx.conf` so the browser stays
   same-origin (simplest; the SignalR block is already configured), or
-- **direct** — point `window.dataServer` at the API host and enable CORS on
-  `MangoWebPoolService` for the `X-Mango-Auth` / `X-Customer-Auth` headers.
+- **direct** — point `window.dataServer` at the API host and enable CORS on the target service for
+  the `X-Mango-Auth` / `X-Customer-Auth` headers.
 
 The proxy route is recommended — it avoids CORS preflight on every `$xt` call and keeps SignalR
 negotiation simple.
