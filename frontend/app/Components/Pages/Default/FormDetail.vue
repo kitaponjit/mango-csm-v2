@@ -203,6 +203,13 @@
         $(this.$refs.myFile).click();
       },
       async loadRetrieve() {
+        // This page is opened from the Form list with ?customer_code=&formcode=.
+        // Opened without them, the request sent the text "undefined" for both
+        // and the backend answered 500; say what is missing instead.
+        if (!this.qString.customer_code || !this.qString.formcode) {
+          $msg.alert('', 'No customer or form was given. Open this page from a customer\'s form list.', 'warning');
+          return;
+        }
         let url = `CSM/Data/FormDetailRead?customer_code=${this.qString.customer_code}&formcode=${this.qString.formcode}`;
 
         let rsp = await $xt.getServer(url);
