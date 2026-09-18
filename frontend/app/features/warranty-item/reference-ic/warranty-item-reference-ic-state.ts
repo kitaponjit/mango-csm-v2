@@ -22,6 +22,7 @@ export interface WarrantyItemReferenceIcControllerOptions {
   service: WarrantyItemReferenceIcService
   refreshList(): Promise<void>
   getExcluded?: () => readonly WarrantyItemReferenceIcKey[]
+  onCreateSettled?: () => void
 }
 
 export interface WarrantyItemReferenceIcController {
@@ -43,7 +44,7 @@ export function createWarrantyItemReferenceIcState(): WarrantyItemReferenceIcSta
     searchField: 'war_code',
     searchText: '',
     page: 1,
-    pageSize: 10,
+    pageSize: 500,
     total: 0,
     error: null,
   }
@@ -126,6 +127,8 @@ export function createWarrantyItemReferenceIcController(
       state.status = 'create-failed'
       state.error = error
       return { status: 'create-failed', error }
+    } finally {
+      options.onCreateSettled?.()
     }
   }
 

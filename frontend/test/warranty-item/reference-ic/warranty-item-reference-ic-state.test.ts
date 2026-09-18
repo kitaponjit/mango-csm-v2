@@ -15,12 +15,17 @@ function createService(overrides: Partial<WarrantyItemReferenceIcService> = {}):
 }
 
 describe('createWarrantyItemReferenceIcController', () => {
+  it('uses the legacy 500-row Reference IC page size', () => {
+    expect(createWarrantyItemReferenceIcState().pageSize).toBe(500)
+  })
+
   it('loads, tracks selection, and refreshes the main list after a successful create', async () => {
     const row = { ic_docno: 'IC-1', ic_itemno: '1', war_code: 'W1', war_des: 'One' }
     const service = createService({ read: vi.fn(async () => ({ items: [row], total: 1 })) })
     const refreshList = vi.fn(async () => undefined)
+    const onCreateSettled = vi.fn()
     const state = createWarrantyItemReferenceIcState()
-    const controller = createWarrantyItemReferenceIcController({ service, refreshList }, state)
+    const controller = createWarrantyItemReferenceIcController({ service, refreshList, onCreateSettled }, state)
 
     await expect(controller.open()).resolves.toEqual({ status: 'loaded' })
     expect(state.items).toEqual([row])
@@ -30,6 +35,25 @@ describe('createWarrantyItemReferenceIcController', () => {
     expect(refreshList).toHaveBeenCalledTimes(1)
     expect(state.status).toBe('created')
     expect(state.selectedItems).toEqual([])
+    expect(onCreateSettled).toHaveBeenCalledTimes(1)
+  })
+
+  it('signals the page to settle the modal after a failed create', async () => {
+    const row = { ic_docno: 'IC-1', ic_itemno: '1' }
+    const service = createService({ create: vi.fn(async () => { throw new Error('create failed') }) })
+    const onCreateSettled = vi.fn()
+    const state = createWarrantyItemReferenceIcState()
+    const controller = createWarrantyItemReferenceIcController({
+      service,
+      refreshList: vi.fn(async () => undefined),
+      onCreateSettled,
+    }, state)
+
+    controller.toggleSelection(row)
+    await expect(controller.createSelected()).resolves.toEqual({ status: 'create-failed', error: expect.any(Error) })
+    expect(state.status).toBe('create-failed')
+    expect(state.selectedItems).toEqual([row])
+    expect(onCreateSettled).toHaveBeenCalledTimes(1)
   })
 
   it('keeps selection and reports a retryable load failure', async () => {

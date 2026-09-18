@@ -1,10 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import moment from 'moment'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   WARRANTY_ITEM_GRID_PROPS,
   createWarrantyItemGridFields,
-  formatWarrantyItemAuditDate,
+  createWarrantyItemGridRows,
 } from '../../../app/features/warranty-item/list/warranty-item-grid'
+import { formatDateFilter } from '../../../app/vue-filters'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('Warranty Item grid contract', () => {
   it('preserves the legacy sortable/saved-column identity and audit fields', () => {
@@ -21,8 +27,32 @@ describe('Warranty Item grid contract', () => {
     expect(createWarrantyItemGridFields(false).map(field => field[0])).not.toContain('action_edit')
   })
 
-  it('formats audit dates as the legacy DD/MM/YYYY HH:mm:ss display', () => {
-    expect(formatWarrantyItemAuditDate('2026-09-01T04:05:06')).toBe('01/09/2026 04:05:06')
-    expect(formatWarrantyItemAuditDate(null)).toBe('')
+  it('passes raw audit timestamps to the shared datetime renderer', () => {
+    const rawTimestamp = '2026-09-01T04:05:06'
+    const rows = createWarrantyItemGridRows([{
+      code: 'W1',
+      name: 'One',
+      groupName: 'Default',
+      durationLabel: '1 year',
+      lifetime: false,
+      active: true,
+      addedBy: 'user-1',
+      addedAt: rawTimestamp,
+      editedBy: 'user-2',
+      editedAt: rawTimestamp,
+      deleteContext: null,
+    }], 1, 500)
+    const firstRow = rows[0]!
+
+    vi.stubGlobal('$xt', {
+      formatDate(value: string, format: string) {
+        const parsed = new Date(value)
+        return Number.isNaN(parsed.getTime()) ? '' : moment(parsed).format(format)
+      },
+    })
+
+    expect(firstRow.add_dt).toBe(rawTimestamp)
+    expect(formatDateFilter(firstRow.add_dt, 'DD/MM/YYYY HH:mm:ss')).toBe('01/09/2026 04:05:06')
+    expect(formatDateFilter('01/09/2026 04:05:06', 'DD/MM/YYYY HH:mm:ss')).not.toBe('01/09/2026 04:05:06')
   })
 })

@@ -53,6 +53,7 @@ import {
   type WarrantyItemReferenceIcController,
 } from './reference-ic/warranty-item-reference-ic-state'
 import { createWarrantyItemReferenceIcService } from './reference-ic/warranty-item-reference-ic-service'
+import { formatWarrantyItemReferenceDate } from './reference-ic/warranty-item-reference-ic-display'
 import { createWarrantyItemExportService } from './export/warranty-item-export-service'
 import { createWarrantyItemDownloadCapability } from './export/warranty-item-download-capability'
 import {
@@ -313,6 +314,7 @@ function connectController(): void {
     referenceIcController.value = createWarrantyItemReferenceIcController({
       service: createdReferenceIcService,
       refreshList,
+      onCreateSettled: closeReferenceIc,
       getExcluded: () => state.items.flatMap(item => item.referenceIcDocument || item.referenceIcItem
         ? [{ ic_docno: item.referenceIcDocument, ic_itemno: item.referenceIcItem }]
         : []),
@@ -878,8 +880,8 @@ onBeforeUnmount(() => {
                       <td>{{ row.war_code ?? '—' }}</td>
                       <td>{{ row.war_des ?? '—' }}</td>
                       <td>{{ row.cust_name ?? '—' }}</td>
-                      <td>{{ row.war_date_start ?? '—' }}</td>
-                      <td>{{ row.war_date_end ?? '—' }}</td>
+                      <td>{{ formatWarrantyItemReferenceDate(row.war_date_start) }}</td>
+                      <td>{{ formatWarrantyItemReferenceDate(row.war_date_end) }}</td>
                       <td>{{ row.ic_docno ?? '—' }}</td>
                       <td>{{ row.ic_itemno ?? '—' }}</td>
                     </tr>

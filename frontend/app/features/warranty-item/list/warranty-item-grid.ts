@@ -26,18 +26,6 @@ export const WARRANTY_ITEM_GRID_PROPS = {
   page_name: 'v_csm_mas_002',
 } as const
 
-function twoDigits(value: number): string {
-  return String(value).padStart(2, '0')
-}
-
-export function formatWarrantyItemAuditDate(value: string | null | undefined): string {
-  if (!value) return ''
-  if (/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}$/.test(value)) return value
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return `${twoDigits(date.getDate())}/${twoDigits(date.getMonth() + 1)}/${date.getFullYear()} ${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}:${twoDigits(date.getSeconds())}`
-}
-
 export function createWarrantyItemGridFields(canEdit: boolean): WarrantyItemGridField[] {
   const fields: WarrantyItemGridField[] = [
     ['item', 'No.', 'text', { width: 100, align: 'center' }],
@@ -75,9 +63,9 @@ export function createWarrantyItemGridRows(items: readonly WarrantyItemListItem[
     lifetime: item.lifetime ? 'Y' : 'N',
     active: item.active ? 'Y' : 'N',
     add_user: item.addedBy ?? '',
-    add_dt: formatWarrantyItemAuditDate(item.addedAt),
+    add_dt: item.addedAt ?? '',
     edit_user: item.editedBy ?? '',
-    edit_dt: formatWarrantyItemAuditDate(item.editedAt),
+    edit_dt: item.editedAt ?? '',
     source: item,
   }))
 }
