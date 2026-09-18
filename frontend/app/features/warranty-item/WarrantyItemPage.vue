@@ -50,10 +50,12 @@ import {
 import {
   createWarrantyItemReferenceIcController,
   createWarrantyItemReferenceIcState,
+  type WarrantyItemReferenceIcCreateResult,
   type WarrantyItemReferenceIcController,
 } from './reference-ic/warranty-item-reference-ic-state'
 import { createWarrantyItemReferenceIcService } from './reference-ic/warranty-item-reference-ic-service'
 import { formatWarrantyItemReferenceDate } from './reference-ic/warranty-item-reference-ic-display'
+import { notifyWarrantyItemReferenceIcOutcome } from './reference-ic/warranty-item-reference-ic-outcome'
 import { createWarrantyItemExportService } from './export/warranty-item-export-service'
 import { createWarrantyItemDownloadCapability } from './export/warranty-item-download-capability'
 import {
@@ -314,7 +316,11 @@ function connectController(): void {
     referenceIcController.value = createWarrantyItemReferenceIcController({
       service: createdReferenceIcService,
       refreshList,
-      onCreateSettled: closeReferenceIc,
+      onCreateSettled: (result: WarrantyItemReferenceIcCreateResult) => {
+        const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+        notifyWarrantyItemReferenceIcOutcome(result, globals.$msg)
+        closeReferenceIc()
+      },
       getExcluded: () => state.items.flatMap(item => item.referenceIcDocument || item.referenceIcItem
         ? [{ ic_docno: item.referenceIcDocument, ic_itemno: item.referenceIcItem }]
         : []),

@@ -18,11 +18,15 @@ export interface WarrantyItemReferenceIcState {
   error: Error | null
 }
 
+export type WarrantyItemReferenceIcCreateResult =
+  | { status: 'created' }
+  | { status: 'create-failed', error: Error }
+
 export interface WarrantyItemReferenceIcControllerOptions {
   service: WarrantyItemReferenceIcService
   refreshList(): Promise<void>
   getExcluded?: () => readonly WarrantyItemReferenceIcKey[]
-  onCreateSettled?: () => void
+  onCreateSettled?: (result: WarrantyItemReferenceIcCreateResult) => void
 }
 
 export interface WarrantyItemReferenceIcController {
@@ -32,7 +36,7 @@ export interface WarrantyItemReferenceIcController {
   retry(): Promise<{ status: 'loaded' } | { status: 'load-failed', error: Error }>
   toggleSelection(row: WarrantyItemReferenceIcRow): void
   toggleAll(checked: boolean): void
-  createSelected(): Promise<{ status: 'created' } | { status: 'create-failed', error: Error }>
+  createSelected(): Promise<WarrantyItemReferenceIcCreateResult>
   reset(): void
 }
 
@@ -107,7 +111,7 @@ export function createWarrantyItemReferenceIcController(
     state.selectedItems = checked ? [...state.items] : []
   }
 
-  async function createSelected(): Promise<{ status: 'created' } | { status: 'create-failed', error: Error }> {
+  async function createSelected(): Promise<WarrantyItemReferenceIcCreateResult> {
     if (state.selectedItems.length === 0) {
       const error = new Error('Select at least one Reference IC row.')
       state.status = 'create-failed'
@@ -116,19 +120,22 @@ export function createWarrantyItemReferenceIcController(
     }
     state.status = 'creating'
     state.error = null
+    let outcome: WarrantyItemReferenceIcCreateResult | null = null
     try {
       await options.service.create(state.selectedItems)
       await options.refreshList()
       state.status = 'created'
       state.selectedItems = []
-      return { status: 'created' }
+      outcome = { status: 'created' }
+      return outcome
     } catch (reason: unknown) {
       const error = asError(reason, 'Reference IC create failed.')
       state.status = 'create-failed'
       state.error = error
-      return { status: 'create-failed', error }
+      outcome = { status: 'create-failed', error }
+      return outcome
     } finally {
-      options.onCreateSettled?.()
+      if (outcome) options.onCreateSettled?.(outcome)
     }
   }
 

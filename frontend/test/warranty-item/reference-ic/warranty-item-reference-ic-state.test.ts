@@ -56,6 +56,52 @@ describe('createWarrantyItemReferenceIcController', () => {
     expect(onCreateSettled).toHaveBeenCalledTimes(1)
   })
 
+  it('exposes the successful outcome before the settle callback resets the panel', async () => {
+    const row = { ic_docno: 'IC-1', ic_itemno: '1' }
+    const state = createWarrantyItemReferenceIcState()
+    let controller: ReturnType<typeof createWarrantyItemReferenceIcController>
+    let settledResult: unknown
+    let statusAtSettlement: string | undefined
+    controller = createWarrantyItemReferenceIcController({
+      service: createService(),
+      refreshList: vi.fn(async () => undefined),
+      onCreateSettled: result => {
+        settledResult = result
+        statusAtSettlement = state.status
+        controller.reset()
+      },
+    }, state)
+
+    controller.toggleSelection(row)
+    await expect(controller.createSelected()).resolves.toEqual({ status: 'created' })
+    expect(settledResult).toEqual({ status: 'created' })
+    expect(statusAtSettlement).toBe('created')
+    expect(state.status).toBe('idle')
+  })
+
+  it('exposes the failed outcome before the settle callback resets the panel', async () => {
+    const row = { ic_docno: 'IC-1', ic_itemno: '1' }
+    const state = createWarrantyItemReferenceIcState()
+    let controller: ReturnType<typeof createWarrantyItemReferenceIcController>
+    let settledResult: unknown
+    let statusAtSettlement: string | undefined
+    controller = createWarrantyItemReferenceIcController({
+      service: createService({ create: vi.fn(async () => { throw new Error('create failed') }) }),
+      refreshList: vi.fn(async () => undefined),
+      onCreateSettled: result => {
+        settledResult = result
+        statusAtSettlement = state.status
+        controller.reset()
+      },
+    }, state)
+
+    controller.toggleSelection(row)
+    await expect(controller.createSelected()).resolves.toEqual({ status: 'create-failed', error: expect.any(Error) })
+    expect(settledResult).toEqual({ status: 'create-failed', error: expect.objectContaining({ message: 'create failed' }) })
+    expect(statusAtSettlement).toBe('create-failed')
+    expect(state.status).toBe('idle')
+  })
+
   it('keeps selection and reports a retryable load failure', async () => {
     const service = createService({ read: vi.fn(async () => { throw new Error('Reference IC unavailable') }) })
     const state = createWarrantyItemReferenceIcState()
