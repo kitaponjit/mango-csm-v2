@@ -28,8 +28,8 @@ Do not add the `Website/` and `frontend/` pattern counts together when estimatin
 | Tree | Stack and role evidenced in the tree | Vue files | Route surface | Styling source | Validation state |
 |---|---|---:|---:|---|---|
 | `Website/` | Active legacy SPA: Vue 2.7, Vue Router 3, Vuex 3, Vite 5, ASP.NET host | 218 | 111 active route imports | AdminLTE/Bootstrap globals, `Content/*.css`, 7 component CSS files, SFC styles | Existing deployable application; browser validation remains manual |
-| `frontend/` | Bulk Nuxt 4/Vue 3 port mirroring the legacy component and route trees | 219 | 111 active route imports; 2 inactive duplicate error routes in `routes/spike.js` | Copied legacy vendor CSS plus one app CSS import and mirrored SFC/CSS files | `MIGRATION.md` says never installed or built; blocked Vue-2-only libraries remain |
-| `Nuxt/` | Independent governed first-slice target under `/csm-next/` | 6 | 3 file-based pages | `app/assets/css/main.css` with `--target-*` tokens and scoped page CSS | Vitest coverage exists; this inventory does not claim integration/UAT |
+| `frontend/` | Current Nuxt 4/Vue 3 runtime target mirroring the legacy component and route trees | 219 | 111 active route imports; 2 inactive duplicate error routes in `routes/spike.js` | Copied legacy vendor CSS plus one app CSS import and mirrored SFC/CSS files | Post-merge focused suites, typechecks, and production build pass; authenticated UAT remains external |
+| `Nuxt/` | Historical first-slice evidence retained under `/csm-next/` | 6 | 3 file-based pages | `app/assets/css/main.css` with `--target-*` tokens and scoped page CSS | History only; not the current runtime target |
 | **Total physical** | Three coexisting frontend trees | **443** | **111 mirrored legacy routes + 3 independent pages** | Three style systems | Transitional |
 
 Breakdown:
@@ -42,7 +42,9 @@ Breakdown:
 
 `Website/Scripts/App/Application/Components/**` and `frontend/app/Components/**` have the same 218 relative `.vue` paths. At this snapshot, 68 pairs are byte-identical and 150 differ because of Vue 3 migration edits or subsequent drift. Their layout-tag counts remain equal, so §§6–11 describe the logical legacy surface once and §12 records the mirror risk.
 
-**OPEN MIGRATION QUESTION:** repository governance identifies `Nuxt/` as the established target boundary, while `frontend/` describes itself as the Nuxt replacement and carries a full copied route/component tree. The owning team must decide whether `frontend/` supersedes, merges with, or is retired in favor of `Nuxt/`. Until then, neither target tree may be silently treated as the sole canonical frontend.
+The former target-ownership question is closed by repository governance: `frontend/` is the current
+runtime target, and `Nuxt/` is history-only. The two physical trees must still be kept distinct when
+counting files and interpreting this inventory.
 
 ## 3. Reproduction method
 
@@ -359,14 +361,14 @@ These are evidence-backed candidates, not authorization to delete code:
 - 150/218 pairs differ in content at this snapshot; differences include intentional Vue 3 changes and may also conceal drift.
 - All page-group shell/table/dialog/pager opening-tag counts currently match, so no broad layout generation has yet diverged.
 - `frontend/` preserves all 111 legacy routes. Its unused `routes/spike.js` is excluded from active counts.
-- Any layout fix made before target ownership is resolved must be assessed in both trees. Do not mechanically overwrite Vue 3 compatibility changes with Vue 2 source.
-- `frontend/MIGRATION.md` records unresolved Vue-2-only component packages, template-semantics checks, and the absence of a completed install/build. Source presence is not runtime parity.
+- Assess any legacy layout change against the current target behavior; do not mechanically overwrite Vue 3 compatibility changes with Vue 2 source.
+- `frontend/MIGRATION.md` records the port evidence and remaining caveats. The merged target has completed the focused suites, project typecheck, and production build; source presence alone is still not runtime or UAT evidence.
 
-### 12.2 Independent `Nuxt/` slice
+### 12.2 Historical `Nuxt/` slice
 
 - `app.vue` is a pass-through `<NuxtPage>` and does not yet provide a global application layout.
 - `TargetDialog` and `TargetState` are the only shared Vue UI primitives.
-- Manual is the strongest current reference for target page structure, state handling, table overflow, dialog use, localization, and responsive CSS.
+- Manual is the strongest historical reference for the first-slice page structure, state handling, table overflow, dialog use, localization, and responsive CSS.
 - Authentication follows target tokens and state handling but has page-local layout CSS.
 - Index remains scaffolding and must not be treated as a production pattern.
 
@@ -383,10 +385,11 @@ These are evidence-backed candidates, not authorization to delete code:
 
 ## 13. Current conclusion
 
-The repository does not have one frontend layout system. It has:
+The repository retains multiple physical frontend trees for compatibility and evidence, but current
+runtime ownership is explicit:
 
 1. a large Vue 2/AdminLTE system in `Website/`;
-2. a physical Vue 3/Nuxt mirror in `frontend/` that retains the same layouts and global CSS but is not build-verified; and
-3. a small independent Nuxt target slice with a semantic token and state/dialog foundation.
+2. the current Vue 3/Nuxt runtime target in `frontend/`, which mirrors the legacy routes and components; and
+3. the historical `Nuxt/` first-slice tree, which is not a current runtime target.
 
-The most reusable legacy structures are `re-page`, the customer shell, report-condition, `app-form-2`, ag-table, `modal-2`, and the primary pager. They are migration inputs, not target APIs. The target direction should preserve route/auth/business behavior while converging on the `--target-*` foundation, one action bar, one dialog contract, one pager, explicit table-selection rules, and shared loading/empty/error behavior.
+The most reusable legacy structures are `re-page`, the customer shell, report-condition, `app-form-2`, ag-table, `modal-2`, and the primary pager. They are migration inputs, not target APIs. The target direction should preserve route/auth/business behavior while converging on explicit target-owned action-bar, dialog, pager, table-selection, and loading/empty/error contracts.
