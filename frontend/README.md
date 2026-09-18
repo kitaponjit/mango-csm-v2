@@ -65,6 +65,23 @@ Re-run it whenever those files change.
 
 The site needs no ASP.NET; an application pool set to **No Managed Code** is enough.
 
+### Test on the local IIS
+
+`deploy/iis/Test-IisDeploy.ps1` does the steps above on this machine's IIS as a throwaway site
+(port 8081, folder `C:\inetpub\mango-csm-iis-test`), then checks deep links, content types, cache
+headers and that `web.config` is not downloadable. Build first in a normal terminal
+(`npm run sync:vendor`, `npm run generate`), then from the repo root in PowerShell **run as
+administrator**:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File frontend\deploy\iis\Test-IisDeploy.ps1
+powershell -ExecutionPolicy Bypass -File frontend\deploy\iis\Test-IisDeploy.ps1 -Remove
+```
+
+`-DataServer /service/` (or a full URL) sets `dataServer` in the deployed copy of `config.js`;
+`-TestOnly` runs only the checks and needs no admin rights. If the backend is on another host or
+port, its `cors_allowed_origins` must include the site's origin, or every page shows a 500.
+
 ## Deploy — Docker
 
 From the **repository root** (not `frontend/`):
