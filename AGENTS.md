@@ -85,6 +85,25 @@ For CSM migration work, keep the evidence and ownership boundaries explicit:
 - Use the existing local `MangoServiceNetCore` checkout as backend contract evidence when required. Keep machine-specific paths private and refer to it generically in committed documentation.
 - The durable CSM closeout record is [`docs/migrations/csm-stack-migration-closeout.md`](docs/migrations/csm-stack-migration-closeout.md); update it only when verified final-state facts change.
 
+### CSM dependency-boundary changes
+
+Do not introduce, replace, or consolidate repository-wide dependency wrappers solely because direct library usage exists.
+
+Before changing an established CSM compatibility boundary, establish:
+
+- the observable behavior that must be preserved;
+- the affected consumers;
+- deployment/runtime assumptions;
+- and the smallest verification needed for the requested change.
+
+Modern framework APIs do not automatically supersede working compatibility boundaries.
+
+Preserve verified behavior unless the task explicitly requires a change.
+
+Detailed architecture and change-trigger guidance:
+
+`docs/architecture/csm-runtime-dependency-boundaries.md`
+
 ## Engineering Rules
 
 - Inspect `git status` before editing and preserve existing user changes.
