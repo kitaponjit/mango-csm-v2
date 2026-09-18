@@ -2,9 +2,9 @@
 
 ## Status
 
-FUTURE WORK — FIRST-SLICE FOUNDATION IMPLEMENTED
+FUTURE WORK — HISTORICAL FIRST-SLICE FOUNDATION
 
-This is a documentation and discovery record captured from the frontend checkout on 2026-09-11. It does not remove SSO, change authentication behavior, or change the approved Nuxt first-slice architecture.
+This is a historical documentation and discovery record captured from the frontend checkout on 2026-09-11. It does not remove SSO or change authentication behavior. The first-slice architecture described here is historical; `frontend/` is the current runtime target, while `Nuxt/` and `/csm-next/` are historical evidence and route context only.
 
 The internal first-slice `SessionAdapter`, authenticated GET `ApiClient`, runtime configuration, and file capability were implemented through PR #4 and exercised by the manual route in PR #8. This does not close AUTH-1: backend/security confirmation of token provenance, validation, lifetime, rotation, revocation, and logout semantics remains required before production cutover. Customer authentication and confirmed provider-specific retirement also remain future work.
 
@@ -16,13 +16,16 @@ SSO will not be used in the target architecture.
 
 The target must preserve the authentication, authorization, session, logout, and customer-versus-internal behavior that the application still requires. SSO-specific redirects, callbacks, provider configuration, and token assumptions must be removed or replaced only after their ownership and server-side effects are confirmed.
 
-The current frontend migration boundary remains documented in [the first-slice ADR](./vue2-to-nuxt-first-slice-adr.md):
+During the first migration slice, the frontend boundary was documented in [the first-slice ADR](./vue2-to-nuxt-first-slice-adr.md):
 
 - Nuxt 4 with client-side rendering;
 - static artifact under the /csm-next/ route prefix;
 - first route v_csm_manual_list;
 - target-facing RuntimeConfig, SessionAdapter, ApiClient, LocalizationAdapter, and file capabilities;
 - no direct target use of legacy globals.
+
+These bullets preserve first-slice context only. They do not define the current runtime boundary;
+the current target is `frontend/`.
 
 SSO retirement is future work and does not automatically block creation of the Nuxt shell. The first slice does require the internal non-SSO session contract to remain available through the SessionAdapter.
 

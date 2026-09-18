@@ -2,13 +2,16 @@
 
 ## Status
 
-FUTURE WORK — FIRST-SLICE BASELINE IMPLEMENTED
+FUTURE WORK — HISTORICAL FIRST-SLICE BASELINE
 
-This is a migration-oriented UI audit captured from representative frontend sources on 2026-09-11. It documents the baseline for future Nuxt development. It does not redesign a page, change CSS, or change application behavior.
+This is a migration-oriented UI audit captured from representative frontend sources on 2026-09-11. It documents the baseline considered during the former first-slice Nuxt work. It does not redesign a page, change CSS, or change application behavior.
 
 The first-slice semantic tokens and feedback/dialog primitives were implemented through PR #6, and the target-native manual route was implemented through PR #8 with local automated and browser acceptance. Product/design approval, live-data UAT, wider shared primitives, responsive exception policy, and legacy visual-debt retirement remain future work.
 
-The approved first-slice route remains v_csm_manual_list under /csm-next/. The route architecture and artifact boundary are documented in [the first-slice ADR](./vue2-to-nuxt-first-slice-adr.md).
+During the first migration slice, the approved route was v_csm_manual_list under `/csm-next/`.
+That route structure is historical context only; the current runtime target is `frontend/`, and
+`Nuxt/` plus `/csm-next/` do not define current runtime ownership. The route architecture and
+artifact boundary are documented in [the first-slice ADR](./vue2-to-nuxt-first-slice-adr.md).
 
 ## Problem Statement
 
