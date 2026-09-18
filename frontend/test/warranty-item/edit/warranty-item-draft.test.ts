@@ -138,7 +138,7 @@ describe('Warranty Item draft boundary', () => {
     ])
   })
 
-  it('reports required and structural validation without asserting unresolved domain ranges', () => {
+  it('reports only the observed legacy-compatible length validation', () => {
     const errors = validateWarrantyItemDraft({
       ...draft,
       code: ' '.repeat(LEGACY_UI_WARRANTY_CODE_MAX + 1),
@@ -146,7 +146,7 @@ describe('Warranty Item draft boundary', () => {
       duration: { years: 1.5, months: Number.NaN, days: -3 },
     })
 
-    expect(errors.map(error => error.field)).toEqual(['code', 'name', 'duration.years', 'duration.months'])
+    expect(errors.map(error => error.field)).toEqual(['code'])
     expect(errors.every(error => error.category === 'validation')).toBe(true)
   })
 

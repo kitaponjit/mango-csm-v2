@@ -190,11 +190,11 @@ describe('WarrantyItemEditService', () => {
     })
   })
 
-  it('does not send invalid drafts to the backend', async () => {
+  it('allows legacy-accepted draft values to reach the backend', async () => {
     const transport = createTransport()
     const { service } = serviceWith(transport)
 
-    await expect(service.create({ ...validDraft, code: '' })).rejects.toMatchObject({ category: 'validation' })
-    expect(transport.postJson).not.toHaveBeenCalled()
+    await expect(service.create({ ...validDraft, code: '' })).resolves.toBe('WAR-001')
+    expect(transport.postJson).toHaveBeenCalledTimes(1)
   })
 })

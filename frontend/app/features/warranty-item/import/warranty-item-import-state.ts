@@ -1,6 +1,8 @@
 import {
   mapWarrantyItemImportRows,
+  DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING,
   WarrantyItemImportServiceError,
+  type WarrantyItemImportMapping,
   type WarrantyItemImportPreview,
   type WarrantyItemImportPreviewRow,
   type WarrantyItemImportService,
@@ -63,6 +65,7 @@ export interface WarrantyItemImportControllerOptions {
   service: WarrantyItemImportService
   refreshList(): Promise<void>
   canImport?: () => boolean
+  getMapping?: () => WarrantyItemImportMapping
 }
 
 export interface WarrantyItemImportController {
@@ -238,7 +241,10 @@ export function createWarrantyItemImportController(
     state.error = null
 
     try {
-      await options.service.importRows(mapWarrantyItemImportRows(rows))
+      await options.service.importRows(mapWarrantyItemImportRows(
+        rows,
+        options.getMapping?.() ?? DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING,
+      ))
       if (!isCurrent(requestGeneration)) {
         return { status: 'superseded' }
       }

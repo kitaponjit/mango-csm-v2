@@ -9,8 +9,8 @@ describe('WarrantyItemPage Create/Edit/Delete source contract', () => {
   it('renders Create only for editable access and wires list-row Edit by code through detail loading', () => {
     expect(source).toContain('v-if="access.canCreate"')
     expect(source).toContain('@click="startCreate"')
-    expect(source).toContain('@click="startEdit(item.code)"')
-    expect(source).toContain('startEdit(item.code)')
+    expect(source).toContain('@cell-clicked="onWarrantyItemGridCellClicked"')
+    expect(source).toContain('startEdit(event.data.source.code)')
     expect(source).toContain('createWarrantyItemFormController')
     expect(source).toContain('readWarrantyItemEditCompatibilitySnapshot')
   })
@@ -43,14 +43,14 @@ describe('WarrantyItemPage Create/Edit/Delete source contract', () => {
     expect(source).toContain('@click="retry"')
     expect(source).toMatch(/<button[^>]+:disabled="busy \|\| formPending[^"]*"[^>]+@click="retry"/s)
     expect(source).not.toContain(':disabled="busy || formPending || !controller" @click="retry"')
-    expect(source).not.toContain('Reference IC')
+    expect(source).toContain('Reference IC')
   })
 
   it('renders a guarded Delete action with explicit context and confirmation', () => {
     expect(source).toContain('createWarrantyItemDeleteService')
     expect(source).toContain('createWarrantyItemDeleteController')
     expect(source).toContain('deleteContext')
-    expect(source).toContain('@click="deleteItem(item)"')
+    expect(source).toContain('deleteItem(event.data.source)')
     expect(source).toContain('$msg.confirm')
     expect(source).toContain('formatWarrantyItemDeleteConfirmation')
     expect(source).toContain('retryDeleteRefresh')
@@ -67,7 +67,7 @@ describe('WarrantyItemPage Create/Edit/Delete source contract', () => {
     expect(source).toContain('getWarrantyItemEditCompatibilityPolicy(editCompatibility.value).canEdit')
     expect(source).toContain('editCompatibility.value = snapshot')
     expect(source).toContain('const canEditNow = computed')
-    expect(source).toContain('v-if="canEditNow"')
+    expect(source).toContain('createWarrantyItemGridFields(canEditNow.value)')
   })
 
   it('refreshes dynamic compatibility at mount/focus/visibility and removes listeners on unmount', () => {

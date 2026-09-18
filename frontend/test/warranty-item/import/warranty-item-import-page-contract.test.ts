@@ -12,9 +12,10 @@ describe('WarrantyItemPage Import source contract', () => {
     expect(source).not.toContain('WarrantyItemImport_Master')
   })
 
-  it('advertises only one .xlsx file and renders preview before explicit Import', () => {
-    expect(source).toContain('accept=".xlsx"')
-    expect(source).not.toContain('accept=".xls, .xlsx"')
+  it('advertises legacy .xls/.xlsx files and renders preview before explicit Import', () => {
+    expect(source).toContain('accept=".xls,.xlsx"')
+    expect(source).not.toContain('accept=".xlsx"')
+    expect(source).toContain('Template_List_Warranty')
     expect(source).not.toContain('multiple')
     expect(source).toContain('importState.status === \'ready-to-import\'')
     expect(source).toContain('@click="importRows"')

@@ -30,6 +30,8 @@ export interface WarrantyItemListItem {
   addedAt: string | null
   editedBy: string | null
   editedAt: string | null
+  referenceIcDocument?: string | null
+  referenceIcItem?: string | null
   /** Non-presentational context retained only for the guarded Delete integration. */
   deleteContext: WarrantyItemDeleteContext | null
 }
@@ -54,6 +56,8 @@ interface RawWarrantyItemRow {
   add_dt: string | null
   edit_user: string | null
   edit_dt: string | null
+  ic_docno?: string | null
+  ic_itemno?: string | null
   acct_no?: string | null
   pre_event?: string | null
   pre_event2?: string | null
@@ -129,6 +133,12 @@ function normalizeRow(rawRow: unknown): WarrantyItemListItem {
     addedAt: rawRow.add_dt,
     editedBy: rawRow.edit_user,
     editedAt: rawRow.edit_dt,
+    ...(rawRow.ic_docno !== undefined || rawRow.ic_itemno !== undefined
+      ? {
+          referenceIcDocument: rawRow.ic_docno ?? null,
+          referenceIcItem: rawRow.ic_itemno ?? null,
+        }
+      : {}),
     deleteContext: normalizeDeleteContext(rawRow),
   }
 }

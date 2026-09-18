@@ -52,7 +52,7 @@ describe('createWarrantyItemImportService', () => {
     expect((form as FormData).get('file')).toMatchObject({ name: 'warranty.xlsx' })
   })
 
-  it.each(['warranty.xls', 'warranty.csv', 'warranty'])('rejects a non-.xlsx file before upload: %s', async name => {
+  it.each(['warranty.csv', 'warranty'])('rejects a non-workbook file before upload: %s', async name => {
     const postForm = vi.fn()
     const service = createWarrantyItemImportService(createTransport({ postForm }))
 
@@ -60,6 +60,18 @@ describe('createWarrantyItemImportService', () => {
       category: 'selection',
     })
     expect(postForm).not.toHaveBeenCalled()
+  })
+
+  it.each(['warranty.xls', 'warranty.xlsx'])('uploads a legacy-supported workbook: %s', async name => {
+    const postForm = vi.fn().mockResolvedValue({
+      success: true,
+      error: '',
+      data: { data: [], total: 0 },
+    })
+    const service = createWarrantyItemImportService(createTransport({ postForm }))
+
+    await expect(service.upload(createFile(name))).resolves.toMatchObject({ rows: [] })
+    expect(postForm).toHaveBeenCalledOnce()
   })
 
   it('normalizes the parser response into typed positional preview columns and ignores column I in the DTO', async () => {
@@ -98,7 +110,7 @@ describe('createWarrantyItemImportService', () => {
       war_code: 'WAR-001',
       war_des: 'Premium',
       type_code: 'WORK',
-      tot_date: 7,
+      tot_date: '7',
       tot_month: 2,
       tot_year: 1,
       lifetime: 'Y',
@@ -106,7 +118,7 @@ describe('createWarrantyItemImportService', () => {
       vendor: 'Vendor',
       war_date_start: '01/02/2026',
       war_date_end: '28/02/2026',
-      active: 'Y',
+      active: ' y ',
     }])
     expect(mapped[0]).not.toHaveProperty('material_name')
     expect(mapped[0]).not.toHaveProperty('I')
@@ -116,17 +128,40 @@ describe('createWarrantyItemImportService', () => {
     expect(mapWarrantyItemImportRows([previewRow({ A: '', B: 'Blank row', M: 'Y' })])).toEqual([{
       war_code: '',
       war_des: 'Blank row',
-      type_code: '',
-      tot_date: 0,
-      tot_month: 0,
-      tot_year: 0,
+      type_code: null,
+      tot_date: null,
+      tot_month: null,
+      tot_year: null,
       lifetime: null,
-      itemcode: '',
+      itemcode: null,
       vendor: null,
       war_date_start: null,
       war_date_end: null,
       active: 'Y',
     }])
+  })
+
+  it('maps through a caller-provided legacy mapping without coercion', () => {
+    const row = previewRow({ A: 'code', B: 'name', D: 'not-an-integer', M: ' y ' })
+
+    expect(mapWarrantyItemImportRows([row], {
+      war_code: 'A',
+      war_des: 'B',
+      type_code: 'A',
+      tot_date: 'D',
+      tot_month: 'A',
+      tot_year: 'A',
+      lifetime: 'A',
+      itemcode: 'A',
+      vendor: 'A',
+      war_date_start: 'A',
+      war_date_end: 'A',
+      active: 'M',
+    })).toEqual([expect.objectContaining({
+      war_code: 'code',
+      tot_date: 'not-an-integer',
+      active: ' y ',
+    })])
   })
 
   it('maps vendor and dates without pretending the frontend controls existing-row persistence asymmetry', () => {

@@ -16,6 +16,11 @@ import {
   type WarrantyItemListController,
 } from './list/warranty-item-list-state'
 import type { WarrantyItemListItem } from './list/warranty-item-list-service'
+import {
+  createWarrantyItemGridFields,
+  createWarrantyItemGridRows,
+  type WarrantyItemGridRow,
+} from './list/warranty-item-grid'
 import { getWarrantyItemPagePolicy } from './page-policy'
 import { readWarrantyItemAccessSnapshot } from './runtime/access-snapshot'
 import { getWarrantyItemEditCompatibilityPolicy, readWarrantyItemEditCompatibilitySnapshot, type WarrantyItemEditCompatibilitySnapshot } from './runtime/edit-compatibility'
@@ -25,7 +30,29 @@ import {
   createWarrantyItemImportState,
   type WarrantyItemImportController,
 } from './import/warranty-item-import-state'
-import { createWarrantyItemImportService, type WarrantyItemImportColumn } from './import/warranty-item-import-service'
+import {
+  createWarrantyItemImportService,
+  DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING,
+  type WarrantyItemImportColumn,
+  type WarrantyItemImportMapping,
+  type WarrantyItemImportService,
+} from './import/warranty-item-import-service'
+import {
+  createWarrantyItemImportAllController,
+  createWarrantyItemImportAllState,
+  type WarrantyItemImportAllController,
+} from './import/warranty-item-import-all-state'
+import {
+  createWarrantyItemImportAllService,
+  DEFAULT_WARRANTY_ITEM_IMPORT_ALL_MAPPING,
+  type WarrantyItemImportAllMapping,
+} from './import/warranty-item-import-all-service'
+import {
+  createWarrantyItemReferenceIcController,
+  createWarrantyItemReferenceIcState,
+  type WarrantyItemReferenceIcController,
+} from './reference-ic/warranty-item-reference-ic-state'
+import { createWarrantyItemReferenceIcService } from './reference-ic/warranty-item-reference-ic-service'
 import { createWarrantyItemExportService } from './export/warranty-item-export-service'
 import { createWarrantyItemDownloadCapability } from './export/warranty-item-download-capability'
 import {
@@ -50,10 +77,26 @@ const formState = reactive(createWarrantyItemFormState())
 const formController = shallowRef<WarrantyItemFormController | null>(null)
 const importState = reactive(createWarrantyItemImportState())
 const importController = shallowRef<WarrantyItemImportController | null>(null)
+const importAllState = reactive(createWarrantyItemImportAllState())
+const importAllController = shallowRef<WarrantyItemImportAllController | null>(null)
+const referenceIcState = reactive(createWarrantyItemReferenceIcState())
+const referenceIcController = shallowRef<WarrantyItemReferenceIcController | null>(null)
+interface WarrantyItemGridApi {
+  createHeaderFromArray(fields: unknown[]): unknown[]
+  setHeader(header: unknown[]): void
+  setDisplay(rows: WarrantyItemGridRow[]): void
+}
+const warrantyItemGrid = shallowRef<WarrantyItemGridApi | null>(null)
+const warrantyItemGridReady = ref(false)
+const warrantyItemGridSortModel = ref<unknown[]>([])
 const exportState = reactive(createWarrantyItemExportState())
 const exportController = shallowRef<WarrantyItemExportController | null>(null)
 const importFileInput = ref<HTMLInputElement | null>(null)
 const importOpen = ref(false)
+const importAllOpen = ref(false)
+const referenceIcOpen = ref(false)
+const importTemplatePending = ref(false)
+const importAllTemplatePending = ref(false)
 const materialSearchText = ref('')
 const setupError = ref<Error | null>(null)
 const busy = computed(() => state.status === 'initial-loading' || state.status === 'refreshing')
@@ -62,6 +105,8 @@ const pageNumbers = computed(() => getWarrantyItemPageNumbers(state.maxPage))
 const formOpen = computed(() => formState.mode !== 'closed' && Boolean(formState.draft))
 const deletePending = computed(() => deleteState.pending)
 const importPending = computed(() => importState.uploadPending || importState.importPending || importState.refreshPending)
+const importAllPending = computed(() => importAllState.uploadPending || importAllState.importPending || importAllState.refreshPending)
+const referenceIcPending = computed(() => referenceIcState.status === 'loading' || referenceIcState.status === 'creating')
 const exportPending = computed(() => exportState.pending)
 const formPending = computed(() => formState.detailPending
   || formState.groupsPending
@@ -69,7 +114,59 @@ const formPending = computed(() => formState.detailPending
   || formState.savePending
   || deletePending.value
   || importPending.value
+  || importTemplatePending.value
+  || importAllPending.value
+  || importAllTemplatePending.value
+  || referenceIcPending.value
   || exportPending.value)
+
+const importMapping = reactive<WarrantyItemImportMapping>({ ...DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING })
+const importMappingFields: ReadonlyArray<{ key: keyof WarrantyItemImportMapping, label: string }> = [
+  { key: 'war_code', label: 'Warranty Code' },
+  { key: 'war_des', label: 'Warranty Name' },
+  { key: 'type_code', label: 'Work Type' },
+  { key: 'tot_date', label: 'Warranty Day' },
+  { key: 'tot_month', label: 'Warranty Month' },
+  { key: 'tot_year', label: 'Warranty Year' },
+  { key: 'lifetime', label: 'Lifetime' },
+  { key: 'itemcode', label: 'Material Code' },
+  { key: 'vendor', label: 'Vendor' },
+  { key: 'war_date_start', label: 'Start Date' },
+  { key: 'war_date_end', label: 'End Date' },
+  { key: 'active', label: 'Active' },
+]
+const importMappingColumns: WarrantyItemImportColumn[] = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+]
+const importAllMapping = reactive<WarrantyItemImportAllMapping>({ ...DEFAULT_WARRANTY_ITEM_IMPORT_ALL_MAPPING })
+const importAllMappingFields: ReadonlyArray<{ key: keyof WarrantyItemImportAllMapping, label: string }> = [
+  { key: 'pre_event', label: 'Pre Event' },
+  { key: 'loccode', label: 'Location Code' },
+  { key: 'locname', label: 'Location Name' },
+  { key: 'war_code', label: 'Warranty Code' },
+  { key: 'war_des', label: 'Warranty Name' },
+  { key: 'type_code', label: 'Work Type' },
+  { key: 'itemcode', label: 'Material Code' },
+  { key: 'tot_date', label: 'Warranty Day' },
+  { key: 'tot_month', label: 'Warranty Month' },
+  { key: 'tot_year', label: 'Warranty Year' },
+  { key: 'lifetime', label: 'Lifetime' },
+  { key: 'itemname_other', label: 'Other Material Name' },
+  { key: 'serial_number', label: 'Serial Number' },
+  { key: 'startdate', label: 'Start Date' },
+  { key: 'enddate', label: 'End Date' },
+  { key: 'vendor', label: 'Vendor' },
+  { key: 'vendor_start_dt', label: 'Vendor Start Date' },
+  { key: 'vendor_end_dt', label: 'Vendor End Date' },
+  { key: 'vendor_remark', label: 'Vendor Remark' },
+  { key: 'remark', label: 'Remark' },
+  { key: 'active_row', label: 'Active Row' },
+  { key: 'active', label: 'Active' },
+]
+const importAllMappingColumns: WarrantyItemImportColumn[] = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+]
 
 const importPreviewColumns: ReadonlyArray<{ key: WarrantyItemImportColumn, label: string }> = [
   { key: 'A', label: 'Warranty Code' },
@@ -89,8 +186,12 @@ const importPreviewColumns: ReadonlyArray<{ key: WarrantyItemImportColumn, label
 
 interface WarrantyItemRuntimeGlobals {
   auth?: unknown
-  store?: { state?: { configData?: unknown } }
-  $msg?: { confirm?: (message: string) => Promise<unknown> | unknown }
+  store?: { state?: { configData?: unknown, maincomp?: unknown } }
+  ui?: Record<string, unknown>
+  $msg?: {
+    confirm?: (message: string) => Promise<unknown> | unknown
+    alert?: (title: string, message: string, type: string) => unknown
+  }
 }
 
 function readCurrentEditCompatibility(): WarrantyItemEditCompatibilitySnapshot {
@@ -108,6 +209,29 @@ const canEditNow = computed(() => access.canCreate
   && typeof editCompatibility.value.isAdmin === 'boolean'
   && getWarrantyItemEditCompatibilityPolicy(editCompatibility.value).canEdit)
 
+function readReferenceIcCost(): string | null {
+  const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+  const maincomp = globals.store?.state?.maincomp
+  if (typeof maincomp !== 'object' || maincomp === null || Array.isArray(maincomp)) return null
+  const iccost = (maincomp as Record<string, unknown>).iccost
+  if (iccost === '3') return '3'
+  return typeof iccost === 'string' ? iccost : null
+}
+
+const referenceIcAvailable = computed(() => access.canCreate && readReferenceIcCost() === '3')
+const referenceIcMaxPage = computed(() => Math.max(1, Math.ceil(referenceIcState.total / referenceIcState.pageSize)))
+const referenceIcAllSelected = computed(() => referenceIcState.items.length > 0
+  && referenceIcState.items.every(item => referenceIcState.selectedItems.some(selected => (
+    selected.ic_docno ?? ''
+  ) === (item.ic_docno ?? '') && (selected.ic_itemno ?? '') === (item.ic_itemno ?? ''))))
+const warrantyItemGridRows = computed(() => createWarrantyItemGridRows(state.items, state.query.page, state.query.pageSize))
+
+function warrantyItemUi(key: string, fallback: string): string {
+  const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+  const value = globals.ui?.[key]
+  return typeof value === 'string' && value.trim() !== '' ? value : fallback
+}
+
 async function refreshList(): Promise<void> {
   if (!controller.value) {
     throw new Error('Warranty Item list service is unavailable.')
@@ -117,6 +241,9 @@ async function refreshList(): Promise<void> {
 
 let formOptions: WarrantyItemFormControllerOptions | null = null
 let deleteOptions: WarrantyItemDeleteControllerOptions | null = null
+let importService: WarrantyItemImportService | null = null
+const importDownload = createWarrantyItemDownloadCapability()
+const importAllDownload = createWarrantyItemDownloadCapability()
 
 async function confirmDelete(target: { code: string, name: string }): Promise<boolean> {
   const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
@@ -141,7 +268,10 @@ function connectController(): void {
     const listService = createWarrantyItemListService(transport)
     const editService = createWarrantyItemEditService(transport)
     const deleteService = createWarrantyItemDeleteService(transport)
-    const importService = createWarrantyItemImportService(transport)
+    const createdImportService = createWarrantyItemImportService(transport)
+    const createdImportAllService = createWarrantyItemImportAllService(transport)
+    const createdReferenceIcService = createWarrantyItemReferenceIcService(transport)
+    importService = createdImportService
     const exportService = createWarrantyItemExportService(transport)
     const exportDownload = createWarrantyItemDownloadCapability()
     const accessSnapshot = readWarrantyItemAccessSnapshot()
@@ -169,10 +299,24 @@ function connectController(): void {
       formController.value = null
     }
     importController.value = createWarrantyItemImportController({
-      service: importService,
+      service: createdImportService,
       canImport: () => access.canCreate,
       refreshList,
+      getMapping: () => ({ ...importMapping }),
     }, importState)
+    importAllController.value = createWarrantyItemImportAllController({
+      service: createdImportAllService,
+      canImport: () => access.canCreate,
+      refreshList,
+      getMapping: () => ({ ...importAllMapping }),
+    }, importAllState)
+    referenceIcController.value = createWarrantyItemReferenceIcController({
+      service: createdReferenceIcService,
+      refreshList,
+      getExcluded: () => state.items.flatMap(item => item.referenceIcDocument || item.referenceIcItem
+        ? [{ ic_docno: item.referenceIcDocument, ic_itemno: item.referenceIcItem }]
+        : []),
+    }, referenceIcState)
     exportController.value = createWarrantyItemExportController({
       service: exportService,
       download: exportDownload,
@@ -183,6 +327,8 @@ function connectController(): void {
     state.error = null
     formState.error = null
     importState.error = null
+    importAllState.error = null
+    referenceIcState.error = null
     exportState.error = null
   } catch (reason: unknown) {
     setupError.value = reason instanceof Error ? reason : new Error('Warranty Item service is unavailable.')
@@ -190,11 +336,53 @@ function connectController(): void {
     state.error = setupError.value
     formState.error = setupError.value
     importState.error = setupError.value
+    importAllState.error = setupError.value
+    referenceIcState.error = setupError.value
     exportState.error = setupError.value
   }
 }
 
 connectController()
+
+function configureWarrantyItemGridHeader(): void {
+  if (!warrantyItemGrid.value) return
+  warrantyItemGrid.value.setHeader(warrantyItemGrid.value.createHeaderFromArray(createWarrantyItemGridFields(canEditNow.value)))
+}
+
+function updateWarrantyItemGridDisplay(): void {
+  if (!warrantyItemGrid.value) return
+  warrantyItemGrid.value.setDisplay(warrantyItemGridRows.value)
+}
+
+function onWarrantyItemGridReady(): void {
+  warrantyItemGridReady.value = true
+  configureWarrantyItemGridHeader()
+  updateWarrantyItemGridDisplay()
+}
+
+function onWarrantyItemGridCellClicked(event: { col?: string, data?: WarrantyItemGridRow }): void {
+  if (!event.data) return
+  if (event.col === 'action_edit') {
+    void startEdit(event.data.source.code)
+  } else if (event.col === 'action_del') {
+    deleteItem(event.data.source)
+  }
+}
+
+function onWarrantyItemGridSortChanged(event: { model?: unknown[] }): void {
+  warrantyItemGridSortModel.value = event.model ?? []
+}
+
+watch(warrantyItemGridRows, () => {
+  if (warrantyItemGridReady.value) updateWarrantyItemGridDisplay()
+}, { flush: 'post' })
+
+watch(canEditNow, () => {
+  if (warrantyItemGridReady.value) {
+    configureWarrantyItemGridHeader()
+    updateWarrantyItemGridDisplay()
+  }
+}, { flush: 'post' })
 
 // Retained rows still belong to the last successful page if a later request fails.
 watch(() => state.status, status => {
@@ -275,14 +463,27 @@ function toggleLifetime(event: Event): void {
 }
 
 function openImport(): void {
+  Object.assign(importMapping, DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING)
   importController.value?.reset()
   importOpen.value = true
+}
+
+function openImportAll(): void {
+  Object.assign(importAllMapping, DEFAULT_WARRANTY_ITEM_IMPORT_ALL_MAPPING)
+  importAllController.value?.reset()
+  importAllOpen.value = true
 }
 
 function closeImport(): void {
   if (importPending.value) return
   importController.value?.reset()
   importOpen.value = false
+}
+
+function closeImportAll(): void {
+  if (importAllPending.value || importAllTemplatePending.value) return
+  importAllController.value?.reset()
+  importAllOpen.value = false
 }
 
 function selectImportFile(event: Event): void {
@@ -297,6 +498,105 @@ function importRows(): void {
 
 function retryImportRefresh(): void {
   void importController.value?.retryRefresh()
+}
+
+function selectImportAllFile(event: Event): void {
+  const input = event.target as HTMLInputElement
+  void importAllController.value?.upload(Array.from(input.files ?? []))
+  input.value = ''
+}
+
+function importAllRows(): void {
+  void importAllController.value?.import()
+}
+
+function retryImportAllRefresh(): void {
+  void importAllController.value?.retryRefresh()
+}
+
+function openReferenceIc(): void {
+  if (!referenceIcAvailable.value) return
+  referenceIcController.value?.reset()
+  referenceIcOpen.value = true
+  void referenceIcController.value?.open()
+}
+
+function closeReferenceIc(): void {
+  if (referenceIcPending.value) return
+  referenceIcController.value?.reset()
+  referenceIcOpen.value = false
+}
+
+function searchReferenceIc(): void {
+  void referenceIcController.value?.search()
+}
+
+function retryReferenceIc(): void {
+  void referenceIcController.value?.retry()
+}
+
+function goToReferenceIcPage(page: number): void {
+  if (!referenceIcController.value) return
+  referenceIcState.page = Math.min(Math.max(1, page), referenceIcMaxPage.value)
+  void referenceIcController.value.search()
+}
+
+function toggleReferenceIcRow(row: typeof referenceIcState.items[number]): void {
+  referenceIcController.value?.toggleSelection(row)
+}
+
+function toggleAllReferenceIc(event: Event): void {
+  referenceIcController.value?.toggleAll((event.target as HTMLInputElement).checked)
+}
+
+function createReferenceIcItems(): void {
+  void referenceIcController.value?.createSelected()
+}
+
+async function downloadStandardImportTemplate(): Promise<void> {
+  if (!importService?.getTemplateToken || importTemplatePending.value) return
+  const target = importDownload.reserve()
+  if (!target) return
+
+  importTemplatePending.value = true
+  try {
+    const token = await importService.getTemplateToken('Template_List_Warranty')
+    importDownload.navigate(target, token)
+  } catch (reason: unknown) {
+    importDownload.close(target)
+    const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+    globals.$msg?.alert?.(
+      'Warranty Item Import',
+      reason instanceof Error ? reason.message : 'Template download failed.',
+      'danger',
+    )
+  } finally {
+    importTemplatePending.value = false
+  }
+}
+
+async function downloadImportAllTemplate(): Promise<void> {
+  if (!importAllController.value || importAllTemplatePending.value) return
+  const target = importAllDownload.reserve()
+  if (!target) return
+
+  importAllTemplatePending.value = true
+  try {
+    const transport = createLegacyXtoolsTransport()
+    const service = createWarrantyItemImportAllService(transport)
+    const token = await service.getTemplateToken('Template_All_Warranty')
+    importAllDownload.navigate(target, token)
+  } catch (reason: unknown) {
+    importAllDownload.close(target)
+    const globals = globalThis as typeof globalThis & WarrantyItemRuntimeGlobals
+    globals.$msg?.alert?.(
+      'Warranty Item Import All',
+      reason instanceof Error ? reason.message : 'Template download failed.',
+      'danger',
+    )
+  } finally {
+    importAllTemplatePending.value = false
+  }
 }
 
 function exportWarrantyItems(): void {
@@ -385,9 +685,9 @@ onBeforeUnmount(() => {
                 </div>
                 <fieldset class="warranty-item-duration">
                   <legend>Warranty duration</legend>
-                  <label><input type="number" min="0" v-model.number="formState.draft.duration.years" :disabled="formPending || formState.draft.lifetime"> Years</label>
-                  <label><input type="number" min="0" v-model.number="formState.draft.duration.months" :disabled="formPending || formState.draft.lifetime"> Months</label>
-                  <label><input type="number" min="0" v-model.number="formState.draft.duration.days" :disabled="formPending || formState.draft.lifetime"> Days</label>
+                  <label><input type="number" step="any" v-model.number="formState.draft.duration.years" :disabled="formPending || formState.draft.lifetime"> Years</label>
+                  <label><input type="number" step="any" v-model.number="formState.draft.duration.months" :disabled="formPending || formState.draft.lifetime"> Months</label>
+                  <label><input type="number" step="any" v-model.number="formState.draft.duration.days" :disabled="formPending || formState.draft.lifetime"> Days</label>
                 </fieldset>
                 <div class="checkbox">
                   <label><input type="checkbox" :checked="formState.draft.lifetime" :disabled="formPending" @change="toggleLifetime"> Lifetime</label>
@@ -406,12 +706,14 @@ onBeforeUnmount(() => {
               <button type="button" class="btn btn-sm btn-instagram" :disabled="busy || formPending || !exportController" @click="exportWarrantyItems">Export</button>
               <button type="button" class="btn btn-sm bg-navy" :disabled="busy || formPending" @click="startCreate">Create</button>
               <button type="button" class="btn btn-sm btn-tumblr" :disabled="busy || formPending" @click="openImport">Import</button>
+              <button type="button" class="btn btn-sm btn-warning" :disabled="busy || formPending" @click="openImportAll">Import All Warranty</button>
+              <button v-if="referenceIcAvailable" type="button" class="btn btn-sm bg-purple" :disabled="busy || formPending" @click="openReferenceIc">Reference IC</button>
             </div>
             <section v-if="importOpen" class="warranty-item-import-panel" aria-labelledby="warranty-item-import-title">
               <div class="warranty-item-import-heading">
                 <div>
                   <h2 id="warranty-item-import-title">Import Warranty Items</h2>
-                  <p>Select one .xlsx workbook, review the parsed A–M rows, then explicitly import the batch.</p>
+                  <p>Select one .xls or .xlsx workbook, review the parsed A–M rows, then explicitly import the batch.</p>
                 </div>
                 <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeImport">Close</button>
               </div>
@@ -419,12 +721,21 @@ onBeforeUnmount(() => {
                 <input
                   ref="importFileInput"
                   type="file"
-                  accept=".xlsx"
+                  accept=".xls,.xlsx"
                   :disabled="formPending"
                   @change="selectImportFile"
                 >
-                <span v-if="importState.fileName">{{ importState.fileName }}</span>
-              </div>
+                 <span v-if="importState.fileName">{{ importState.fileName }}</span>
+               </div>
+               <div class="warranty-item-import-mapping">
+                 <div v-for="field in importMappingFields" :key="field.key" class="form-group">
+                   <label :for="`warranty-item-import-${field.key}`">{{ field.label }}</label>
+                   <select :id="`warranty-item-import-${field.key}`" v-model="importMapping[field.key]" class="form-control input-sm" :disabled="formPending">
+                     <option v-for="column in importMappingColumns" :key="column" :value="column">{{ column }}</option>
+                   </select>
+                 </div>
+               </div>
+               <button type="button" class="btn btn-sm btn-success" :disabled="formPending || !importService" @click="downloadStandardImportTemplate">Download Template_List_Warranty</button>
               <p v-if="importState.status === 'uploading'" role="status">Uploading and parsing workbook…</p>
               <p v-else-if="importState.status === 'ready-to-import'" role="status">Preview ready. Review the rows before importing.</p>
               <p v-else-if="importState.status === 'importing' || importState.status === 'refreshing-after-import'" role="status">{{ importState.status === 'importing' ? 'Importing Warranty Items…' : 'Refreshing Warranty Items…' }}</p>
@@ -457,16 +768,144 @@ onBeforeUnmount(() => {
                 <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeImport">Cancel</button>
               </div>
             </section>
+            <section
+              v-if="importAllOpen"
+              class="warranty-item-import-panel warranty-item-import-all-panel"
+              aria-labelledby="warranty-item-import-all-title"
+              data-persistence-endpoint="CSM/Master/WarrantyAutoImportData"
+            >
+              <div class="warranty-item-import-heading">
+                <div>
+                  <h2 id="warranty-item-import-all-title">Import All Warranty</h2>
+                  <p>Select one .xls or .xlsx workbook, review the parsed A–V rows, then explicitly import the batch.</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeImportAll">Close</button>
+              </div>
+              <div class="warranty-item-import-controls">
+                <input type="file" accept=".xls,.xlsx" :disabled="formPending" @change="selectImportAllFile">
+                <span v-if="importAllState.fileName">{{ importAllState.fileName }}</span>
+              </div>
+              <div class="warranty-item-import-mapping">
+                <div v-for="field in importAllMappingFields" :key="field.key" class="form-group">
+                  <label :for="`warranty-item-import-all-${field.key}`">{{ field.label }}</label>
+                  <select :id="`warranty-item-import-all-${field.key}`" v-model="importAllMapping[field.key]" class="form-control input-sm" :disabled="formPending">
+                    <option v-for="column in importAllMappingColumns" :key="column" :value="column">{{ column }}</option>
+                  </select>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-success" :disabled="formPending || !importAllController" @click="downloadImportAllTemplate">Download Template_All_Warranty</button>
+              <p v-if="importAllState.status === 'uploading'" role="status">Uploading and parsing Import All Warranty workbook…</p>
+              <p v-else-if="importAllState.status === 'ready-to-import'" role="status">Import All preview ready. Review the rows before importing.</p>
+              <p v-else-if="importAllState.status === 'importing' || importAllState.status === 'refreshing-after-import'" role="status">{{ importAllState.status === 'importing' ? 'Importing All Warranty Items…' : 'Refreshing Warranty Items…' }}</p>
+              <p v-else-if="importAllState.status === 'imported'" class="alert alert-success" role="status">Import All Warranty completed.</p>
+              <p v-if="importAllState.error" class="alert alert-danger" role="alert">{{ importAllState.error.message }}</p>
+              <p v-if="importAllState.status === 'refresh-failed-after-import'" class="alert alert-warning" role="status">
+                Import All succeeded, but the list refresh failed. Retry refresh without importing the batch again.
+              </p>
+              <button v-if="importAllState.status === 'refresh-failed-after-import'" type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="retryImportAllRefresh">Retry list refresh</button>
+              <div v-if="importAllState.rows.length" class="table-responsive warranty-item-import-preview">
+                <table class="table table-bordered table-striped">
+                  <caption>Import All preview — {{ importAllState.rows.length }} parsed row(s)</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Row</th>
+                      <th v-for="column in importAllMappingColumns" :key="column" scope="col">{{ column }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in importAllState.rows" :key="row.rowNumber">
+                      <td>{{ row.rowNumber }}</td>
+                      <td v-for="column in importAllMappingColumns" :key="column">{{ row.columns[column] ?? '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="warranty-item-import-actions">
+                <button type="button" class="btn btn-sm bg-olive" :disabled="formPending || importAllState.status !== 'ready-to-import' || !importAllState.rows.length" @click="importAllRows">Import All Warranty</button>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeImportAll">Cancel</button>
+              </div>
+            </section>
+            <section v-if="referenceIcOpen" class="warranty-item-reference-ic-panel" aria-labelledby="warranty-item-reference-ic-title" data-lookup-endpoint="csm/master/WarrantyRefIC" data-create-endpoint="CSM/MASTER/WarrantyItem_Create">
+              <div class="warranty-item-import-heading">
+                <div>
+                  <h2 id="warranty-item-reference-ic-title">Reference IC</h2>
+                  <p>Choose receiving-document warranty rows to create Warranty Items.</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="closeReferenceIc">Close</button>
+              </div>
+              <form class="warranty-item-filters" @submit.prevent="searchReferenceIc">
+                <div class="form-group">
+                  <label for="warranty-item-reference-ic-field">{{ warrantyItemUi('search_by', 'Search by') }}</label>
+                  <select id="warranty-item-reference-ic-field" v-model="referenceIcState.searchField" class="form-control input-sm" :disabled="formPending">
+                    <option value="war_code">Warranty Code</option>
+                    <option value="war_des">Warranty Name</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="warranty-item-reference-ic-text">{{ warrantyItemUi('search', 'Search') }}</label>
+                  <input id="warranty-item-reference-ic-text" v-model="referenceIcState.searchText" type="search" class="form-control input-sm" :disabled="formPending">
+                </div>
+                <button type="submit" class="btn btn-sm bg-navy" :disabled="formPending || !referenceIcController">Search</button>
+              </form>
+              <p v-if="referenceIcState.status === 'loading'" role="status">Loading Reference IC…</p>
+              <div v-else-if="referenceIcState.status === 'load-failed'" class="alert alert-danger" role="alert">
+                <p>{{ referenceIcState.error?.message || 'Unable to load Reference IC rows.' }}</p>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending" @click="retryReferenceIc">Retry</button>
+              </div>
+              <p v-else-if="referenceIcState.status === 'creating'" role="status">Creating Warranty Items from Reference IC…</p>
+              <p v-else-if="referenceIcState.status === 'created'" class="alert alert-success" role="status">Reference IC Warranty Items created.</p>
+              <p v-if="referenceIcState.status === 'create-failed' && referenceIcState.error" class="alert alert-danger" role="alert">{{ referenceIcState.error.message }}</p>
+              <div class="table-responsive warranty-item-reference-ic-table">
+                <table class="table table-bordered table-striped">
+                  <caption>Reference IC — {{ referenceIcState.selectedItems.length }} selected of {{ referenceIcState.total }}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col"><input type="checkbox" :checked="referenceIcAllSelected" :disabled="formPending || !referenceIcState.items.length" aria-label="Select all Reference IC rows" @change="toggleAllReferenceIc"></th>
+                      <th scope="col">No.</th>
+                      <th scope="col">Warranty Code</th>
+                      <th scope="col">Warranty Name</th>
+                      <th scope="col">Vendor</th>
+                      <th scope="col">Start Date</th>
+                      <th scope="col">End Date</th>
+                      <th scope="col">IC Doc No.</th>
+                      <th scope="col">IC No.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, index) in referenceIcState.items" :key="`${row.ic_docno ?? ''}:${row.ic_itemno ?? ''}`">
+                      <td><input type="checkbox" :checked="referenceIcState.selectedItems.some(selected => (selected.ic_docno ?? '') === (row.ic_docno ?? '') && (selected.ic_itemno ?? '') === (row.ic_itemno ?? ''))" :disabled="formPending" @change="toggleReferenceIcRow(row)"></td>
+                      <td>{{ (referenceIcState.page - 1) * referenceIcState.pageSize + index + 1 }}</td>
+                      <td>{{ row.war_code ?? '—' }}</td>
+                      <td>{{ row.war_des ?? '—' }}</td>
+                      <td>{{ row.cust_name ?? '—' }}</td>
+                      <td>{{ row.war_date_start ?? '—' }}</td>
+                      <td>{{ row.war_date_end ?? '—' }}</td>
+                      <td>{{ row.ic_docno ?? '—' }}</td>
+                      <td>{{ row.ic_itemno ?? '—' }}</td>
+                    </tr>
+                    <tr v-if="!referenceIcState.items.length">
+                      <td colspan="9" class="text-center">No Reference IC rows found.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <nav class="warranty-item-paging" aria-label="Reference IC pages">
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending || referenceIcState.page <= 1" @click="goToReferenceIcPage(referenceIcState.page - 1)">Previous</button>
+                <span>Page {{ referenceIcState.page }} of {{ referenceIcMaxPage }} · {{ referenceIcState.total }} total rows</span>
+                <button type="button" class="btn btn-sm btn-default" :disabled="formPending || referenceIcState.page >= referenceIcMaxPage" @click="goToReferenceIcPage(referenceIcState.page + 1)">Next</button>
+                <button type="button" class="btn btn-sm bg-olive" :disabled="formPending || !referenceIcState.selectedItems.length" @click="createReferenceIcItems">Create selected</button>
+              </nav>
+            </section>
             <form class="warranty-item-filters" @submit.prevent="controller?.updateFilters(filters)">
               <div class="form-group">
-                <label for="warranty-item-field">Search by</label>
+                <label for="warranty-item-field">{{ warrantyItemUi('search_by', 'Search by') }}</label>
                 <select id="warranty-item-field" v-model="filters.field" class="form-control input-sm" :disabled="formPending">
                   <option value="war_code">Warranty Code</option>
                   <option value="war_des">Warranty Name</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="warranty-item-text">Search</label>
+                <label for="warranty-item-text">{{ warrantyItemUi('search', 'Search') }}</label>
                 <input id="warranty-item-text" v-model="filters.text" type="search" class="form-control input-sm" :disabled="formPending">
               </div>
               <div class="form-group">
@@ -488,45 +927,17 @@ onBeforeUnmount(() => {
             </div>
             <p v-else-if="state.status === 'loaded' && !state.items.length" role="status">No Warranty Items found.</p>
 
-            <div v-if="state.items.length" class="table-responsive" :aria-busy="busy">
-              <table class="table table-bordered table-striped">
-                <caption>Warranty Items — page {{ displayedPage }}, {{ state.total }} total rows</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">No.</th>
-                    <th scope="col">Code</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Group</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Lifetime</th>
-                    <th scope="col">Active</th>
-                    <th scope="col">Added by</th>
-                    <th scope="col">Added at</th>
-                    <th scope="col">Edited by</th>
-                    <th scope="col">Edited at</th>
-                    <th v-if="canEditNow" scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(item, index) in state.items" :key="item.code">
-                    <td>{{ (displayedPage - 1) * state.query.pageSize + index + 1 }}</td>
-                    <td>{{ item.code }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.groupName }}</td>
-                    <td>{{ item.durationLabel }}</td>
-                    <td>{{ item.lifetime ? 'Yes' : 'No' }}</td>
-                    <td>{{ item.active ? 'Yes' : 'No' }}</td>
-                    <td>{{ item.addedBy ?? '—' }}</td>
-                    <td>{{ item.addedAt ?? '—' }}</td>
-                    <td>{{ item.editedBy ?? '—' }}</td>
-                    <td>{{ item.editedAt ?? '—' }}</td>
-                    <td v-if="canEditNow">
-                      <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending" @click="startEdit(item.code)">Edit</button>
-                      <button type="button" class="btn btn-sm btn-danger" :disabled="busy || formPending || !item.deleteContext || isDeleteBlocked(item.code)" @click="deleteItem(item)">Delete</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-if="state.items.length" class="warranty-item-grid" :aria-busy="busy">
+              <ag-table
+                ref="warrantyItemGrid"
+                :sorting="true"
+                :saveColumns="'Y'"
+                :doctype="'MSCSM'"
+                :page_name="'v_csm_mas_002'"
+                @ready="onWarrantyItemGridReady"
+                @cell-clicked="onWarrantyItemGridCellClicked"
+                @on-sort-changed="onWarrantyItemGridSortChanged"
+              />
             </div>
             <nav class="warranty-item-paging" aria-label="Warranty Item pages">
               <button type="button" class="btn btn-sm btn-default" :disabled="busy || formPending || !controller || state.query.page <= 1" aria-label="First page" @click="controller?.goToPage(1)">First</button>
@@ -550,7 +961,11 @@ onBeforeUnmount(() => {
 .warranty-item-import-heading, .warranty-item-import-controls, .warranty-item-import-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .warranty-item-import-heading { justify-content: space-between; }
 .warranty-item-import-heading h2 { margin-top: 0; }
+.warranty-item-import-mapping { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.warranty-item-import-mapping .form-group { margin-bottom: 0; }
 .warranty-item-import-preview { margin-top: 12px; }
+.warranty-item-reference-ic-panel { border: 1px solid #ddd; padding: 12px; margin-bottom: 16px; }
+.warranty-item-reference-ic-table { margin-top: 12px; }
 .warranty-item-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 16px; }
 .warranty-item-filters .form-group { margin-bottom: 0; }
 .warranty-item-form-panel { border: 1px solid #ddd; padding: 12px; margin-bottom: 16px; }

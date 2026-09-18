@@ -90,7 +90,7 @@ export interface WarrantyItemUpdateRequest {
 export interface WarrantyItemValidationError {
   category: 'validation'
   field: 'code' | 'name' | 'duration.years' | 'duration.months' | 'duration.days'
-  code: 'required' | 'legacy-max-length' | 'finite-integer'
+  code: 'legacy-max-length'
   message: string
 }
 
@@ -208,9 +208,7 @@ export function setWarrantyItemLifetime(draft: WarrantyItemDraft, lifetime: bool
 
 export function validateWarrantyItemDraft(draft: WarrantyItemDraft): WarrantyItemValidationError[] {
   const errors: WarrantyItemValidationError[] = []
-  if (typeof draft.code !== 'string' || draft.code.trim() === '') {
-    errors.push({ category: 'validation', field: 'code', code: 'required', message: 'Warranty Code is required.' })
-  } else if (draft.code.length > LEGACY_UI_WARRANTY_CODE_MAX) {
+  if (typeof draft.code === 'string' && draft.code.length > LEGACY_UI_WARRANTY_CODE_MAX) {
     errors.push({
       category: 'validation',
       field: 'code',
@@ -219,30 +217,13 @@ export function validateWarrantyItemDraft(draft: WarrantyItemDraft): WarrantyIte
     })
   }
 
-  if (typeof draft.name !== 'string' || draft.name.trim() === '') {
-    errors.push({ category: 'validation', field: 'name', code: 'required', message: 'Warranty Name is required.' })
-  } else if (draft.name.length > LEGACY_UI_WARRANTY_NAME_MAX) {
+  if (typeof draft.name === 'string' && draft.name.length > LEGACY_UI_WARRANTY_NAME_MAX) {
     errors.push({
       category: 'validation',
       field: 'name',
       code: 'legacy-max-length',
       message: `Warranty Name cannot exceed ${LEGACY_UI_WARRANTY_NAME_MAX} characters in the legacy-compatible UI.`,
     })
-  }
-
-  for (const [field, value] of [
-    ['duration.years', draft.duration.years],
-    ['duration.months', draft.duration.months],
-    ['duration.days', draft.duration.days],
-  ] as const) {
-    if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value))) {
-      errors.push({
-        category: 'validation',
-        field,
-        code: 'finite-integer',
-        message: `${field} must be a finite whole number.`,
-      })
-    }
   }
 
   return errors

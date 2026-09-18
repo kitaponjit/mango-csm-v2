@@ -2,10 +2,11 @@ import type { WarrantyItemTransport } from '../runtime/legacy-xtools-transport'
 
 export type WarrantyItemImportColumn =
   | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+  | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V'
 
 export type WarrantyItemImportCell = string | number | boolean | null
 
-export type WarrantyItemImportColumns = Record<WarrantyItemImportColumn, WarrantyItemImportCell>
+export type WarrantyItemImportColumns = Partial<Record<WarrantyItemImportColumn, WarrantyItemImportCell>>
 
 export interface WarrantyItemImportPreviewRow {
   rowNumber: number
@@ -19,22 +20,37 @@ export interface WarrantyItemImportPreview {
 }
 
 export interface WarrantyItemImportDto {
-  war_code: string
-  war_des: string | null
-  type_code: string
-  tot_date: number
-  tot_month: number
-  tot_year: number
-  /** Backend normalizes non-Y values to N; Import does not impose a duration invariant. */
-  lifetime: string | null
-  itemcode: string
-  /** Sent for inserts; the backend intentionally does not overwrite it on existing rows. */
-  vendor: string | null
-  /** Sent for inserts; the backend intentionally does not overwrite them on existing rows. */
-  war_date_start: string | null
-  war_date_end: string | null
-  /** Backend normalizes non-Y/N values to N; the mapper preserves that authority. */
-  active: string | null
+  war_code: WarrantyItemImportCell
+  war_des: WarrantyItemImportCell
+  type_code: WarrantyItemImportCell
+  tot_date: WarrantyItemImportCell
+  tot_month: WarrantyItemImportCell
+  tot_year: WarrantyItemImportCell
+  lifetime: WarrantyItemImportCell
+  itemcode: WarrantyItemImportCell
+  vendor: WarrantyItemImportCell
+  war_date_start: WarrantyItemImportCell
+  war_date_end: WarrantyItemImportCell
+  active: WarrantyItemImportCell
+}
+
+export type WarrantyItemImportMapping = {
+  [field in keyof WarrantyItemImportDto]: WarrantyItemImportColumn
+}
+
+export const DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING: WarrantyItemImportMapping = {
+  war_code: 'A',
+  war_des: 'B',
+  type_code: 'C',
+  tot_date: 'D',
+  tot_month: 'E',
+  tot_year: 'F',
+  lifetime: 'G',
+  itemcode: 'H',
+  vendor: 'J',
+  war_date_start: 'K',
+  war_date_end: 'L',
+  active: 'M',
 }
 
 export type WarrantyItemImportErrorCategory =
@@ -64,12 +80,14 @@ export interface WarrantyItemImportResult {
 export interface WarrantyItemImportService {
   upload(file: File): Promise<WarrantyItemImportPreview>
   importRows(rows: readonly WarrantyItemImportDto[]): Promise<WarrantyItemImportResult>
+  getTemplateToken?(templateName: string): Promise<string>
 }
 
 const UPLOAD_PATH = 'Anywhere/Import/ImportExcel'
 const PERSISTENCE_PATH = 'CSM/Master/WarrantyItemImportData_Master'
 const IMPORT_COLUMNS: WarrantyItemImportColumn[] = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
 ]
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -142,13 +160,14 @@ function normalizeParserRow(rawRow: unknown, index: number): WarrantyItemImportP
     throw contractError(`Warranty Item Import parser row ${index + 1} is malformed.`)
   }
 
-  const columns = {} as WarrantyItemImportColumns
+  const columns: WarrantyItemImportColumns = {}
   for (const column of IMPORT_COLUMNS) {
+    if (!Object.prototype.hasOwnProperty.call(rawRow, column)) continue
     const value = rawRow[column]
-    if (value !== undefined && !isImportCell(value)) {
+    if (!isImportCell(value)) {
       throw contractError(`Warranty Item Import parser column ${column} in row ${index + 1} is malformed.`)
     }
-    columns[column] = value === undefined ? null : value
+    columns[column] = value
   }
 
   return { rowNumber: index + 1, columns }
@@ -202,61 +221,55 @@ function unwrapPersistenceResponse(rawResponse: unknown): WarrantyItemImportResu
   return { status: 'imported' }
 }
 
-function textValue(value: WarrantyItemImportCell): string | null {
-  if (value === null) return null
-  if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  return null
+function mappedCell(row: WarrantyItemImportPreviewRow, column: WarrantyItemImportColumn): WarrantyItemImportCell {
+  return row.columns[column] === undefined ? null : row.columns[column]!
 }
 
-function integerValue(value: WarrantyItemImportCell): number {
-  if (typeof value === 'number') {
-    return Number.isInteger(value) && Number.isFinite(value) ? value : 0
-  }
-  if (typeof value !== 'string') return 0
-  const normalized = value.trim()
-  if (!/^[+-]?\d+$/.test(normalized)) return 0
-  const parsed = Number(normalized)
-  return Number.isSafeInteger(parsed) ? parsed : 0
-}
-
-function activeValue(value: WarrantyItemImportCell): string | null {
-  const text = textValue(value)
-  return text === null ? null : text.toUpperCase().trim()
-}
-
-export function mapWarrantyItemImportRow(row: WarrantyItemImportPreviewRow): WarrantyItemImportDto {
-  const { columns } = row
+export function mapWarrantyItemImportRow(
+  row: WarrantyItemImportPreviewRow,
+  mapping: WarrantyItemImportMapping = DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING,
+): WarrantyItemImportDto {
   return {
-    war_code: textValue(columns.A) ?? '',
-    war_des: textValue(columns.B),
-    type_code: textValue(columns.C) ?? '',
-    tot_date: integerValue(columns.D),
-    tot_month: integerValue(columns.E),
-    tot_year: integerValue(columns.F),
-    lifetime: textValue(columns.G),
-    itemcode: textValue(columns.H) ?? '',
-    vendor: textValue(columns.J),
-    war_date_start: textValue(columns.K),
-    war_date_end: textValue(columns.L),
-    active: activeValue(columns.M),
+    war_code: mappedCell(row, mapping.war_code),
+    war_des: mappedCell(row, mapping.war_des),
+    type_code: mappedCell(row, mapping.type_code),
+    tot_date: mappedCell(row, mapping.tot_date),
+    tot_month: mappedCell(row, mapping.tot_month),
+    tot_year: mappedCell(row, mapping.tot_year),
+    lifetime: mappedCell(row, mapping.lifetime),
+    itemcode: mappedCell(row, mapping.itemcode),
+    vendor: mappedCell(row, mapping.vendor),
+    war_date_start: mappedCell(row, mapping.war_date_start),
+    war_date_end: mappedCell(row, mapping.war_date_end),
+    active: mappedCell(row, mapping.active),
   }
 }
 
-export function mapWarrantyItemImportRows(rows: readonly WarrantyItemImportPreviewRow[]): WarrantyItemImportDto[] {
-  return rows.map(mapWarrantyItemImportRow)
+export function mapWarrantyItemImportRows(
+  rows: readonly WarrantyItemImportPreviewRow[],
+  mapping: WarrantyItemImportMapping = DEFAULT_WARRANTY_ITEM_IMPORT_MAPPING,
+): WarrantyItemImportDto[] {
+  return rows.map(row => mapWarrantyItemImportRow(row, mapping))
 }
 
-function assertXlsx(file: File): void {
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    throw new WarrantyItemImportServiceError('selection', 'Select one .xlsx Warranty Item workbook.')
+function assertWorkbook(file: File): void {
+  const name = file.name.toLowerCase()
+  if (!name.endsWith('.xls') && !name.endsWith('.xlsx')) {
+    throw new WarrantyItemImportServiceError('selection', 'Select one .xls or .xlsx Warranty Item workbook.')
   }
+}
+
+function normalizeTemplateResponse(rawResponse: unknown): string {
+  if (!isRecord(rawResponse) || rawResponse.success !== true || typeof rawResponse.path !== 'string' || rawResponse.path.trim() === '') {
+    throw contractError('Warranty Item Import template response is malformed.')
+  }
+  return rawResponse.path
 }
 
 export function createWarrantyItemImportService(transport: WarrantyItemTransport): WarrantyItemImportService {
   return {
     async upload(file) {
-      assertXlsx(file)
+      assertWorkbook(file)
       const form = new FormData()
       form.append('file', file)
       const rawResponse = await callTransport(() => transport.postForm(UPLOAD_PATH, form))
@@ -277,6 +290,18 @@ export function createWarrantyItemImportService(transport: WarrantyItemTransport
       } catch (reason: unknown) {
         if (reason instanceof WarrantyItemImportServiceError) throw reason
         throw contractError('Warranty Item Import response is malformed.', reason)
+      }
+    },
+
+    async getTemplateToken(templateName) {
+      const rawResponse = await callTransport(() => transport.get(
+        `Anywhere/Import/DownloadTemplateExcel?filename=${encodeURIComponent(templateName)}`,
+      ))
+      try {
+        return normalizeTemplateResponse(rawResponse)
+      } catch (reason: unknown) {
+        if (reason instanceof WarrantyItemImportServiceError) throw reason
+        throw contractError('Warranty Item Import template response is malformed.', reason)
       }
     },
   }
