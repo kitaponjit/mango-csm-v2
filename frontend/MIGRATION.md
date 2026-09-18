@@ -1,8 +1,131 @@
-# Migration tracker — Vue 2 SPA → Nuxt
+# CSM migration tracker — current project state
 
-Source: `../Website/Scripts/App/Application` (218 `.vue`, ~142k LOC, 111 routes).
+Updated: **2026-09-18**. This tracker follows the [repository governance](../AGENTS.md).
+The [CSM closeout record](../docs/migrations/csm-stack-migration-closeout.md) owns the
+verified implementation closeout and its validation results. Dated entries below preserve
+earlier evidence; their outstanding lists and superseded designs are historical.
 
-## Done
+## Current architecture and ownership
+
+| Boundary | Current implementation | Migration status |
+| --- | --- | --- |
+| Legacy product reference | `Website/`: Vue 2.7, Vue Router 3, Vuex, ASP.NET Framework host | Retained for behavior comparison; not retired. Its current package scripts use Vite, despite the historical Webpack stack. |
+| Target frontend | `frontend/`: Nuxt 4, Vue 3, Vue Router 4, Pinia, Vite | Established runtime target; full port of the 218-component, 111-route legacy baseline. These are baseline counts, not current file totals. |
+| Earlier Nuxt scaffold | `Nuxt/`, former `/csm-next/` first slice | Superseded; historical evidence only. New UI belongs in `frontend/`. |
+| Backend | Separate `MangoServiceNetCore` .NET 8 repository | Target contracts and dev integration are recorded; production cutover is not established here. |
+| Frontend hosting | Static output, IIS/Linux configs, nginx Docker image and root `compose.yaml` | Frontend deployment configuration exists. Compose starts only the frontend; final backend IIS/Docker topology remains open. |
+| Relational persistence | SQL Server legacy; SQLite target | Ownership, SQL Server feature mapping, migration and rollback remain unresolved. No database migration is implemented by this frontend. |
+| Document persistence | MongoDB target; browser document-query tooling in this checkout | The frontend-only store is not a MongoDB persistence cutover. Production ownership remains an explicit backend decision. |
+
+`LEGACY = PRODUCT BEHAVIOR SPECIFICATION`; `TARGET STACK = IMPLEMENTATION CONSTRAINT`;
+`MIGRATION FEATURE DELTA = 0`. Missing legacy behavior is a `GAP`; target-only behavior is
+`EXTRA` until intentionally approved. Automated checks do not authorize legacy retirement.
+
+## Implementation and parity closeout
+
+- [x] Full component/route port, Vue 3 lifecycle/template changes, shared widget adapters,
+  Pinia compatibility facade, runtime globals and base-relative vendor assets are present.
+- [x] Core SignalR client adapter is present in `app/plugins/signalr.client.js`; the target
+  no longer loads the SignalR 2 generated-proxy stack.
+- [x] PR #32 closeout records **97/97 migration units**, Warranty
+  `FULL_CAPABILITY_AUDITED`, **0 active Warranty GAP** and **0 Warranty UNKNOWN**.
+  Its final merge SHA is `7ca1e766411adb5039b45175e700b2f7c1cd1a5e`.
+- [x] Warranty Item implementation lives in `app/features/warranty-item/`, with focused
+  tests under `test/warranty-item/`. See the
+  [capability ledger](../docs/migrations/warranty-item-c4-capability-ledger.md) for workflow evidence.
+- [x] PR #35, merged at `fe99a6d9007e2e832cbef53c2e5429ee775136f4`, adds shared ag-Grid
+  API compatibility, approval-screen fixes, Vue 3 template-ref fixes, Vuex-compatible unknown
+  action handling, missing-query validation and CustomerData error handling. Its commit record
+  reports a signed-in sweep of 50 accessible screens; this is scoped evidence, not complete UAT.
+
+The current checkout is newer than the PR #32 validation snapshot. The results in the closeout
+record apply to its recorded SHA and were **not rerun for this documentation update**.
+
+## Runtime and deployment contract
+
+- `nuxt.config.ts` sets `ssr: false`, uses the existing route table through
+  `app/router.options.js`, and generates static output at `.output/public/`.
+- `NUXT_APP_BASE_URL` defaults to `/`. Scripts, styles and vendor images resolve from the
+  app base URL. `/` redirects to `/page/`; bookmarked legacy route paths remain the reference.
+- `public/config.js` is loaded before vendor scripts and is not bundled. `window.dataServer`
+  includes the API path base, normally `/service/`. Dev runs at `http://localhost:3000` against
+  `http://localhost:5075/service/`; deployed values must follow the integration contract.
+- Preserve internal `X-Mango-Auth` and customer `X-Customer-Auth` token domains, menu rights,
+  project rights and language behavior. Do not introduce a new SSO dependency.
+- `scripts/sync-vendor.mjs` replaces `public/vendor/` from `Website/Content` and
+  `Website/Scripts/Others`. Maintain source assets rather than editing only the generated copy.
+  `npm run dev` runs the sync automatically through `predev`; static builds require an explicit sync.
+- IIS and Linux deployment configs live under `deploy/iis/` and `deploy/linux/`.
+  `deploy/Dockerfile` builds from the repository root. Root `compose.yaml` serves the frontend
+  on port 8080 by default and proxies `/service/` to `API_UPSTREAM`; it does not start the backend.
+
+See [frontend/backend wiring](../docs/integration/frontend-backend-connection.md) and
+[backend contract navigation](../docs/backend/contract-navigation-knowledge.md) before changing
+that boundary. Backend deployment configuration and persistence belong to their owning repository.
+
+## Document store: frontend-only extra
+
+`app/services/document-store/` queries JSON files from `public/data/` in the browser using a
+MongoDB-compatible query engine and Extended JSON dates. It has **no HTTP backend driver,
+no `window.documentStore` switch and no `CSM/Document/*` endpoint integration**.
+Inserts return `pending: true`, live only in memory and disappear on reload.
+
+The `v_csm_log_web` screen is gated by menu right `60000`. The CSM closeout classifies it as
+**`PARKED_EXTRA`**, outside legacy parity. Its tests use a throwaway real `mongod` to compare
+query semantics; MongoDB packages are dev tooling, not browser database access or production
+persistence. See the [current document-store contract](../docs/integration/document-store-contract.md).
+
+## Validation commands and recorded results
+
+Run these from `frontend/` using the existing installed dependencies:
+
+| Command | Scope | PR #32 closeout result |
+| --- | --- | --- |
+| `npm test` | Query unit checks, store API checks, MongoDB query parity | `PASS` — 35 query, 28 store, 64 parity cases |
+| `npm run test:warranty-item` | Vitest suite under `test/warranty-item/` | `PASS` — 36 files / 204 tests |
+| `npm run typecheck:warranty-item` | Nuxt preparation and focused Warranty Item typecheck | `PASS` |
+| `npm run typecheck` | Project typecheck | `PASS` |
+| `npm run sync:vendor`, then `npm run build` | Vendor sync and `nuxt generate` | Production build `PASS` |
+
+The MongoDB parity harness may download/cache a local binary. `test:http` was removed with
+the backend driver. No tests, typechecks, builds, Docker/IIS runs or browser checks were run
+for this documentation-only update; these are recorded results and available commands.
+
+## Remaining verification and decisions
+
+- **Authenticated UAT: `BLOCKED_EXTERNAL_ENV`** in the durable closeout. Historical route
+  walks and PR #35's scoped browser sweep do not establish full per-role, customer-session,
+  live-data or realtime workflow acceptance. Real-environment evidence and owner sign-off remain required.
+- **Backend issue:** PR #35 records `CSM/Data/CustomerDataReadList` returning backend 500s.
+  The frontend now surfaces the error and closes its spinner; the backend resolution is not
+  established by this checkout.
+- **Row grouping:** three legacy screens still declare `rowGroup`, while the target registers
+  only `AllCommunityModule`. The historical Enterprise/grouping question remains unresolved
+  in the inspected source; grouped behavior needs executable parity evidence and an explicit decision.
+- **Intentional compatibility:** Chart.js remains on v2 with its two v2 plugins. Historical
+  probes record working charts; upgrading it is separate work. Preserve pre-existing date-limit
+  prop behavior and unresolved legacy tags until their intended product behavior is established.
+- **Realtime differences:** the current adapter uses one connection per tab and sends `userid`
+  for presence. The historical record describes these differences; complete feature acceptance
+  and approval are not established by their implementation alone.
+- **Architecture decisions:** backend cutover/final IIS-Docker topology, SQLite/MongoDB
+  ownership and rollback, deployment automation, and legacy endpoint/host retirement remain open.
+  Existing frontend Docker files do not settle the service topology or authorize retirement.
+
+For a parity defect, establish executable legacy behavior, demonstrate the target mismatch,
+add a `RED` regression, apply the minimal fix and verify `GREEN`. Run focused checks before
+the applicable project gates. Report actual results as `PASS`, `FAIL`, `NOT RUN — ENVIRONMENT`
+or `BLOCKED_EXTERNAL_ENV`; keep authenticated UAT separate from automated completion.
+
+## Historical implementation notes (2026-09-15–17)
+
+The remainder is the dated migration log. Later entries supersede earlier plans and gaps,
+especially the document store's removed backend driver. Verification claims below describe
+the runs recorded at the time, not fresh verification of the current checkout.
+
+Legacy baseline: `../Website/Scripts/App/Application` (218 `.vue`, ~142k LOC, 111 routes).
+
+## Initial work completed
 
 In `../Website` (still shippable on Vue 2.7):
 - [x] webpack → Vite
@@ -405,7 +528,7 @@ Login page renders with the company list from SQL Server via the .NET 8 backend;
 `api/public/ViewUserAuthentication`, `api/public/Extension_ForCallCenter` and
 `CSM/API/CSM_Read_img_csm` all return 200 with correct CORS headers.
 
-## Still outstanding
+## Historical outstanding list (superseded by later entries)
 
 - ~~SignalR / realtime~~ **ported 2026-09-15** - see below.
 - All 98 staff routes were walked (see the route-walk section); what remains is that they were
@@ -767,8 +890,11 @@ backend at all.
 Consequence to be aware of: **inserted documents are lost on reload.** Keeping them without a backend
 would mean the browser's own storage (IndexedDB), per browser and per device — not implemented.
 
-## Ordering note
+## Maintenance after the full port
 
-`../Website` stays on Vue 2.7 + Vite and remains deployable throughout. From this point the two
-frontends have diverged and both need maintaining until the port completes — any fix landed in
-`Website/` must be mirrored into `frontend/`.
+`../Website` remains the Vue 2.7 behavior reference; its current build scripts use Vite.
+`frontend/` owns the current Nuxt runtime, and `Nuxt/` remains superseded. Preserve the legacy
+host until replacement parity, real-environment verification and retirement approval exist.
+Evaluate legacy fixes for target parity and carry required behavior through the established
+adapters; preserve unrelated working-tree changes. Implementation closeout does not establish
+production cutover or authorize legacy removal.
